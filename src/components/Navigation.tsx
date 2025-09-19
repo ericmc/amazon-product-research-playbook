@@ -9,7 +9,8 @@ import {
   X,
   Upload,
   Database,
-  Puzzle
+  Puzzle,
+  Settings
 } from "lucide-react";
 
 const navigationItems = [
@@ -17,6 +18,7 @@ const navigationItems = [
   { name: "Opportunities", href: "/opportunities", icon: Database },
   { name: "Import", href: "/import", icon: Upload },
   { name: "Integrations", href: "/integrations", icon: Puzzle },
+  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export const Navigation = () => {

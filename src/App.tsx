@@ -10,6 +10,7 @@ import Opportunities from "./pages/Opportunities";
 import OpportunityDetail from "./pages/OpportunityDetail";
 import Import from "./pages/Import";
 import Integrations from "./pages/Integrations";
+import Settings from "./components/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/opportunities/:id" element={<OpportunityDetail />} />
               <Route path="/import" element={<Import />} />
               <Route path="/integrations" element={<Integrations />} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

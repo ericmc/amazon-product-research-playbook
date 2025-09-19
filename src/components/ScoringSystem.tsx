@@ -7,9 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
-import { Calculator, TrendingUp, AlertTriangle, CheckCircle, HelpCircle, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
+import { Calculator, TrendingUp, AlertTriangle, CheckCircle, HelpCircle, ChevronDown, ChevronUp, AlertCircle, Save } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ExternalTools } from "@/components/ExternalTools";
+import { opportunityStorage, SavedOpportunity } from "@/utils/OpportunityStorage";
+import { useToast } from "@/hooks/use-toast";
 
 interface ScoringCriteria {
   id: string;
@@ -218,6 +220,8 @@ const ScoringSystem = () => {
   const [criteria, setCriteria] = useState<ScoringCriteria[]>(defaultCriteria);
   const [productName, setProductName] = useState("Bamboo Kitchen Utensil Set");
   const [expandedGuidance, setExpandedGuidance] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
 
   // Check for prefilled data from Data Intake
   React.useEffect(() => {
@@ -410,16 +414,35 @@ const ScoringSystem = () => {
     );
   };
 
-  const saveOpportunity = () => {
-    const entry = {
-      productName,
-      criteria,
-      finalScore,
-      createdAt: new Date().toISOString()
-    };
-    const key = "amazon-research-opportunities";
-    const existing = JSON.parse(localStorage.getItem(key) ?? "[]");
-    localStorage.setItem(key, JSON.stringify([entry, ...existing]));
+  const saveOpportunity = async () => {
+    setIsSaving(true);
+    try {
+      const opportunity: SavedOpportunity = {
+        id: crypto.randomUUID(),
+        productName,
+        criteria,
+        finalScore,
+        createdAt: new Date().toISOString(),
+        status: finalScore >= 80 ? 'scored' : 'draft',
+        source: 'manual'
+      };
+      
+      await opportunityStorage.saveOpportunity(opportunity);
+      
+      toast({
+        title: "Opportunity Saved",
+        description: `"${productName}" has been saved to your opportunities list.`,
+      });
+    } catch (error) {
+      console.error('Failed to save opportunity:', error);
+      toast({
+        title: "Save Failed",
+        description: "Could not save opportunity. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const calculateScore = () => {
@@ -833,9 +856,23 @@ const ScoringSystem = () => {
             </CardContent>
           </Card>
 
-          <Button className="w-full" size="lg" onClick={saveOpportunity}>
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Save Score & Continue
+          <Button 
+            className="w-full" 
+            size="lg" 
+            onClick={saveOpportunity}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <>
+                <div className="w-4 h-4 mr-2 animate-spin border-2 border-current border-t-transparent rounded-full" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                Save Opportunity
+              </>
+            )}
           </Button>
         </div>
       </div>
