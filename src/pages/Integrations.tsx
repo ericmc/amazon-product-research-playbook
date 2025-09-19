@@ -313,6 +313,115 @@ const Integrations = () => {
             ))}
           </div>
 
+          {/* Amazon POE Quick Guide */}
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-3">
+                <div className="text-3xl">📊</div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">Amazon POE Quick Guide</h3>
+                  <p className="text-sm text-muted-foreground">When and how to use Product Opportunity Explorer</p>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* When to Use */}
+              <div>
+                <h4 className="font-semibold text-foreground mb-3 flex items-center">
+                  <Calendar className="w-4 h-4 mr-2 text-blue-600" />
+                  When to Use POE
+                </h4>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-start space-x-2">
+                      <TrendingUp className="w-4 h-4 text-blue-600 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Trend Analysis</p>
+                        <p className="text-xs text-muted-foreground">Check if search volume is growing, stable, or declining</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <BarChart3 className="w-4 h-4 text-blue-600 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Niche Size Validation</p>
+                        <p className="text-xs text-muted-foreground">Confirm market demand is large enough for your goals</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-start space-x-2">
+                      <Users className="w-4 h-4 text-blue-600 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Competition Assessment</p>
+                        <p className="text-xs text-muted-foreground">See how concentrated the market is among top brands</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Calendar className="w-4 h-4 text-blue-600 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Seasonality Check</p>
+                        <p className="text-xs text-muted-foreground">Identify seasonal patterns in search behavior</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Field Mapping */}
+              <div>
+                <h4 className="font-semibold text-foreground mb-3 flex items-center">
+                  <Copy className="w-4 h-4 mr-2 text-blue-600" />
+                  Copy POE Stats to Scoring Fields
+                </h4>
+                <div className="bg-white/50 dark:bg-gray-900/50 rounded-lg p-4 space-y-3">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Badge variant="outline" className="text-xs">POE → Demand</Badge>
+                      <div>
+                        <p className="text-sm font-medium">Search Frequency Rank</p>
+                        <p className="text-xs text-muted-foreground">Copy total search volume or search frequency rank directly to Demand field</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Badge variant="outline" className="text-xs">POE → Competition</Badge>
+                      <div>
+                        <p className="text-sm font-medium">Market Concentration</p>
+                        <p className="text-xs text-muted-foreground">Use "Brand Share %" - higher concentration = higher competition score</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Badge variant="outline" className="text-xs">POE → Seasonality</Badge>
+                      <div>
+                        <p className="text-sm font-medium">Search Trend Variation</p>
+                        <p className="text-xs text-muted-foreground">Calculate coefficient of variation from 12-month trend data</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t pt-3">
+                    <p className="text-xs text-muted-foreground">
+                      💡 <strong>Pro Tip:</strong> POE data is most valuable for demand validation and seasonality analysis. 
+                      For revenue estimates, combine with Jungle Scout or Helium 10 data.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Access Link */}
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  Requires Amazon Brand Registry • Most accurate search data available
+                </div>
+                <Button asChild variant="outline">
+                  <a href="https://sellercentral.amazon.com/opportunity-explorer" target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    Open POE in Seller Central
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Bottom CTA */}
           <Card className="bg-primary/5 border-primary/20">
             <CardContent className="text-center py-8">
