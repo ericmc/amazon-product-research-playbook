@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, Users, Star, TrendingUp, AlertTriangle, Shield } from "lucide-react";
+import TrackingDashboard from "@/components/TrackingDashboard";
 
 const competitorData = [
   {
@@ -63,10 +64,11 @@ export default function Analysis() {
         </div>
 
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="competitors">Competitor Analysis</TabsTrigger>
             <TabsTrigger value="market">Market Overview</TabsTrigger>
             <TabsTrigger value="positioning">Product Positioning</TabsTrigger>
+            <TabsTrigger value="tracking">Tracking Dashboard</TabsTrigger>
           </TabsList>
 
           <TabsContent value="competitors" className="space-y-6">
@@ -273,6 +275,10 @@ export default function Analysis() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="tracking">
+            <TrackingDashboard />
           </TabsContent>
         </Tabs>
 

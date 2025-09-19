@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CheckCircle, AlertTriangle, TrendingUp, Users, Star, DollarSign } from "lucide-react";
+import ScoringSystem from "@/components/ScoringSystem";
 
 const validationCriteria = [
   { 
@@ -108,9 +110,17 @@ export default function Validation() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Product Analysis */}
-          <div className="lg:col-span-2 space-y-6">
+        <Tabs defaultValue="analysis" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="analysis">Product Analysis</TabsTrigger>
+            <TabsTrigger value="scoring">Scoring System</TabsTrigger>
+            <TabsTrigger value="tracking">Progress Tracking</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="analysis" className="space-y-6">
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Product Analysis */}
+              <div className="lg:col-span-2 space-y-6">
             {/* Product Selection */}
             <Card>
               <CardHeader>
@@ -299,6 +309,58 @@ export default function Validation() {
             </Card>
           </div>
         </div>
+      </TabsContent>
+
+      <TabsContent value="scoring">
+        <ScoringSystem />
+      </TabsContent>
+
+      <TabsContent value="tracking" className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Validation Progress */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Validation Progress</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Criteria Passed</span>
+                <span className="text-sm font-medium">{passedCriteria}/{criteria.length}</span>
+              </div>
+              <Progress value={validationProgress} />
+              <div className="text-xs text-muted-foreground">
+                {validationProgress >= 80 ? "Ready for analysis phase" : "Continue validation"}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Risk Assessment */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Risk Assessment</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Competition Level</span>
+                <Badge variant="secondary">Medium</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Seasonality Risk</span>
+                <Badge variant="default">Low</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Patent Risk</span>
+                <Badge variant="default">Low</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Supply Chain</span>
+                <Badge variant="default">Stable</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </TabsContent>
+    </Tabs>
       </div>
     </div>
   );

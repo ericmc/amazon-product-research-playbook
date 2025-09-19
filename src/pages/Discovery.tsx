@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Filter, TrendingUp, DollarSign, Package } from "lucide-react";
+import ToolsetOverview from "@/components/ToolsetOverview";
 
 const discoveryChecklist = [
   { id: 1, task: "Set target price range ($15-$50)", completed: false },
@@ -53,9 +55,17 @@ export default function Discovery() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Workflow */}
-          <div className="lg:col-span-2 space-y-6">
+        <Tabs defaultValue="workflow" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="workflow">Discovery Workflow</TabsTrigger>
+            <TabsTrigger value="tools">Toolset Setup</TabsTrigger>
+            <TabsTrigger value="checklist">Progress Tracking</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="workflow" className="space-y-6">
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Main Workflow */}
+              <div className="lg:col-span-2 space-y-6">
             {/* Search Criteria */}
             <Card>
               <CardHeader>
@@ -115,7 +125,7 @@ export default function Discovery() {
                   Start Product Search
                 </Button>
               </CardContent>
-            </Card>
+              </Card>
 
             {/* Key Metrics to Track */}
             <Card>
@@ -211,6 +221,58 @@ export default function Discovery() {
             </Card>
           </div>
         </div>
+      </TabsContent>
+
+      <TabsContent value="tools">
+        <ToolsetOverview />
+      </TabsContent>
+
+      <TabsContent value="checklist" className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Progress Checklist */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Discovery Checklist</CardTitle>
+              <CardDescription>Complete these steps before moving to validation</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {checklist.map((item) => (
+                <div key={item.id} className="flex items-start space-x-3">
+                  <Checkbox
+                    checked={item.completed}
+                    onCheckedChange={() => toggleChecklistItem(item.id)}
+                    className="mt-1"
+                  />
+                  <span className={`text-sm ${item.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                    {item.task}
+                  </span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Required Tools */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Required Tools</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {toolsNeeded.map((tool, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-foreground">{tool.name}</div>
+                    <div className="text-sm text-muted-foreground">{tool.purpose}</div>
+                  </div>
+                  <Badge variant={tool.status === "required" ? "default" : "secondary"}>
+                    {tool.status}
+                  </Badge>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </TabsContent>
+    </Tabs>
       </div>
     </div>
   );
