@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -118,10 +119,16 @@ const OpportunitiesList = () => {
       .slice(0, 2); // Show top 2 weakest
   };
 
+  const scoreColorMap = {
+    excellent: "bg-success text-success-foreground",
+    good: "bg-warning text-warning-foreground", 
+    poor: "bg-destructive text-destructive-foreground"
+  };
+
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "bg-green-600 text-white";
-    if (score >= 60) return "bg-amber-500 text-black";
-    return "bg-red-600 text-white";
+    if (score >= 80) return scoreColorMap.excellent;
+    if (score >= 60) return scoreColorMap.good;
+    return scoreColorMap.poor;
   };
 
   const formatDate = (dateString: string) => {
@@ -316,6 +323,7 @@ const OpportunitiesList = () => {
                     <Checkbox
                       checked={selectedIds.size === opportunities.length && opportunities.length > 0}
                       onCheckedChange={handleSelectAll}
+                      aria-label="Select all opportunities"
                     />
                     <span className="text-sm text-muted-foreground">
                       Select All ({opportunities.length})
@@ -351,6 +359,7 @@ const OpportunitiesList = () => {
                             <Checkbox
                               checked={isSelected}
                               onCheckedChange={(checked) => handleSelectOpportunity(index, checked as boolean)}
+                              aria-label={`Select ${opportunity.productName}`}
                             />
                             <div className="space-y-1">
                               <CardTitle className="text-lg">{opportunity.productName}</CardTitle>
@@ -361,7 +370,7 @@ const OpportunitiesList = () => {
                             </div>
                           </div>
                           <div className="text-right space-y-2">
-                            <Badge className={`text-lg px-3 py-1 ${getScoreColor(opportunity.finalScore)}`}>
+                            <Badge className={cn("text-lg px-3 py-1", getScoreColor(opportunity.finalScore))}>
                               {opportunity.finalScore}
                             </Badge>
                             <div className="flex items-center space-x-1">
@@ -529,7 +538,7 @@ const ComparisonView = ({ opportunities }: { opportunities: SavedOpportunity[] }
             {opportunities.map((opportunity, index) => (
               <div key={index} className="text-center space-y-2">
                 <h4 className="font-medium text-foreground">{opportunity.productName}</h4>
-                <div className={`text-3xl font-bold px-4 py-2 rounded-lg ${getScoreColor(opportunity.finalScore)}`}>
+                <div className={cn("text-3xl font-bold px-4 py-2 rounded-lg", getScoreColor(opportunity.finalScore))}>
                   {opportunity.finalScore}
                 </div>
                 <Progress value={opportunity.finalScore} className="w-full" />

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -183,11 +184,17 @@ const ScoringSystem = () => {
     .sort((a, b) => a.weighted - b.weighted)
     .slice(0, 3);
   
-  const scoreIntent = finalScore >= 80 ? "success" : finalScore >= 60 ? "warning" : "danger";
-  const intentClass =
-    scoreIntent === "success" ? "bg-green-600 text-white" :
-    scoreIntent === "warning" ? "bg-amber-500 text-black" :
-    "bg-red-600 text-white";
+  const scoreColorMap = {
+    excellent: "bg-success text-success-foreground",
+    good: "bg-warning text-warning-foreground",
+    poor: "bg-destructive text-destructive-foreground"
+  };
+
+  const getScoreIntentClass = (score: number) => {
+    if (score >= 80) return scoreColorMap.excellent;
+    if (score >= 60) return scoreColorMap.good;
+    return scoreColorMap.poor;
+  };
 
   return (
     <div className="space-y-6">
@@ -213,11 +220,13 @@ const ScoringSystem = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-foreground">Product Name</label>
+                <label htmlFor="product-name" className="text-sm font-medium text-foreground">Product Name</label>
                 <Input 
+                  id="product-name"
                   value={productName}
                   onChange={(e) => setProductName(e.target.value)}
                   className="mt-1"
+                  aria-describedby="product-name-description"
                 />
               </div>
             </CardContent>
@@ -240,7 +249,7 @@ const ScoringSystem = () => {
                       {criterion.weight}% weight
                     </Badge>
                   </div>
-                  <CardDescription>{criterion.description}</CardDescription>
+                  <CardDescription id={`${criterion.id}-description`}>{criterion.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center space-x-4">
@@ -249,6 +258,8 @@ const ScoringSystem = () => {
                       value={criterion.value}
                       onChange={(e) => updateCriteriaValue(criterion.id, clamp(Number(e.target.value), 0, criterion.maxValue))}
                       className="w-32"
+                      aria-label={`${criterion.name} value`}
+                      aria-describedby={`${criterion.id}-description`}
                     />
                     <div className="flex-1">
                       <Slider
@@ -257,6 +268,8 @@ const ScoringSystem = () => {
                         max={criterion.maxValue}
                         step={criterion.id === 'revenue' ? 1000 : 1}
                         className="flex-1"
+                        aria-label={`${criterion.name} slider`}
+                        aria-describedby={`${criterion.id}-description`}
                       />
                     </div>
                     <div className="text-sm text-muted-foreground w-20">
@@ -294,7 +307,7 @@ const ScoringSystem = () => {
               <div className="text-6xl font-bold text-foreground">{finalScore}</div>
               <Progress value={finalScore} className="w-full" />
               <Badge 
-                className={`text-lg px-4 py-2 ${intentClass}`}
+                className={cn("text-lg px-4 py-2", getScoreIntentClass(finalScore))}
               >
                 {finalScore >= 80 ? "Excellent" : finalScore >= 60 ? "Good" : "Poor"}
               </Badge>

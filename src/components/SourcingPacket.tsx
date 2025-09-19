@@ -286,6 +286,7 @@ const SourcingPacket: React.FC<SourcingPacketProps> = ({
                 value={newKeyword}
                 onChange={(e) => setNewKeyword(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && addKeyword()}
+                aria-label="Add new keyword"
               />
               <Button onClick={addKeyword} size="sm">
                 <Plus className="w-4 h-4" />

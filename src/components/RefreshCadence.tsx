@@ -248,14 +248,19 @@ const RefreshCadence: React.FC<RefreshCadenceProps> = ({
           {/* Schedule Info */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>Refresh Frequency (days)</Label>
+              <Label htmlFor="refresh-frequency">Refresh Frequency (days)</Label>
               <Input
+                id="refresh-frequency"
                 type="number"
                 value={refreshData.refreshFrequency}
                 onChange={(e) => updateRefreshData({ refreshFrequency: parseInt(e.target.value) || 7 })}
                 min="1"
                 max="365"
+                aria-describedby="refresh-frequency-description"
               />
+              <p id="refresh-frequency-description" className="text-xs text-muted-foreground">
+                How often to refresh data (1-365 days)
+              </p>
             </div>
             <div className="space-y-2">
               <Label>Last Refreshed</Label>

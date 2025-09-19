@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -172,8 +173,9 @@ export default function Discovery() {
                       checked={item.completed}
                       onCheckedChange={() => toggleChecklistItem(item.id)}
                       className="mt-1"
+                      aria-label={`Mark ${item.task} as complete`}
                     />
-                    <span className={`text-sm ${item.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                    <span className={cn("text-sm", item.completed ? 'line-through text-muted-foreground' : 'text-foreground')}>
                       {item.task}
                     </span>
                   </div>
@@ -242,8 +244,9 @@ export default function Discovery() {
                     checked={item.completed}
                     onCheckedChange={() => toggleChecklistItem(item.id)}
                     className="mt-1"
+                    aria-label={`Mark ${item.task} as complete`}
                   />
-                  <span className={`text-sm ${item.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                  <span className={cn("text-sm", item.completed ? 'line-through text-muted-foreground' : 'text-foreground')}>
                     {item.task}
                   </span>
                 </div>

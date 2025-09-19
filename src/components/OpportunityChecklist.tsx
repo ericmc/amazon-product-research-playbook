@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -293,10 +294,11 @@ const OpportunityChecklistComponent = ({
                               updateItem(item.id, { completed: checked as boolean })
                             }
                             className="mt-1"
+                            aria-label={`Mark ${item.title} as complete`}
                           />
                           <div className="flex-1 space-y-2">
                             <div>
-                              <h4 className={`font-medium ${item.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                              <h4 className={cn("font-medium", item.completed ? 'line-through text-muted-foreground' : 'text-foreground')}>
                                 {item.title}
                               </h4>
                               <p className="text-sm text-muted-foreground">
@@ -306,6 +308,7 @@ const OpportunityChecklistComponent = ({
                             <Textarea
                               placeholder="Add notes, findings, or links..."
                               value={item.notes}
+                              aria-label={`Notes for ${item.title}`}
                               onChange={(e) => updateItem(item.id, { notes: e.target.value })}
                               className="min-h-[80px]"
                             />
