@@ -230,6 +230,9 @@ const ScoringSystem = () => {
               <CardTitle>Overall Score</CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-4">
+              {totalWeight !== 100 && (
+                <p className="text-sm text-amber-600">Heads up: weights sum to {totalWeight}. Consider adjusting to 100 for a true % score.</p>
+              )}
               <div className="text-6xl font-bold text-foreground">{finalScore}</div>
               <Progress value={finalScore} className="w-full" />
               <Badge 
