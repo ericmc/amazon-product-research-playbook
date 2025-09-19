@@ -19,8 +19,10 @@ interface ScoringCriteria {
   weight: number;
   value: number;
   maxValue: number;
+  unit: string;
   description: string;
   threshold: number;
+  isInverted?: boolean;
   source?: 'jungle_scout' | 'helium_10' | 'amazon_poe' | 'manual';
   guidance: {
     overview: string;
@@ -51,65 +53,12 @@ interface NextStepsAnalysis {
 
 const defaultCriteria: ScoringCriteria[] = [
   {
-    id: "revenue",
-    name: "Monthly Revenue Potential",
-    weight: 25,
-    value: 15000,
-    maxValue: 50000,
-    description: "Estimated monthly revenue for top 10 products",
-    threshold: 10000,
-    guidance: {
-      overview: "Calculate total revenue potential by analyzing top performing products in your niche",
-      steps: [
-        { tool: "Jungle Scout Product Database", instruction: "Filter by your category and price range, then sum monthly revenue for top 10-15 listings" },
-        { tool: "Helium 10 Black Box", instruction: "Set revenue filters and analyze revenue distribution for similar products" },
-        { tool: "Manual Research", instruction: "Use (Price × Monthly Sales) for top products, exclude clear outliers" }
-      ],
-      tips: [
-        "Exclude extreme outliers (top 1-2 products if they're 5x+ higher than median)",
-        "Focus on products with consistent sales patterns, not one-time spikes",
-        "Consider seasonal variations - use 12-month average if available"
-      ],
-      examples: [
-        "Kitchen gadgets: $25 price × 500 monthly sales = $12,500 revenue",
-        "Top 10 products averaging $15K monthly = strong revenue potential",
-        "Niche with only 1-2 high performers = risky revenue concentration"
-      ]
-    }
-  },
-  {
-    id: "competition",
-    name: "Competition Level",
-    weight: 20,
-    value: 65,
-    maxValue: 100,
-    description: "Lower score = less competition (inverted)",
-    threshold: 70,
-    guidance: {
-      overview: "Measure market saturation by analyzing review counts and number of established sellers",
-      steps: [
-        { tool: "Jungle Scout", instruction: "Get review counts for top 10 listings, calculate median. Count how many have >1,000 reviews" },
-        { tool: "Helium 10", instruction: "Use Black Box to analyze review distribution and competing products count" },
-        { tool: "Amazon Search", instruction: "Search your main keyword, count products with >500 reviews on first 2 pages" }
-      ],
-      tips: [
-        "Lower review counts = easier entry (this field is inverted - lower input = higher score)",
-        "Look for markets with mix of high and low review products",
-        "Consider review velocity (recent vs old reviews) for trend analysis"
-      ],
-      examples: [
-        "Median 150 reviews = score ~85 (low competition)",
-        "Median 800 reviews = score ~40 (high competition)", 
-        "5+ products with >1,000 reviews = very competitive market"
-      ]
-    }
-  },
-  {
     id: "demand",
     name: "Market Demand",
-    weight: 20,
+    weight: 25,
     value: 2500,
     maxValue: 10000,
+    unit: "searches",
     description: "Monthly search volume for main keywords",
     threshold: 1000,
     guidance: {
@@ -132,73 +81,49 @@ const defaultCriteria: ScoringCriteria[] = [
     }
   },
   {
-    id: "barriers",
-    name: "Entry Barriers",
-    weight: 15,
-    value: 30,
+    id: "competition",
+    name: "Competition Level", 
+    weight: 20,
+    value: 45,
     maxValue: 100,
-    description: "Lower score = easier entry (inverted)",
-    threshold: 60,
+    unit: "%",
+    description: "Market saturation level (lower is better)",
+    threshold: 70,
+    isInverted: true,
     guidance: {
-      overview: "Evaluate barriers that might prevent or slow down new competitors entering the market",
+      overview: "Measure market saturation by analyzing review counts and number of established sellers",
       steps: [
-        { tool: "Barrier Checklist", instruction: "Score each: Specialized tooling (20pts), Certifications/FDA (25pts), Hazmat/Oversized (15pts), High MOQ requirements (20pts), Fragile/Complex shipping (10pts), Patent risks (10pts)" },
-        { tool: "Supplier Research", instruction: "Contact 3-5 suppliers to understand minimum orders, lead times, and complexity" },
-        { tool: "Regulatory Check", instruction: "Research if product requires special approvals, testing, or compliance" }
+        { tool: "Jungle Scout", instruction: "Get review counts for top 10 listings, calculate median. Score: 0-300 reviews = 20%, 300-700 = 50%, 700+ = 80%" },
+        { tool: "Helium 10", instruction: "Use Black Box to analyze review distribution and competing products count" },
+        { tool: "Amazon POE", instruction: "Check competition intensity rating if available" }
       ],
       tips: [
-        "This field is inverted - higher barriers = lower input score = higher final score",
-        "Some barriers protect you after entry, others just slow you down",
-        "Consider barriers that competitors also face vs. barriers unique to new entrants"
+        "Lower competition scores = easier market entry",
+        "Look for markets with mix of high and low review products",
+        "Consider review velocity (recent vs old reviews) for trend analysis"
       ],
       examples: [
-        "Simple product, no certifications needed = 20 barrier score",
-        "FDA approval required = 60+ barrier score",
-        "Custom tooling + certifications = 80+ barrier score"
+        "Median 150 reviews = 25% competition (low)",
+        "Median 800 reviews = 75% competition (high)", 
+        "5+ products with >1,000 reviews = very competitive market"
       ]
     }
   },
   {
-    id: "seasonality",
-    name: "Seasonality Risk",
-    weight: 10,
-    value: 20,
-    maxValue: 100,
-    description: "Lower score = less seasonal (inverted)",
-    threshold: 50,
-    guidance: {
-      overview: "Analyze how much demand fluctuates throughout the year to assess cash flow risk",
-      steps: [
-        { tool: "Jungle Scout", instruction: "Check seasonality graph for main keywords, look for consistent vs. spiky patterns" },
-        { tool: "Helium 10 Trendster", instruction: "Analyze 12-month search trends for seasonal volatility" },
-        { tool: "Google Trends", instruction: "Compare year-over-year patterns to identify seasonal sensitivity" }
-      ],
-      tips: [
-        "This field is inverted - higher seasonality = lower input score = higher final score",
-        "Steady year-round demand = low seasonality risk",
-        "Products with predictable seasons can still be profitable with proper planning"
-      ],
-      examples: [
-        "Kitchen essentials: consistent demand = 15 seasonality score",
-        "Christmas decorations: extreme seasonal = 85 seasonality score",
-        "Fitness equipment: January spike but steady otherwise = 35 seasonality score"
-      ]
-    }
-  },
-  {
-    id: "profitability",
+    id: "margin",
     name: "Profit Margins",
-    weight: 10,
+    weight: 20,
     value: 35,
     maxValue: 60,
+    unit: "%",
     description: "Expected profit margin percentage",
-    threshold: 25,
+    threshold: 30,
     guidance: {
       overview: "Calculate realistic profit margins after all costs to ensure sustainable business model",
       steps: [
         { tool: "Helium 10 Profitability Calculator", instruction: "Input estimated: Product cost, Amazon FBA fees, shipping/freight, any duties/tariffs" },
-        { tool: "Manual Calculation", instruction: "Profit = Selling Price - (COGS + FBA fees + Freight + Duties + Amazon referral fee)" },
-        { tool: "Supplier Quotes", instruction: "Get actual quotes for MOQ pricing, shipping costs, and any tooling/setup fees" }
+        { tool: "Jungle Scout Sales Estimator", instruction: "Use profit calculator with real supplier quotes and shipping costs" },
+        { tool: "Manual Calculation", instruction: "Profit = Selling Price - (COGS + FBA fees + Freight + Duties + Amazon referral fee)" }
       ],
       tips: [
         "Aim for minimum 30% margin for sustainable business",
@@ -209,6 +134,91 @@ const defaultCriteria: ScoringCriteria[] = [
         "$25 selling price - $8 COGS - $5 FBA - $2 shipping = $10 profit (40%)",
         "Complex electronics often have 15-25% margins due to competition",
         "Simple accessories can achieve 50%+ margins with good sourcing"
+      ]
+    }
+  },
+  {
+    id: "revenue",
+    name: "Revenue Potential",
+    weight: 20,
+    value: 15000,
+    maxValue: 50000,
+    unit: "USD",
+    description: "Estimated monthly revenue for top 10 products",
+    threshold: 10000,
+    guidance: {
+      overview: "Calculate total revenue potential by analyzing top performing products in your niche",
+      steps: [
+        { tool: "Jungle Scout Product Database", instruction: "Filter by your category and price range, then sum monthly revenue for top 10-15 listings" },
+        { tool: "Helium 10 Black Box", instruction: "Set revenue filters and analyze revenue distribution for similar products" },
+        { tool: "Amazon POE", instruction: "Use revenue estimates from POE data if available" }
+      ],
+      tips: [
+        "Exclude extreme outliers (top 1-2 products if they're 5x+ higher than median)",
+        "Focus on products with consistent sales patterns, not one-time spikes",
+        "Consider seasonal variations - use 12-month average if available"
+      ],
+      examples: [
+        "Kitchen gadgets: $25 price × 500 monthly sales = $12,500 revenue",
+        "Top 10 products averaging $15K monthly = strong revenue potential",
+        "Niche with only 1-2 high performers = risky revenue concentration"
+      ]
+    }
+  },
+  {
+    id: "barriers",
+    name: "Entry Barriers",
+    weight: 10,
+    value: 30,
+    maxValue: 100,
+    unit: "%",
+    description: "Market entry difficulty (higher protects you)",
+    threshold: 40,
+    guidance: {
+      overview: "Evaluate barriers that might prevent or slow down new competitors entering the market",
+      steps: [
+        { tool: "Barrier Checklist", instruction: "Score each: Specialized tooling (20pts), Certifications/FDA (25pts), Hazmat/Oversized (15pts), High MOQ requirements (20pts), Fragile/Complex shipping (10pts), Patent risks (10pts)" },
+        { tool: "Supplier Research", instruction: "Contact 3-5 suppliers to understand minimum orders, lead times, and complexity" },
+        { tool: "Regulatory Check", instruction: "Research if product requires special approvals, testing, or compliance" }
+      ],
+      tips: [
+        "Higher barriers protect your market position after entry",
+        "Some barriers protect you after entry, others just slow you down",
+        "Consider barriers that competitors also face vs. barriers unique to new entrants"
+      ],
+      examples: [
+        "Simple product, no certifications needed = 20%",
+        "FDA approval required = 60%",
+        "Custom tooling + certifications = 80%"
+      ]
+    }
+  },
+  {
+    id: "seasonality",
+    name: "Seasonality Risk",
+    weight: 5,
+    value: 20,
+    maxValue: 100,
+    unit: "%",
+    description: "Demand fluctuation risk (lower is better)",
+    threshold: 50,
+    isInverted: true,
+    guidance: {
+      overview: "Analyze how much demand fluctuates throughout the year to assess cash flow risk",
+      steps: [
+        { tool: "Jungle Scout", instruction: "Check seasonality graph for main keywords, look for consistent vs. spiky patterns" },
+        { tool: "Helium 10 Trendster", instruction: "Analyze 12-month search trends for seasonal volatility" },
+        { tool: "Amazon POE", instruction: "Check seasonal trends in POE data if available" }
+      ],
+      tips: [
+        "Lower seasonality scores = more stable cash flow",
+        "Steady year-round demand = low seasonality risk",
+        "Products with predictable seasons can still be profitable with proper planning"
+      ],
+      examples: [
+        "Kitchen essentials: consistent demand = 15%",
+        "Christmas decorations: extreme seasonal = 85%",
+        "Fitness equipment: January spike but steady otherwise = 35%"
       ]
     }
   }
@@ -235,43 +245,9 @@ const ScoringSystem = () => {
         setCriteria(prev => prev.map(criterion => {
           let updatedCriterion = { ...criterion };
           
-          switch (criterion.id) {
-            case 'revenue':
-              if (data.revenue !== undefined) {
-                updatedCriterion.value = data.revenue;
-                updatedCriterion.source = data.source || 'manual';
-              }
-              break;
-            case 'competition':
-              if (data.competition !== undefined) {
-                updatedCriterion.value = data.competition;
-                updatedCriterion.source = data.source || 'manual';
-              }
-              break;
-            case 'demand':
-              if (data.demand !== undefined) {
-                updatedCriterion.value = data.demand;
-                updatedCriterion.source = data.source || 'manual';
-              }
-              break;
-            case 'barriers':
-              if (data.barriers !== undefined) {
-                updatedCriterion.value = data.barriers;
-                updatedCriterion.source = data.source || 'manual';
-              }
-              break;
-            case 'seasonality':
-              if (data.seasonality !== undefined) {
-                updatedCriterion.value = data.seasonality;
-                updatedCriterion.source = data.source || 'manual';
-              }
-              break;
-            case 'profitability':
-              if (data.profitability !== undefined) {
-                updatedCriterion.value = data.profitability;
-                updatedCriterion.source = data.source || 'manual';
-              }
-              break;
+          if (data[criterion.id] !== undefined) {
+            updatedCriterion.value = data[criterion.id];
+            updatedCriterion.source = data.source || 'manual';
           }
           
           return updatedCriterion;
@@ -286,14 +262,13 @@ const ScoringSystem = () => {
   }, []);
 
   const generateActionableSuggestion = (criterion: ScoringCriteria): string => {
-    const isInverted = ['competition', 'barriers', 'seasonality'].includes(criterion.id);
-    const normalizedValue = isInverted ? criterion.maxValue - criterion.value : criterion.value;
+    const isInverted = criterion.isInverted || false;
     
     switch (criterion.id) {
       case 'revenue':
         if (criterion.value < criterion.threshold) {
           const needed = criterion.threshold - criterion.value;
-          return `Revenue ${criterion.value.toLocaleString()} → increase target market by ${Math.round(needed/1000)}K/mo or explore higher-priced variants`;
+          return `Revenue $${criterion.value.toLocaleString()} → increase target market by $${Math.round(needed/1000)}K/mo or explore higher-priced variants`;
         }
         return `Strong revenue potential at $${criterion.value.toLocaleString()}/month`;
         
@@ -306,28 +281,28 @@ const ScoringSystem = () => {
         
       case 'competition':
         if (criterion.value > criterion.threshold) {
-          return `Competition ${criterion.value} reviews → focus on underserved sub-niches or improve differentiation strategy`;
+          return `Competition ${criterion.value}% → focus on underserved sub-niches or improve differentiation strategy`;
         }
-        return `Manageable competition with ${criterion.value} median reviews`;
+        return `Manageable competition at ${criterion.value}%`;
+        
+      case 'margin':
+        if (criterion.value < criterion.threshold) {
+          const needed = criterion.threshold - criterion.value;
+          return `Margin ${criterion.value}% → test +$${Math.round(needed * 0.5)} price increase or reduce freight costs by $${(needed * 0.01).toFixed(2)}/unit`;
+        }
+        return `Healthy margins at ${criterion.value}%`;
         
       case 'barriers':
         if (criterion.value < criterion.threshold) {
-          return `Low barriers ${criterion.value}/100 → consider products requiring certifications, custom tooling, or specialized expertise`;
+          return `Low barriers ${criterion.value}% → consider products requiring certifications, custom tooling, or specialized expertise`;
         }
-        return `Good protective barriers at ${criterion.value}/100`;
+        return `Good protective barriers at ${criterion.value}%`;
         
       case 'seasonality':
         if (criterion.value > criterion.threshold) {
           return `High seasonality ${criterion.value}% → plan inventory cycles or bundle with complementary year-round products`;
         }
         return `Stable year-round demand (${criterion.value}% variation)`;
-        
-      case 'profitability':
-        if (criterion.value < criterion.threshold) {
-          const needed = criterion.threshold - criterion.value;
-          return `Margin ${criterion.value}% → test +$${Math.round(needed * 0.5)} price increase or reduce freight costs by $${(needed * 0.01).toFixed(2)}/unit`;
-        }
-        return `Healthy margins at ${criterion.value}%`;
         
       default:
         return 'Review and optimize this metric';
@@ -346,7 +321,7 @@ const ScoringSystem = () => {
 
   const evaluateGates = (): NextStepsAnalysis => {
     const gateResults: GateResult[] = criteria.map(criterion => {
-      const isInverted = ['competition', 'barriers', 'seasonality'].includes(criterion.id);
+      const isInverted = criterion.isInverted || false;
       const normalizedValue = isInverted ? criterion.maxValue - criterion.value : criterion.value;
       const normalizedScore = (normalizedValue / criterion.maxValue) * 100;
       const weightedScore = (normalizedScore * criterion.weight) / 100;
@@ -446,28 +421,28 @@ const ScoringSystem = () => {
   };
 
   const calculateScore = () => {
-    let totalScore = 0;
-    
-    criteria.forEach(criterion => {
-      let normalizedValue = criterion.value;
-      
-      // Invert competition, barriers, and seasonality (lower is better)
-      if (['competition', 'barriers', 'seasonality'].includes(criterion.id)) {
-        normalizedValue = criterion.maxValue - criterion.value;
-      }
-      
-      const score = (normalizedValue / criterion.maxValue) * 100;
-      const weightedScore = (score * criterion.weight) / 100;
-      totalScore += weightedScore;
-    });
-    
-    return Math.round(totalScore);
+    return Math.round(
+      criteria.reduce((sum, criterion) => {
+        const isInverted = criterion.isInverted || false;
+        const normalizedValue = isInverted ? criterion.maxValue - criterion.value : criterion.value;
+        const normalizedScore = (normalizedValue / criterion.maxValue) * 100;
+        return sum + (normalizedScore * criterion.weight) / 100;
+      }, 0)
+    );
   };
 
   const getRecommendation = (score: number) => {
-    if (score >= 80) return { text: "Strong Opportunity - Proceed to Analysis", icon: CheckCircle, color: "success" };
-    if (score >= 60) return { text: "Moderate Opportunity - Review Carefully", icon: AlertTriangle, color: "warning" };
-    return { text: "Weak Opportunity - Consider Alternatives", icon: AlertTriangle, color: "destructive" };
+    const gateAnalysis = evaluateGates();
+    const passedGates = gateAnalysis.gateResults.filter(g => g.passes).length;
+    const totalGates = gateAnalysis.gateResults.length;
+
+    if (score >= 80 && passedGates === totalGates) {
+      return { text: "Excellent", icon: CheckCircle, color: "success" };
+    } else if (score >= 60 && passedGates >= 2) {
+      return { text: "Good", icon: TrendingUp, color: "warning" };
+    } else {
+      return { text: "Poor", icon: AlertTriangle, color: "destructive" };
+    }
   };
 
   const finalScore = calculateScore();
@@ -524,18 +499,19 @@ const ScoringSystem = () => {
           </Card>
 
           {criteria.map((criterion) => {
-            const normalizedValue = ['competition', 'barriers', 'seasonality'].includes(criterion.id) 
-              ? criterion.maxValue - criterion.value
-              : criterion.value;
+            const isInverted = criterion.isInverted || false;
+            const normalizedValue = isInverted ? criterion.maxValue - criterion.value : criterion.value;
             const percentage = (normalizedValue / criterion.maxValue) * 100;
-            const meetsThreshold = criterion.value >= criterion.threshold || 
-              (['competition', 'barriers', 'seasonality'].includes(criterion.id) && criterion.value <= criterion.threshold);
+            const meetsThreshold = isInverted ? criterion.value <= criterion.threshold : criterion.value >= criterion.threshold;
 
             return (
               <Card key={criterion.id}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{criterion.name}</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      {criterion.name}
+                      <span className="text-sm text-muted-foreground font-normal">({criterion.unit})</span>
+                    </CardTitle>
                     <div className="flex items-center space-x-2">
                       <Badge variant={meetsThreshold ? "default" : "destructive"}>
                         {criterion.weight}% weight
