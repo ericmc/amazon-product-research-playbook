@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
-import { Calculator, TrendingUp, AlertTriangle, CheckCircle, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Calculator, TrendingUp, AlertTriangle, CheckCircle, HelpCircle, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ExternalTools } from "@/components/ExternalTools";
 
@@ -19,12 +19,32 @@ interface ScoringCriteria {
   maxValue: number;
   description: string;
   threshold: number;
+  source?: 'jungle_scout' | 'helium_10' | 'amazon_poe' | 'manual';
   guidance: {
     overview: string;
     steps: { tool: string; instruction: string; }[];
     tips: string[];
     examples: string[];
   };
+}
+
+interface GateResult {
+  id: string;
+  name: string;
+  passes: boolean;
+  currentValue: number;
+  threshold: number;
+  normalizedScore: number;
+  weightedScore: number;
+  source: string;
+  suggestion: string;
+}
+
+interface NextStepsAnalysis {
+  gateResults: GateResult[];
+  weakestCriteria: GateResult[];
+  overallStatus: 'strong' | 'moderate' | 'weak';
+  recommendedActions: string[];
 }
 
 const defaultCriteria: ScoringCriteria[] = [
@@ -193,8 +213,6 @@ const defaultCriteria: ScoringCriteria[] = [
 ];
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
-const prettyNumber = (n: number) => n.toLocaleString();
-const prettyMoney = (n: number) => n.toLocaleString(undefined, {style: "currency", currency: "USD"});
 
 const ScoringSystem = () => {
   const [criteria, setCriteria] = useState<ScoringCriteria[]>(defaultCriteria);
@@ -209,24 +227,50 @@ const ScoringSystem = () => {
         const data = JSON.parse(prefilledData);
         setProductName(data.productName || "");
         
-        // Update criteria with imported values
+        // Update criteria with imported values and source tracking
         setCriteria(prev => prev.map(criterion => {
+          let updatedCriterion = { ...criterion };
+          
           switch (criterion.id) {
             case 'revenue':
-              return { ...criterion, value: data.revenue || criterion.value };
+              if (data.revenue !== undefined) {
+                updatedCriterion.value = data.revenue;
+                updatedCriterion.source = data.source || 'manual';
+              }
+              break;
             case 'competition':
-              return { ...criterion, value: data.competition || criterion.value };
+              if (data.competition !== undefined) {
+                updatedCriterion.value = data.competition;
+                updatedCriterion.source = data.source || 'manual';
+              }
+              break;
             case 'demand':
-              return { ...criterion, value: data.demand || criterion.value };
+              if (data.demand !== undefined) {
+                updatedCriterion.value = data.demand;
+                updatedCriterion.source = data.source || 'manual';
+              }
+              break;
             case 'barriers':
-              return { ...criterion, value: data.barriers || criterion.value };
+              if (data.barriers !== undefined) {
+                updatedCriterion.value = data.barriers;
+                updatedCriterion.source = data.source || 'manual';
+              }
+              break;
             case 'seasonality':
-              return { ...criterion, value: data.seasonality || criterion.value };
+              if (data.seasonality !== undefined) {
+                updatedCriterion.value = data.seasonality;
+                updatedCriterion.source = data.source || 'manual';
+              }
+              break;
             case 'profitability':
-              return { ...criterion, value: data.profitability || criterion.value };
-            default:
-              return criterion;
+              if (data.profitability !== undefined) {
+                updatedCriterion.value = data.profitability;
+                updatedCriterion.source = data.source || 'manual';
+              }
+              break;
           }
+          
+          return updatedCriterion;
         }));
         
         // Clear the session storage after use
@@ -236,6 +280,127 @@ const ScoringSystem = () => {
       }
     }
   }, []);
+
+  const generateActionableSuggestion = (criterion: ScoringCriteria): string => {
+    const isInverted = ['competition', 'barriers', 'seasonality'].includes(criterion.id);
+    const normalizedValue = isInverted ? criterion.maxValue - criterion.value : criterion.value;
+    
+    switch (criterion.id) {
+      case 'revenue':
+        if (criterion.value < criterion.threshold) {
+          const needed = criterion.threshold - criterion.value;
+          return `Revenue ${criterion.value.toLocaleString()} → increase target market by ${Math.round(needed/1000)}K/mo or explore higher-priced variants`;
+        }
+        return `Strong revenue potential at $${criterion.value.toLocaleString()}/month`;
+        
+      case 'demand':
+        if (criterion.value < criterion.threshold) {
+          const needed = criterion.threshold - criterion.value;
+          return `Search volume ${criterion.value} → research ${Math.round(needed/100)}+ additional related keywords or consider broader market`;
+        }
+        return `Solid demand with ${criterion.value.toLocaleString()} monthly searches`;
+        
+      case 'competition':
+        if (criterion.value > criterion.threshold) {
+          return `Competition ${criterion.value} reviews → focus on underserved sub-niches or improve differentiation strategy`;
+        }
+        return `Manageable competition with ${criterion.value} median reviews`;
+        
+      case 'barriers':
+        if (criterion.value < criterion.threshold) {
+          return `Low barriers ${criterion.value}/100 → consider products requiring certifications, custom tooling, or specialized expertise`;
+        }
+        return `Good protective barriers at ${criterion.value}/100`;
+        
+      case 'seasonality':
+        if (criterion.value > criterion.threshold) {
+          return `High seasonality ${criterion.value}% → plan inventory cycles or bundle with complementary year-round products`;
+        }
+        return `Stable year-round demand (${criterion.value}% variation)`;
+        
+      case 'profitability':
+        if (criterion.value < criterion.threshold) {
+          const needed = criterion.threshold - criterion.value;
+          return `Margin ${criterion.value}% → test +$${Math.round(needed * 0.5)} price increase or reduce freight costs by $${(needed * 0.01).toFixed(2)}/unit`;
+        }
+        return `Healthy margins at ${criterion.value}%`;
+        
+      default:
+        return 'Review and optimize this metric';
+    }
+  };
+
+  const getSourceLabel = (source?: string): string => {
+    switch (source) {
+      case 'jungle_scout': return 'JS';
+      case 'helium_10': return 'H10';
+      case 'amazon_poe': return 'POE';
+      case 'manual': return 'Manual';
+      default: return 'Manual';
+    }
+  };
+
+  const evaluateGates = (): NextStepsAnalysis => {
+    const gateResults: GateResult[] = criteria.map(criterion => {
+      const isInverted = ['competition', 'barriers', 'seasonality'].includes(criterion.id);
+      const normalizedValue = isInverted ? criterion.maxValue - criterion.value : criterion.value;
+      const normalizedScore = (normalizedValue / criterion.maxValue) * 100;
+      const weightedScore = (normalizedScore * criterion.weight) / 100;
+      
+      let passes = false;
+      if (isInverted) {
+        passes = criterion.value <= criterion.threshold;
+      } else {
+        passes = criterion.value >= criterion.threshold;
+      }
+
+      return {
+        id: criterion.id,
+        name: criterion.name,
+        passes,
+        currentValue: criterion.value,
+        threshold: criterion.threshold,
+        normalizedScore,
+        weightedScore,
+        source: getSourceLabel(criterion.source),
+        suggestion: generateActionableSuggestion(criterion)
+      };
+    });
+
+    // Find two weakest criteria by weighted score
+    const weakestCriteria = [...gateResults]
+      .sort((a, b) => a.weightedScore - b.weightedScore)
+      .slice(0, 2);
+
+    const passedGates = gateResults.filter(g => g.passes).length;
+    const totalGates = gateResults.length;
+    
+    let overallStatus: 'strong' | 'moderate' | 'weak' = 'weak';
+    if (passedGates >= totalGates - 1) overallStatus = 'strong';
+    else if (passedGates >= totalGates / 2) overallStatus = 'moderate';
+
+    const recommendedActions = [];
+    if (overallStatus === 'strong') {
+      recommendedActions.push('✅ Strong opportunity - proceed to competitive analysis');
+      recommendedActions.push('📊 Set up tracking dashboard for key metrics');
+      recommendedActions.push('🎯 Begin sourcing and supplier outreach');
+    } else if (overallStatus === 'moderate') {
+      recommendedActions.push('⚠️ Address weak criteria before proceeding');
+      recommendedActions.push('🔍 Gather additional market research');
+      recommendedActions.push('💡 Consider product modifications or positioning changes');
+    } else {
+      recommendedActions.push('❌ High risk - significant improvements needed');
+      recommendedActions.push('🔄 Reassess market selection or product concept');
+      recommendedActions.push('📈 Focus on top 2 improvement areas first');
+    }
+
+    return {
+      gateResults,
+      weakestCriteria,
+      overallStatus,
+      recommendedActions
+    };
+  };
 
   const updateCriteriaValue = (id: string, value: number) => {
     setCriteria(prev => 
@@ -276,12 +441,6 @@ const ScoringSystem = () => {
     return Math.round(totalScore);
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "success";
-    if (score >= 60) return "warning";
-    return "destructive";
-  };
-
   const getRecommendation = (score: number) => {
     if (score >= 80) return { text: "Strong Opportunity - Proceed to Analysis", icon: CheckCircle, color: "success" };
     if (score >= 60) return { text: "Moderate Opportunity - Review Carefully", icon: AlertTriangle, color: "warning" };
@@ -291,16 +450,7 @@ const ScoringSystem = () => {
   const finalScore = calculateScore();
   const recommendation = getRecommendation(finalScore);
   const totalWeight = criteria.reduce((s, c) => s + c.weight, 0);
-  
-  const weakest = [...criteria]
-    .map(c => {
-      const normalized = ['competition','barriers','seasonality'].includes(c.id) ? c.maxValue - c.value : c.value;
-      const pct = (normalized / c.maxValue) * 100;
-      const weighted = (pct * c.weight) / 100;
-      return {id: c.id, name: c.name, weighted};
-    })
-    .sort((a, b) => a.weighted - b.weighted)
-    .slice(0, 3);
+  const gateAnalysis = evaluateGates();
   
   const scoreColorMap = {
     excellent: "bg-success text-success-foreground",
@@ -363,9 +513,16 @@ const ScoringSystem = () => {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{criterion.name}</CardTitle>
-                    <Badge variant={meetsThreshold ? "default" : "destructive"}>
-                      {criterion.weight}% weight
-                    </Badge>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={meetsThreshold ? "default" : "destructive"}>
+                        {criterion.weight}% weight
+                      </Badge>
+                      {criterion.source && (
+                        <Badge variant="outline" className="text-xs">
+                          {getSourceLabel(criterion.source)}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <CardDescription id={`${criterion.id}-description`}>{criterion.description}</CardDescription>
                   
@@ -512,6 +669,100 @@ const ScoringSystem = () => {
               >
                 {finalScore >= 80 ? "Excellent" : finalScore >= 60 ? "Good" : "Poor"}
               </Badge>
+            </CardContent>
+          </Card>
+
+          {/* Gate Analysis & Next Steps */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-foreground" />
+                <span>Gate Analysis & Next Steps</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Overall Status */}
+              <div className={cn(
+                "p-4 rounded-lg border-2",
+                gateAnalysis.overallStatus === 'strong' ? 'bg-success/10 border-success' :
+                gateAnalysis.overallStatus === 'moderate' ? 'bg-warning/10 border-warning' :
+                'bg-destructive/10 border-destructive'
+              )}>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium">
+                    {gateAnalysis.overallStatus === 'strong' ? '🎯 Strong Opportunity' :
+                     gateAnalysis.overallStatus === 'moderate' ? '⚠️ Moderate Opportunity' :
+                     '❌ Weak Opportunity'}
+                  </h4>
+                  <Badge variant={
+                    gateAnalysis.overallStatus === 'strong' ? 'default' :
+                    gateAnalysis.overallStatus === 'moderate' ? 'secondary' : 'destructive'
+                  }>
+                    {gateAnalysis.gateResults.filter(g => g.passes).length}/{gateAnalysis.gateResults.length} Gates Passed
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  {gateAnalysis.recommendedActions.map((action, index) => (
+                    <p key={index} className="text-sm">{action}</p>
+                  ))}
+                </div>
+              </div>
+
+              {/* Gate Results */}
+              <div className="space-y-2">
+                <h5 className="font-medium">Criteria Gate Status</h5>
+                <div className="grid gap-2">
+                  {gateAnalysis.gateResults.map((gate) => (
+                    <div key={gate.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        {gate.passes ? (
+                          <CheckCircle className="w-4 h-4 text-success" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 text-destructive" />
+                        )}
+                        <div>
+                          <span className="text-sm font-medium">{gate.name}</span>
+                          <div className="flex items-center space-x-2">
+                            <Badge variant="outline" className="text-xs">
+                              {gate.source}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {gate.currentValue} {gate.passes ? '≥' : '<'} {gate.threshold}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <Badge variant={gate.passes ? "default" : "destructive"} className="text-xs">
+                        {Math.round(gate.weightedScore)}/25
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Weakest Criteria Focus */}
+              <div className="space-y-3">
+                <h5 className="font-medium">🎯 Top 2 Improvement Areas</h5>
+                {gateAnalysis.weakestCriteria.map((weak, index) => (
+                  <Card key={weak.id} className="bg-muted/30">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <Badge variant="outline">{index + 1}</Badge>
+                          <span className="font-medium">{weak.name}</span>
+                          <Badge variant="secondary" className="text-xs">{weak.source}</Badge>
+                        </div>
+                        <Badge variant="destructive" className="text-xs">
+                          {Math.round(weak.weightedScore)}/25 pts
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-foreground bg-background p-3 rounded border-l-4 border-primary">
+                        💡 {weak.suggestion}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
