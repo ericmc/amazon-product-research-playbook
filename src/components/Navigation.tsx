@@ -10,7 +10,8 @@ import {
   FileText,
   Menu,
   X,
-  Upload
+  Upload,
+  Database
 } from "lucide-react";
 
 const navigationItems = [
@@ -20,6 +21,7 @@ const navigationItems = [
   { name: "Validation", href: "/validation", icon: CheckCircle, badge: "Phase 2" },
   { name: "Analysis", href: "/analysis", icon: BarChart3, badge: "Phase 3" },
   { name: "Decision", href: "/decision", icon: TrendingUp, badge: "Phase 4" },
+  { name: "Opportunities", href: "/opportunities", icon: Database, badge: "Saved" },
 ];
 
 export const Navigation = () => {

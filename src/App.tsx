@@ -10,6 +10,7 @@ import DataIntake from "./pages/DataIntake";
 import Validation from "./pages/Validation";
 import Analysis from "./pages/Analysis";
 import Decision from "./pages/Decision";
+import Opportunities from "./pages/Opportunities";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/validation" element={<Validation />} />
           <Route path="/analysis" element={<Analysis />} />
           <Route path="/decision" element={<Decision />} />
+          <Route path="/opportunities" element={<Opportunities />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
