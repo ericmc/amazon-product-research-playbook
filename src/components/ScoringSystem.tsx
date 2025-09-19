@@ -90,6 +90,18 @@ const ScoringSystem = () => {
     );
   };
 
+  const saveOpportunity = () => {
+    const entry = {
+      productName,
+      criteria,
+      finalScore,
+      createdAt: new Date().toISOString()
+    };
+    const key = "amazon-research-opportunities";
+    const existing = JSON.parse(localStorage.getItem(key) ?? "[]");
+    localStorage.setItem(key, JSON.stringify([entry, ...existing]));
+  };
+
   const calculateScore = () => {
     let totalScore = 0;
     
