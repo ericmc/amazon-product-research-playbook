@@ -17,8 +17,11 @@ import {
   ClipboardList,
   ChevronRight,
   Package,
-  Clock
+  Clock,
+  Plus
 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useNavigate } from "react-router-dom";
 import OpportunityChecklistComponent, { OpportunityChecklist } from "./OpportunityChecklist";
 import DecisionTree from "./DecisionTree";
 import SourcingPacket from "./SourcingPacket";
@@ -33,6 +36,7 @@ interface WeakCriterion {
 }
 
 const OpportunitiesList = () => {
+  const navigate = useNavigate();
   const [opportunities, setOpportunities] = useState<SavedOpportunity[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
@@ -87,6 +91,12 @@ const OpportunitiesList = () => {
     if (score >= 80) return scoreColorMap.excellent;
     if (score >= 60) return scoreColorMap.good;
     return scoreColorMap.poor;
+  };
+
+  const getScoreLabel = (score: number) => {
+    if (score >= 80) return "Excellent";
+    if (score >= 60) return "Good";
+    return "Poor";
   };
 
   const formatDate = (dateString: string) => {
@@ -277,10 +287,16 @@ const OpportunitiesList = () => {
                 <p className="text-muted-foreground mb-4">
                   Start by analyzing products in the Scoring System to build your opportunity pipeline.
                 </p>
-                <Button onClick={loadOpportunities}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh
-                </Button>
+                <div className="flex gap-2 justify-center">
+                  <Button onClick={() => navigate('/score')}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Score
+                  </Button>
+                  <Button variant="outline" onClick={loadOpportunities}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Refresh
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ) : (
@@ -298,20 +314,41 @@ const OpportunitiesList = () => {
                     </span>
                   </div>
                   {selectedIds.size > 0 && (
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={handleDeleteSelected}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Selected ({selectedIds.size})
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete Selected ({selectedIds.size})
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Opportunities</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete {selectedIds.size} selected opportunities? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDeleteSelected}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   )}
                 </div>
-                <Button variant="outline" onClick={loadOpportunities}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={() => navigate('/score')}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Score
+                  </Button>
+                  <Button variant="outline" onClick={loadOpportunities}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Refresh
+                  </Button>
+                </div>
               </div>
 
               <div className="grid gap-4">
@@ -344,8 +381,7 @@ const OpportunitiesList = () => {
                             <div className="flex items-center space-x-1">
                               <Star className="w-4 h-4 text-amber-500" />
                               <span className="text-sm text-muted-foreground">
-                                {opportunity.finalScore >= 80 ? "Excellent" : 
-                                 opportunity.finalScore >= 60 ? "Good" : "Poor"}
+                                {getScoreLabel(opportunity.finalScore)}
                               </span>
                             </div>
                           </div>
@@ -361,13 +397,13 @@ const OpportunitiesList = () => {
                           {weakCriteria.length > 0 && (
                             <div>
                               <div className="flex items-center space-x-2 mb-2">
-                                <TrendingDown className="w-4 h-4 text-red-500" />
-                                <h4 className="text-sm font-medium text-foreground">Areas for Improvement</h4>
+                                <TrendingDown className="w-4 h-4 text-destructive" />
+                                <h4 className="text-sm font-medium text-foreground">Weakest Areas</h4>
                               </div>
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-1">
                                 {weakCriteria.map((criterion) => (
-                                  <Badge key={criterion.id} variant="destructive" className="text-xs">
-                                    {criterion.name}: {Math.round(criterion.score)}
+                                  <Badge key={criterion.id} variant="outline" className="text-xs px-2 py-1">
+                                    {criterion.name}
                                   </Badge>
                                 ))}
                               </div>
