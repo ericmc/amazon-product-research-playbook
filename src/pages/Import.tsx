@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +23,11 @@ import {
   Database,
   ExternalLink,
   Download,
-  Clipboard
+  Clipboard,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  Copy
 } from "lucide-react";
 
 interface SourceOption {
@@ -31,6 +36,11 @@ interface SourceOption {
   description: string;
   icon: string;
   features: string[];
+  csvTemplate: {
+    sampleHeaders: string[];
+    commonMappings: { header: string; mapsTo: string; description: string; }[];
+    notes: string[];
+  };
 }
 
 interface ParsedData {
@@ -58,28 +68,104 @@ const sourceOptions: SourceOption[] = [
     name: 'Jungle Scout',
     description: 'Product database and opportunity finder',
     icon: '🦍',
-    features: ['Revenue estimates', 'Search volume', 'Competition data', 'Review counts']
+    features: ['Revenue estimates', 'Search volume', 'Competition data', 'Review counts'],
+    csvTemplate: {
+      sampleHeaders: [
+        'Product Title', 'Monthly Revenue', 'Price', 'Reviews', 'Rating', 'BSR', 
+        'Category', 'Sales', 'FBA Fees', 'Net', 'Opportunity Score'
+      ],
+      commonMappings: [
+        { header: 'Product Title', mapsTo: 'Product Name', description: 'Product title or ASIN' },
+        { header: 'Monthly Revenue', mapsTo: 'Revenue', description: 'Estimated monthly revenue (primary metric)' },
+        { header: 'Reviews', mapsTo: 'Competition', description: 'Review count as competition proxy' },
+        { header: 'Sales', mapsTo: 'Demand', description: 'Monthly sales volume or units sold' },
+        { header: 'Net', mapsTo: 'Profitability', description: 'Net profit or margin percentage' }
+      ],
+      notes: [
+        'Monthly Revenue is the most accurate field for our revenue scoring',
+        'Review count indicates market saturation - higher reviews = more competition',
+        'BSR and Category help contextualize the market size',
+        'Seasonality data usually requires manual analysis of the trend graphs'
+      ]
+    }
   },
   {
     id: 'helium_10', 
     name: 'Helium 10',
     description: 'Black Box and Magnet tools',
     icon: '🎈',
-    features: ['Black Box revenue', 'Magnet keywords', 'Review analysis', 'Profit calculator']
+    features: ['Black Box revenue', 'Magnet keywords', 'Review analysis', 'Profit calculator'],
+    csvTemplate: {
+      sampleHeaders: [
+        'Title', 'Revenue', 'Price', 'Review Count', 'Rating', 'Weight', 'Dimensions',
+        'Search Volume', 'Competing Products', 'Profit Margin', 'ROI'
+      ],
+      commonMappings: [
+        { header: 'Title', mapsTo: 'Product Name', description: 'Product title from Black Box' },
+        { header: 'Revenue', mapsTo: 'Revenue', description: 'Monthly revenue estimates' },
+        { header: 'Search Volume', mapsTo: 'Demand', description: 'Keyword search volume from Magnet' },
+        { header: 'Review Count', mapsTo: 'Competition', description: 'Total reviews indicating competition' },
+        { header: 'Profit Margin', mapsTo: 'Profitability', description: 'Calculated margin from Profitability tool' }
+      ],
+      notes: [
+        'Black Box provides comprehensive revenue data across product variations',
+        'Combine with Magnet keyword data for demand metrics',
+        'Use Profitability Calculator exports for accurate margin data',
+        'Competing Products count can indicate market saturation'
+      ]
+    }
   },
   {
     id: 'amazon_poe',
     name: 'Amazon POE',
     description: 'Product Opportunity Explorer',
     icon: '📊',
-    features: ['Search frequency', 'Click share', 'Market concentration', 'Seasonal trends']
+    features: ['Search frequency', 'Click share', 'Market concentration', 'Seasonal trends'],
+    csvTemplate: {
+      sampleHeaders: [
+        'Search Term', 'Search Frequency Rank', 'Search Frequency', 'Click Share',
+        'Conversion Share', '#3P Sellers', 'Product Title', 'Brand'
+      ],
+      commonMappings: [
+        { header: 'Search Term', mapsTo: 'Product Name', description: 'Main search keyword or product category' },
+        { header: 'Search Frequency', mapsTo: 'Demand', description: 'Real Amazon search volume data' },
+        { header: '#3P Sellers', mapsTo: 'Competition', description: 'Number of third-party sellers' },
+        { header: 'Click Share', mapsTo: 'Competition', description: 'Market concentration metric' }
+      ],
+      notes: [
+        'POE provides the most accurate search data since it\'s directly from Amazon',
+        'Requires Amazon Brand Registry access to use',
+        'Search Frequency is the gold standard for demand metrics',
+        'Use seasonal trend data for seasonality scoring (manual analysis)',
+        'Click Share and Conversion Share indicate market competitiveness'
+      ]
+    }
   },
   {
     id: 'manual',
     name: 'Manual Entry',
     description: 'Type or paste your own data',
     icon: '✏️',
-    features: ['Custom research', 'Multiple sources', 'Flexible input', 'Quick entry']
+    features: ['Custom research', 'Multiple sources', 'Flexible input', 'Quick entry'],
+    csvTemplate: {
+      sampleHeaders: [
+        'Product Name', 'Monthly Revenue', 'Search Volume', 'Competition Score',
+        'Entry Barriers', 'Seasonality Risk', 'Profit Margin'
+      ],
+      commonMappings: [
+        { header: 'Product Name', mapsTo: 'Product Name', description: 'Any product identifier' },
+        { header: 'Monthly Revenue', mapsTo: 'Revenue', description: 'Revenue in USD' },
+        { header: 'Search Volume', mapsTo: 'Demand', description: 'Monthly search volume' },
+        { header: 'Competition Score', mapsTo: 'Competition', description: 'Competition rating (0-100)' },
+        { header: 'Profit Margin', mapsTo: 'Profitability', description: 'Margin percentage' }
+      ],
+      notes: [
+        'Use this for data compiled from multiple sources',
+        'Flexible header names - you can map any column to any field',
+        'Supports data from custom research or other tools',
+        'Ideal for combining insights from multiple research methods'
+      ]
+    }
   }
 ];
 
@@ -150,11 +236,20 @@ const DataImportWizard = () => {
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
   const [fieldMappings, setFieldMappings] = useState<FieldMapping>({});
   const [productName, setProductName] = useState('');
+  const [expandedHelp, setExpandedHelp] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied to clipboard",
+      description: "Sample headers copied to your clipboard"
+    });
+  };
 
   const detectDelimiter = (text: string): string => {
     const delimiters = [',', ';', '\t', '|'];
@@ -428,37 +523,128 @@ const DataImportWizard = () => {
               <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   {sourceOptions.map((source) => (
-                    <Card 
-                      key={source.id}
-                      className={`cursor-pointer transition-all hover:shadow-md ${
-                        selectedSource === source.id ? 'ring-2 ring-primary bg-primary/5' : ''
-                      }`}
-                      onClick={() => setSelectedSource(source.id)}
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center space-x-3">
-                          <span className="text-2xl">{source.icon}</span>
-                          <div>
-                            <CardTitle className="text-lg">{source.name}</CardTitle>
-                            <CardDescription className="text-sm">
-                              {source.description}
-                            </CardDescription>
+                    <div key={source.id} className="space-y-3">
+                      <Card 
+                        className={`cursor-pointer transition-all hover:shadow-md ${
+                          selectedSource === source.id ? 'ring-2 ring-primary bg-primary/5' : ''
+                        }`}
+                        onClick={() => setSelectedSource(source.id)}
+                      >
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center space-x-3">
+                            <span className="text-2xl">{source.icon}</span>
+                            <div>
+                              <CardTitle className="text-lg">{source.name}</CardTitle>
+                              <CardDescription className="text-sm">
+                                {source.description}
+                              </CardDescription>
+                            </div>
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="space-y-2">
-                          <p className="text-xs font-medium text-muted-foreground">Supports:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {source.features.map((feature) => (
-                              <Badge key={feature} variant="secondary" className="text-xs">
-                                {feature}
-                              </Badge>
-                            ))}
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium text-muted-foreground">Supports:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {source.features.map((feature) => (
+                                <Badge key={feature} variant="secondary" className="text-xs">
+                                  {feature}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+
+                      {/* CSV Template Help */}
+                      <Collapsible 
+                        open={expandedHelp === source.id} 
+                        onOpenChange={() => setExpandedHelp(expandedHelp === source.id ? '' : source.id)}
+                      >
+                        <CollapsibleTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="w-full justify-between text-xs h-8"
+                          >
+                            <span className="flex items-center space-x-1">
+                              <Info className="w-3 h-3" />
+                              <span>CSV Template & Mapping Guide</span>
+                            </span>
+                            {expandedHelp === source.id ? (
+                              <ChevronUp className="w-3 h-3" />
+                            ) : (
+                              <ChevronDown className="w-3 h-3" />
+                            )}
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-3">
+                          <Card className="bg-muted/30">
+                            <CardContent className="p-4 space-y-4">
+                              {/* Sample Headers */}
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <h5 className="text-sm font-medium">Expected CSV Headers</h5>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={() => copyToClipboard(source.csvTemplate.sampleHeaders.join(','))}
+                                    className="h-6 text-xs"
+                                  >
+                                    <Copy className="w-3 h-3 mr-1" />
+                                    Copy
+                                  </Button>
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {source.csvTemplate.sampleHeaders.map((header) => (
+                                    <Badge key={header} variant="outline" className="text-xs">
+                                      {header}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <Separator />
+
+                              {/* Common Mappings */}
+                              <div className="space-y-2">
+                                <h5 className="text-sm font-medium">Typical Field Mappings</h5>
+                                <div className="space-y-2">
+                                  {source.csvTemplate.commonMappings.map((mapping, index) => (
+                                    <div key={index} className="flex items-start space-x-2 text-xs">
+                                      <Badge variant="secondary" className="text-xs min-w-fit">
+                                        {mapping.header}
+                                      </Badge>
+                                      <ArrowRight className="w-3 h-3 mt-0.5 text-muted-foreground flex-shrink-0" />
+                                      <div className="space-y-1">
+                                        <span className="font-medium text-primary">{mapping.mapsTo}</span>
+                                        <p className="text-muted-foreground">{mapping.description}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <Separator />
+
+                              {/* Pro Tips */}
+                              <div className="space-y-2">
+                                <h5 className="text-sm font-medium flex items-center space-x-1">
+                                  <span>💡</span>
+                                  <span>Pro Tips</span>
+                                </h5>
+                                <div className="space-y-1">
+                                  {source.csvTemplate.notes.map((note, index) => (
+                                    <p key={index} className="text-xs text-muted-foreground">
+                                      • {note}
+                                    </p>
+                                  ))}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
                   ))}
                 </div>
 
