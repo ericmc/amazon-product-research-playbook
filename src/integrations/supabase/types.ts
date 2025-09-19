@@ -14,7 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      opportunities: {
+        Row: {
+          created_at: string
+          criteria: Json
+          final_score: number
+          id: string
+          notes: string | null
+          product_name: string
+          source: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          criteria?: Json
+          final_score?: number
+          id?: string
+          notes?: string | null
+          product_name: string
+          source: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          criteria?: Json
+          final_score?: number
+          id?: string
+          notes?: string | null
+          product_name?: string
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      raw_imports: {
+        Row: {
+          created_at: string
+          field_mappings: Json
+          id: string
+          import_metadata: Json | null
+          opportunity_id: string | null
+          raw_data: Json
+          source: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          field_mappings?: Json
+          id?: string
+          import_metadata?: Json | null
+          opportunity_id?: string | null
+          raw_data: Json
+          source: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          field_mappings?: Json
+          id?: string
+          import_metadata?: Json | null
+          opportunity_id?: string | null
+          raw_data?: Json
+          source?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raw_imports_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
