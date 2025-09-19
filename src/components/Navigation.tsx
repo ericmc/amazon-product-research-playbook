@@ -3,25 +3,17 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   Search, 
-  CheckCircle, 
   BarChart3, 
-  TrendingUp, 
-  FileText,
   Menu,
   X,
   Upload,
-  Database,
-  Home
+  Database
 } from "lucide-react";
 
 const navigationItems = [
-  { name: "Overview", href: "/", icon: Home },
-  { name: "Discovery", href: "/discovery", icon: Search },
-  { name: "Data Intake", href: "/intake", icon: Upload },
-  { name: "Validation", href: "/validation", icon: CheckCircle },
-  { name: "Analysis", href: "/analysis", icon: BarChart3 },
-  { name: "Decision", href: "/decision", icon: TrendingUp },
+  { name: "Score", href: "/score", icon: BarChart3 },
   { name: "Opportunities", href: "/opportunities", icon: Database },
+  { name: "Import", href: "/import", icon: Upload },
 ];
 
 export const Navigation = () => {
