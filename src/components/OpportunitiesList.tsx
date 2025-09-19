@@ -17,6 +17,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import OpportunityChecklistComponent, { OpportunityChecklist } from "./OpportunityChecklist";
+import DecisionTree from "./DecisionTree";
 
 interface SavedOpportunity {
   productName: string;
@@ -295,9 +296,14 @@ const OpportunitiesList = () => {
                                 ))}
                               </div>
                             </div>
-                          )}
+                           )}
 
-                          <div className="flex items-center justify-between pt-2 border-t">
+                           <div className="border-t pt-3">
+                             <h4 className="text-sm font-medium text-foreground mb-2">Decision Tree</h4>
+                             <DecisionTree criteria={opportunity.criteria} />
+                           </div>
+                           
+                           <div className="flex items-center justify-between pt-2 border-t">
                             <Button
                               variant="outline"
                               size="sm"
