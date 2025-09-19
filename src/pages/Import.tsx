@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ExternalTools } from "@/components/ExternalTools";
 import { 
   Upload, 
   FileText, 
@@ -647,6 +648,12 @@ const DataImportWizard = () => {
                     </div>
                   ))}
                 </div>
+
+                {/* External Tools */}
+                <ExternalTools 
+                  productName={selectedSource ? sourceOptions.find(s => s.id === selectedSource)?.name : ''}
+                  context="import"
+                />
 
                 <div className="flex justify-end">
                   <Button 

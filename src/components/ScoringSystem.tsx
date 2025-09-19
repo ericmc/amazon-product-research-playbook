@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Calculator, TrendingUp, AlertTriangle, CheckCircle, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ExternalTools } from "@/components/ExternalTools";
 
 interface ScoringCriteria {
   id: string;
@@ -490,6 +491,12 @@ const ScoringSystem = () => {
 
         {/* Score Summary */}
         <div className="space-y-6">
+          {/* External Tools */}
+          <ExternalTools 
+            productName={productName}
+            context="scoring"
+          />
+          
           <Card>
             <CardHeader className="text-center">
               <CardTitle>Overall Score</CardTitle>
