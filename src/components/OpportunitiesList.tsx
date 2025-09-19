@@ -15,11 +15,13 @@ import {
   RefreshCw,
   ClipboardList,
   ChevronRight,
-  Package
+  Package,
+  Clock
 } from "lucide-react";
 import OpportunityChecklistComponent, { OpportunityChecklist } from "./OpportunityChecklist";
 import DecisionTree from "./DecisionTree";
 import SourcingPacket from "./SourcingPacket";
+import RefreshCadence from "./RefreshCadence";
 
 interface SavedOpportunity {
   productName: string;
@@ -43,6 +45,26 @@ interface SavedOpportunity {
     status: "requested-quotes" | "samples" | "in-tooling" | "not-started";
     notes: string;
   };
+  refreshData?: {
+    lastRefreshed: string;
+    nextRefreshDue: string;
+    refreshFrequency: number;
+    isOverdue: boolean;
+    trendNotes: Array<{
+      date: string;
+      oldScore: number;
+      newScore: number;
+      note: string;
+      keyChanges: string[];
+    }>;
+    checklist: {
+      dataRetrieved: boolean;
+      scoreRecalculated: boolean;
+      trendsAnalyzed: boolean;
+      notesLogged: boolean;
+      competitorsChecked: boolean;
+    };
+  };
 }
 
 interface WeakCriterion {
@@ -57,6 +79,7 @@ const OpportunitiesList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [viewingChecklist, setViewingChecklist] = useState<number | null>(null);
   const [viewingSourcingPacket, setViewingSourcingPacket] = useState<number | null>(null);
+  const [viewingRefreshCadence, setViewingRefreshCadence] = useState<number | null>(null);
 
   const loadOpportunities = () => {
     setIsLoading(true);
@@ -160,6 +183,17 @@ const OpportunitiesList = () => {
     setOpportunities(updatedOpportunities);
   };
 
+  const updateOpportunityRefreshData = (index: number, refreshData: any) => {
+    const updatedOpportunities = [...opportunities];
+    updatedOpportunities[index] = {
+      ...updatedOpportunities[index],
+      refreshData
+    };
+    
+    localStorage.setItem("amazon-research-opportunities", JSON.stringify(updatedOpportunities));
+    setOpportunities(updatedOpportunities);
+  };
+
   const updateOpportunitySourcingPacket = (index: number, sourcingPacket: any) => {
     const updatedOpportunities = [...opportunities];
     updatedOpportunities[index] = {
@@ -175,6 +209,27 @@ const OpportunitiesList = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Show refresh cadence view if selected
+  if (viewingRefreshCadence !== null && opportunities[viewingRefreshCadence]) {
+    return (
+      <div className="space-y-6">
+        <Button 
+          variant="outline" 
+          onClick={() => setViewingRefreshCadence(null)}
+          className="mb-4"
+        >
+          ← Back to Opportunities
+        </Button>
+        <RefreshCadence
+          opportunityIndex={viewingRefreshCadence}
+          productName={opportunities[viewingRefreshCadence].productName}
+          opportunity={opportunities[viewingRefreshCadence]}
+          onUpdate={(refreshData) => updateOpportunityRefreshData(viewingRefreshCadence, refreshData)}
+        />
       </div>
     );
   }
@@ -348,7 +403,7 @@ const OpportunitiesList = () => {
                           </div>
                           
                           <div className="flex items-center justify-between pt-2 border-t">
-                            <div className="flex space-x-2">
+                            <div className="flex flex-wrap gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -384,6 +439,30 @@ const OpportunitiesList = () => {
                                     className="ml-1"
                                   >
                                     {opportunity.sourcingPacket.status.replace("-", " ")}
+                                  </Badge>
+                                )}
+                                <ChevronRight className="w-4 h-4" />
+                              </Button>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setViewingRefreshCadence(index)}
+                                className="flex items-center space-x-2"
+                              >
+                                <Clock className="w-4 h-4" />
+                                <span>Refresh Schedule</span>
+                                {opportunity.refreshData && (
+                                  <Badge 
+                                    variant={
+                                      opportunity.refreshData.isOverdue ? "destructive" :
+                                      new Date() > new Date(new Date(opportunity.refreshData.nextRefreshDue).getTime() - 2 * 24 * 60 * 60 * 1000) ? "secondary" :
+                                      "default"
+                                    }
+                                    className="ml-1"
+                                  >
+                                    {opportunity.refreshData.isOverdue ? "Overdue" : 
+                                     new Date() > new Date(new Date(opportunity.refreshData.nextRefreshDue).getTime() - 2 * 24 * 60 * 60 * 1000) ? "Due Soon" : "On Track"}
                                   </Badge>
                                 )}
                                 <ChevronRight className="w-4 h-4" />
