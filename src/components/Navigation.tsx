@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { 
   Search, 
   CheckCircle, 
@@ -11,17 +10,18 @@ import {
   Menu,
   X,
   Upload,
-  Database
+  Database,
+  Home
 } from "lucide-react";
 
 const navigationItems = [
-  { name: "Overview", href: "/", icon: FileText },
-  { name: "Discovery", href: "/discovery", icon: Search, badge: "Phase 1" },
-  { name: "Data Intake", href: "/intake", icon: Upload, badge: "Import" },
-  { name: "Validation", href: "/validation", icon: CheckCircle, badge: "Phase 2" },
-  { name: "Analysis", href: "/analysis", icon: BarChart3, badge: "Phase 3" },
-  { name: "Decision", href: "/decision", icon: TrendingUp, badge: "Phase 4" },
-  { name: "Opportunities", href: "/opportunities", icon: Database, badge: "Saved" },
+  { name: "Overview", href: "/", icon: Home },
+  { name: "Discovery", href: "/discovery", icon: Search },
+  { name: "Data Intake", href: "/intake", icon: Upload },
+  { name: "Validation", href: "/validation", icon: CheckCircle },
+  { name: "Analysis", href: "/analysis", icon: BarChart3 },
+  { name: "Decision", href: "/decision", icon: TrendingUp },
+  { name: "Opportunities", href: "/opportunities", icon: Database },
 ];
 
 export const Navigation = () => {
@@ -29,87 +29,83 @@ export const Navigation = () => {
   const location = useLocation();
 
   return (
-    <nav className="bg-card border-b border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <Search className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold text-foreground">Amazon Research Playbook</span>
-            </Link>
-          </div>
+    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container max-w-7xl mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <Link to="/" className="flex items-center space-x-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+              <Search className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-lg font-semibold leading-none">Amazon Research</span>
+              <span className="text-sm text-muted-foreground leading-none">Playbook</span>
+            </div>
+          </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-4">
-            {navigationItems.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                  }`}
-                >
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.name}</span>
-                  {item.badge && (
-                    <Badge variant="secondary" className="text-xs">
-                      {item.badge}
-                    </Badge>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border">
-            <div className="space-y-2">
+          <div className="hidden lg:flex">
+            <div className="flex items-center space-x-1 rounded-lg bg-muted p-1">
               {navigationItems.map((item) => {
                 const isActive = location.pathname === item.href;
                 return (
                   <Link
                     key={item.name}
                     to={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
                       isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
                     }`}
                   >
-                    <item.icon className="w-4 h-4" />
-                    <span>{item.name}</span>
-                    {item.badge && (
-                      <Badge variant="secondary" className="text-xs">
-                        {item.badge}
-                      </Badge>
-                    )}
+                    <item.icon className="mr-2 h-4 w-4" />
+                    {item.name}
                   </Link>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Mobile Navigation Toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </Button>
+        </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden">
+            <div className="border-t py-4">
+              <div className="grid gap-2">
+                {navigationItems.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      }`}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
