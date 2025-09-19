@@ -137,6 +137,16 @@ const ScoringSystem = () => {
   const recommendation = getRecommendation(finalScore);
   const totalWeight = criteria.reduce((s, c) => s + c.weight, 0);
   
+  const weakest = [...criteria]
+    .map(c => {
+      const normalized = ['competition','barriers','seasonality'].includes(c.id) ? c.maxValue - c.value : c.value;
+      const pct = (normalized / c.maxValue) * 100;
+      const weighted = (pct * c.weight) / 100;
+      return {id: c.id, name: c.name, weighted};
+    })
+    .sort((a, b) => a.weighted - b.weighted)
+    .slice(0, 3);
+  
   const scoreIntent = finalScore >= 80 ? "success" : finalScore >= 60 ? "warning" : "danger";
   const intentClass =
     scoreIntent === "success" ? "bg-green-600 text-white" :
