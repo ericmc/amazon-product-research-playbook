@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
-import { Calculator, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
+import { Calculator, TrendingUp, AlertTriangle, CheckCircle, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface ScoringCriteria {
   id: string;
@@ -16,6 +18,12 @@ interface ScoringCriteria {
   maxValue: number;
   description: string;
   threshold: number;
+  guidance: {
+    overview: string;
+    steps: { tool: string; instruction: string; }[];
+    tips: string[];
+    examples: string[];
+  };
 }
 
 const defaultCriteria: ScoringCriteria[] = [
@@ -26,7 +34,25 @@ const defaultCriteria: ScoringCriteria[] = [
     value: 15000,
     maxValue: 50000,
     description: "Estimated monthly revenue for top 10 products",
-    threshold: 10000
+    threshold: 10000,
+    guidance: {
+      overview: "Calculate total revenue potential by analyzing top performing products in your niche",
+      steps: [
+        { tool: "Jungle Scout Product Database", instruction: "Filter by your category and price range, then sum monthly revenue for top 10-15 listings" },
+        { tool: "Helium 10 Black Box", instruction: "Set revenue filters and analyze revenue distribution for similar products" },
+        { tool: "Manual Research", instruction: "Use (Price × Monthly Sales) for top products, exclude clear outliers" }
+      ],
+      tips: [
+        "Exclude extreme outliers (top 1-2 products if they're 5x+ higher than median)",
+        "Focus on products with consistent sales patterns, not one-time spikes",
+        "Consider seasonal variations - use 12-month average if available"
+      ],
+      examples: [
+        "Kitchen gadgets: $25 price × 500 monthly sales = $12,500 revenue",
+        "Top 10 products averaging $15K monthly = strong revenue potential",
+        "Niche with only 1-2 high performers = risky revenue concentration"
+      ]
+    }
   },
   {
     id: "competition",
@@ -35,7 +61,25 @@ const defaultCriteria: ScoringCriteria[] = [
     value: 65,
     maxValue: 100,
     description: "Lower score = less competition (inverted)",
-    threshold: 70
+    threshold: 70,
+    guidance: {
+      overview: "Measure market saturation by analyzing review counts and number of established sellers",
+      steps: [
+        { tool: "Jungle Scout", instruction: "Get review counts for top 10 listings, calculate median. Count how many have >1,000 reviews" },
+        { tool: "Helium 10", instruction: "Use Black Box to analyze review distribution and competing products count" },
+        { tool: "Amazon Search", instruction: "Search your main keyword, count products with >500 reviews on first 2 pages" }
+      ],
+      tips: [
+        "Lower review counts = easier entry (this field is inverted - lower input = higher score)",
+        "Look for markets with mix of high and low review products",
+        "Consider review velocity (recent vs old reviews) for trend analysis"
+      ],
+      examples: [
+        "Median 150 reviews = score ~85 (low competition)",
+        "Median 800 reviews = score ~40 (high competition)", 
+        "5+ products with >1,000 reviews = very competitive market"
+      ]
+    }
   },
   {
     id: "demand",
@@ -44,7 +88,25 @@ const defaultCriteria: ScoringCriteria[] = [
     value: 2500,
     maxValue: 10000,
     description: "Monthly search volume for main keywords",
-    threshold: 1000
+    threshold: 1000,
+    guidance: {
+      overview: "Assess total search demand by combining volume for main keyword plus related high-intent terms",
+      steps: [
+        { tool: "Helium 10 Magnet", instruction: "Enter main keyword, get search volume for primary term + top 2-3 related keywords" },
+        { tool: "Jungle Scout Keyword Scout", instruction: "Research main keyword family and sum volumes for primary search terms" },
+        { tool: "Amazon POE", instruction: "Use Search Frequency data for most accurate Amazon-specific demand (if available)" }
+      ],
+      tips: [
+        "Include related keywords that indicate buying intent",
+        "Avoid including overly broad terms that don't represent your specific product",
+        "Consider seasonal patterns - use annual average or peak season data"
+      ],
+      examples: [
+        "'Bamboo cutting board': 1,500 + 'eco cutting board': 800 = 2,300 total",
+        "Single keyword with 5,000+ volume = strong standalone demand",
+        "Multiple small keywords (200-400 each) can add up to meaningful demand"
+      ]
+    }
   },
   {
     id: "barriers",
@@ -53,7 +115,25 @@ const defaultCriteria: ScoringCriteria[] = [
     value: 30,
     maxValue: 100,
     description: "Lower score = easier entry (inverted)",
-    threshold: 60
+    threshold: 60,
+    guidance: {
+      overview: "Evaluate barriers that might prevent or slow down new competitors entering the market",
+      steps: [
+        { tool: "Barrier Checklist", instruction: "Score each: Specialized tooling (20pts), Certifications/FDA (25pts), Hazmat/Oversized (15pts), High MOQ requirements (20pts), Fragile/Complex shipping (10pts), Patent risks (10pts)" },
+        { tool: "Supplier Research", instruction: "Contact 3-5 suppliers to understand minimum orders, lead times, and complexity" },
+        { tool: "Regulatory Check", instruction: "Research if product requires special approvals, testing, or compliance" }
+      ],
+      tips: [
+        "This field is inverted - higher barriers = lower input score = higher final score",
+        "Some barriers protect you after entry, others just slow you down",
+        "Consider barriers that competitors also face vs. barriers unique to new entrants"
+      ],
+      examples: [
+        "Simple product, no certifications needed = 20 barrier score",
+        "FDA approval required = 60+ barrier score",
+        "Custom tooling + certifications = 80+ barrier score"
+      ]
+    }
   },
   {
     id: "seasonality",
@@ -62,7 +142,25 @@ const defaultCriteria: ScoringCriteria[] = [
     value: 20,
     maxValue: 100,
     description: "Lower score = less seasonal (inverted)",
-    threshold: 50
+    threshold: 50,
+    guidance: {
+      overview: "Analyze how much demand fluctuates throughout the year to assess cash flow risk",
+      steps: [
+        { tool: "Jungle Scout", instruction: "Check seasonality graph for main keywords, look for consistent vs. spiky patterns" },
+        { tool: "Helium 10 Trendster", instruction: "Analyze 12-month search trends for seasonal volatility" },
+        { tool: "Google Trends", instruction: "Compare year-over-year patterns to identify seasonal sensitivity" }
+      ],
+      tips: [
+        "This field is inverted - higher seasonality = lower input score = higher final score",
+        "Steady year-round demand = low seasonality risk",
+        "Products with predictable seasons can still be profitable with proper planning"
+      ],
+      examples: [
+        "Kitchen essentials: consistent demand = 15 seasonality score",
+        "Christmas decorations: extreme seasonal = 85 seasonality score",
+        "Fitness equipment: January spike but steady otherwise = 35 seasonality score"
+      ]
+    }
   },
   {
     id: "profitability",
@@ -71,7 +169,25 @@ const defaultCriteria: ScoringCriteria[] = [
     value: 35,
     maxValue: 60,
     description: "Expected profit margin percentage",
-    threshold: 25
+    threshold: 25,
+    guidance: {
+      overview: "Calculate realistic profit margins after all costs to ensure sustainable business model",
+      steps: [
+        { tool: "Helium 10 Profitability Calculator", instruction: "Input estimated: Product cost, Amazon FBA fees, shipping/freight, any duties/tariffs" },
+        { tool: "Manual Calculation", instruction: "Profit = Selling Price - (COGS + FBA fees + Freight + Duties + Amazon referral fee)" },
+        { tool: "Supplier Quotes", instruction: "Get actual quotes for MOQ pricing, shipping costs, and any tooling/setup fees" }
+      ],
+      tips: [
+        "Aim for minimum 30% margin for sustainable business",
+        "Include all costs: product, shipping, FBA, referral fees, storage, returns",
+        "Factor in promotional costs and PPC spending for customer acquisition"
+      ],
+      examples: [
+        "$25 selling price - $8 COGS - $5 FBA - $2 shipping = $10 profit (40%)",
+        "Complex electronics often have 15-25% margins due to competition",
+        "Simple accessories can achieve 50%+ margins with good sourcing"
+      ]
+    }
   }
 ];
 
@@ -82,6 +198,7 @@ const prettyMoney = (n: number) => n.toLocaleString(undefined, {style: "currency
 const ScoringSystem = () => {
   const [criteria, setCriteria] = useState<ScoringCriteria[]>(defaultCriteria);
   const [productName, setProductName] = useState("Bamboo Kitchen Utensil Set");
+  const [expandedGuidance, setExpandedGuidance] = useState<string>('');
 
   // Check for prefilled data from Data Intake
   React.useEffect(() => {
@@ -250,6 +367,83 @@ const ScoringSystem = () => {
                     </Badge>
                   </div>
                   <CardDescription id={`${criterion.id}-description`}>{criterion.description}</CardDescription>
+                  
+                  {/* Guidance Toggle */}
+                  <Collapsible 
+                    open={expandedGuidance === criterion.id} 
+                    onOpenChange={() => setExpandedGuidance(expandedGuidance === criterion.id ? '' : criterion.id)}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-fit p-0 h-auto text-xs text-primary hover:text-primary/80"
+                      >
+                        <HelpCircle className="w-3 h-3 mr-1" />
+                        <span>How do I fill this?</span>
+                        {expandedGuidance === criterion.id ? (
+                          <ChevronUp className="w-3 h-3 ml-1" />
+                        ) : (
+                          <ChevronDown className="w-3 h-3 ml-1" />
+                        )}
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-3">
+                      <Card className="bg-muted/30">
+                        <CardContent className="p-4 space-y-4">
+                          {/* Overview */}
+                          <div>
+                            <p className="text-sm text-foreground">{criterion.guidance.overview}</p>
+                          </div>
+
+                          <Separator />
+
+                          {/* Steps by Tool */}
+                          <div className="space-y-3">
+                            <h5 className="text-sm font-medium">Step-by-Step Instructions</h5>
+                            {criterion.guidance.steps.map((step, index) => (
+                              <div key={index} className="space-y-1">
+                                <div className="flex items-start space-x-2">
+                                  <Badge variant="outline" className="text-xs min-w-fit">
+                                    {step.tool}
+                                  </Badge>
+                                  <p className="text-xs text-foreground">{step.instruction}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <Separator />
+
+                          {/* Pro Tips */}
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-medium">💡 Pro Tips</h5>
+                            <div className="space-y-1">
+                              {criterion.guidance.tips.map((tip, index) => (
+                                <p key={index} className="text-xs text-muted-foreground">
+                                  • {tip}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+
+                          <Separator />
+
+                          {/* Examples */}
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-medium">📋 Examples</h5>
+                            <div className="space-y-1">
+                              {criterion.guidance.examples.map((example, index) => (
+                                <p key={index} className="text-xs text-muted-foreground font-mono bg-muted/50 p-2 rounded">
+                                  {example}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center space-x-4">
