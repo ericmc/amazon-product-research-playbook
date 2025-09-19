@@ -9,12 +9,14 @@ import {
   TrendingUp, 
   FileText,
   Menu,
-  X
+  X,
+  Upload
 } from "lucide-react";
 
 const navigationItems = [
   { name: "Overview", href: "/", icon: FileText },
   { name: "Discovery", href: "/discovery", icon: Search, badge: "Phase 1" },
+  { name: "Data Intake", href: "/intake", icon: Upload, badge: "Import" },
   { name: "Validation", href: "/validation", icon: CheckCircle, badge: "Phase 2" },
   { name: "Analysis", href: "/analysis", icon: BarChart3, badge: "Phase 3" },
   { name: "Decision", href: "/decision", icon: TrendingUp, badge: "Phase 4" },

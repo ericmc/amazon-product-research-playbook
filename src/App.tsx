@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Navigation } from "./components/Navigation";
 import Index from "./pages/Index";
 import Discovery from "./pages/Discovery";
+import DataIntake from "./pages/DataIntake";
 import Validation from "./pages/Validation";
 import Analysis from "./pages/Analysis";
 import Decision from "./pages/Decision";
@@ -23,6 +24,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/discovery" element={<Discovery />} />
+          <Route path="/intake" element={<DataIntake />} />
           <Route path="/validation" element={<Validation />} />
           <Route path="/analysis" element={<Analysis />} />
           <Route path="/decision" element={<Decision />} />

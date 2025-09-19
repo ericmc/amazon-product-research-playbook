@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,6 +81,42 @@ const prettyMoney = (n: number) => n.toLocaleString(undefined, {style: "currency
 const ScoringSystem = () => {
   const [criteria, setCriteria] = useState<ScoringCriteria[]>(defaultCriteria);
   const [productName, setProductName] = useState("Bamboo Kitchen Utensil Set");
+
+  // Check for prefilled data from Data Intake
+  React.useEffect(() => {
+    const prefilledData = sessionStorage.getItem('prefilledScoringData');
+    if (prefilledData) {
+      try {
+        const data = JSON.parse(prefilledData);
+        setProductName(data.productName || "");
+        
+        // Update criteria with imported values
+        setCriteria(prev => prev.map(criterion => {
+          switch (criterion.id) {
+            case 'revenue':
+              return { ...criterion, value: data.revenue || criterion.value };
+            case 'competition':
+              return { ...criterion, value: data.competition || criterion.value };
+            case 'demand':
+              return { ...criterion, value: data.demand || criterion.value };
+            case 'barriers':
+              return { ...criterion, value: data.barriers || criterion.value };
+            case 'seasonality':
+              return { ...criterion, value: data.seasonality || criterion.value };
+            case 'profitability':
+              return { ...criterion, value: data.profitability || criterion.value };
+            default:
+              return criterion;
+          }
+        }));
+        
+        // Clear the session storage after use
+        sessionStorage.removeItem('prefilledScoringData');
+      } catch (error) {
+        console.error('Error parsing prefilled data:', error);
+      }
+    }
+  }, []);
 
   const updateCriteriaValue = (id: string, value: number) => {
     setCriteria(prev => 
