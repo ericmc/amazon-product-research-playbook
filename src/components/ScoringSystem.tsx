@@ -233,7 +233,10 @@ const ScoringSystem = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <recommendation.icon className={`w-5 h-5 text-${recommendation.color}`} />
+                {(() => {
+                  const Icon = recommendation.icon;
+                  return <Icon className="w-5 h-5 text-foreground" />;
+                })()}
                 <span>Recommendation</span>
               </CardTitle>
             </CardHeader>
