@@ -74,6 +74,10 @@ const defaultCriteria: ScoringCriteria[] = [
   }
 ];
 
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+const prettyNumber = (n: number) => n.toLocaleString();
+const prettyMoney = (n: number) => n.toLocaleString(undefined, {style: "currency", currency: "USD"});
+
 const ScoringSystem = () => {
   const [criteria, setCriteria] = useState<ScoringCriteria[]>(defaultCriteria);
   const [productName, setProductName] = useState("Bamboo Kitchen Utensil Set");
@@ -184,7 +188,7 @@ const ScoringSystem = () => {
                     <Input
                       type="number"
                       value={criterion.value}
-                      onChange={(e) => updateCriteriaValue(criterion.id, Number(e.target.value))}
+                      onChange={(e) => updateCriteriaValue(criterion.id, clamp(Number(e.target.value), 0, criterion.maxValue))}
                       className="w-32"
                     />
                     <div className="flex-1">
