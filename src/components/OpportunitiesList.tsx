@@ -12,8 +12,11 @@ import {
   TrendingDown, 
   Star,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  ClipboardList,
+  ChevronRight
 } from "lucide-react";
+import OpportunityChecklistComponent, { OpportunityChecklist } from "./OpportunityChecklist";
 
 interface SavedOpportunity {
   productName: string;
@@ -27,6 +30,7 @@ interface SavedOpportunity {
   }>;
   finalScore: number;
   createdAt: string;
+  checklist?: OpportunityChecklist;
 }
 
 interface WeakCriterion {
@@ -39,6 +43,7 @@ const OpportunitiesList = () => {
   const [opportunities, setOpportunities] = useState<SavedOpportunity[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
+  const [viewingChecklist, setViewingChecklist] = useState<number | null>(null);
 
   const loadOpportunities = () => {
     setIsLoading(true);
@@ -131,10 +136,42 @@ const OpportunitiesList = () => {
       .slice(0, 3); // Limit to 3 for comparison
   };
 
+  const updateOpportunityChecklist = (index: number, checklist: OpportunityChecklist) => {
+    const updatedOpportunities = [...opportunities];
+    updatedOpportunities[index] = {
+      ...updatedOpportunities[index],
+      checklist
+    };
+    
+    localStorage.setItem("amazon-research-opportunities", JSON.stringify(updatedOpportunities));
+    setOpportunities(updatedOpportunities);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Show checklist view if selected
+  if (viewingChecklist !== null && opportunities[viewingChecklist]) {
+    return (
+      <div className="space-y-6">
+        <Button 
+          variant="outline" 
+          onClick={() => setViewingChecklist(null)}
+          className="mb-4"
+        >
+          ← Back to Opportunities
+        </Button>
+        <OpportunityChecklistComponent
+          opportunityIndex={viewingChecklist}
+          productName={opportunities[viewingChecklist].productName}
+          checklist={opportunities[viewingChecklist].checklist}
+          onUpdate={(checklist) => updateOpportunityChecklist(viewingChecklist, checklist)}
+        />
       </div>
     );
   }
@@ -259,6 +296,24 @@ const OpportunitiesList = () => {
                               </div>
                             </div>
                           )}
+
+                          <div className="flex items-center justify-between pt-2 border-t">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setViewingChecklist(index)}
+                              className="flex items-center space-x-2"
+                            >
+                              <ClipboardList className="w-4 h-4" />
+                              <span>Research Checklist</span>
+                              {opportunity.checklist && (
+                                <Badge variant="secondary" className="ml-1">
+                                  {opportunity.checklist.completionRate}%
+                                </Badge>
+                              )}
+                              <ChevronRight className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -293,6 +348,12 @@ const ComparisonView = ({ opportunities }: { opportunities: SavedOpportunity[] }
   }
 
   const allCriteria = opportunities[0]?.criteria || [];
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "bg-green-600 text-white";
+    if (score >= 60) return "bg-amber-500 text-black";
+    return "bg-red-600 text-white";
+  };
 
   return (
     <div className="space-y-6">
@@ -359,12 +420,6 @@ const ComparisonView = ({ opportunities }: { opportunities: SavedOpportunity[] }
       </Card>
     </div>
   );
-};
-
-const getScoreColor = (score: number) => {
-  if (score >= 80) return "bg-green-600 text-white";
-  if (score >= 60) return "bg-amber-500 text-black";
-  return "bg-red-600 text-white";
 };
 
 export default OpportunitiesList;
