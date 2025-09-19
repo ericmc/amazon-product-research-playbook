@@ -119,6 +119,12 @@ const ScoringSystem = () => {
 
   const finalScore = calculateScore();
   const recommendation = getRecommendation(finalScore);
+  
+  const scoreIntent = finalScore >= 80 ? "success" : finalScore >= 60 ? "warning" : "danger";
+  const intentClass =
+    scoreIntent === "success" ? "bg-green-600 text-white" :
+    scoreIntent === "warning" ? "bg-amber-500 text-black" :
+    "bg-red-600 text-white";
 
   return (
     <div className="space-y-6">
@@ -222,8 +228,7 @@ const ScoringSystem = () => {
               <div className="text-6xl font-bold text-foreground">{finalScore}</div>
               <Progress value={finalScore} className="w-full" />
               <Badge 
-                variant={getScoreColor(finalScore) as any}
-                className="text-lg px-4 py-2"
+                className={`text-lg px-4 py-2 ${intentClass}`}
               >
                 {finalScore >= 80 ? "Excellent" : finalScore >= 60 ? "Good" : "Poor"}
               </Badge>
