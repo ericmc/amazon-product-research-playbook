@@ -322,7 +322,7 @@ const ScoringSystem = () => {
             </CardContent>
           </Card>
 
-          <Button className="w-full" size="lg">
+          <Button className="w-full" size="lg" onClick={saveOpportunity}>
             <TrendingUp className="w-4 h-4 mr-2" />
             Save Score & Continue
           </Button>
