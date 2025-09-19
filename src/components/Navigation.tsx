@@ -8,13 +8,15 @@ import {
   Menu,
   X,
   Upload,
-  Database
+  Database,
+  Puzzle
 } from "lucide-react";
 
 const navigationItems = [
   { name: "Score", href: "/score", icon: BarChart3 },
   { name: "Opportunities", href: "/opportunities", icon: Database },
   { name: "Import", href: "/import", icon: Upload },
+  { name: "Integrations", href: "/integrations", icon: Puzzle },
 ];
 
 export const Navigation = () => {
