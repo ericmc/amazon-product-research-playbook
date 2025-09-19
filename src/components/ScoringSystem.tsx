@@ -398,7 +398,7 @@ const ScoringSystem = () => {
         criteria,
         finalScore,
         createdAt: new Date().toISOString(),
-        status: finalScore >= 80 ? 'scored' : 'draft',
+        status: 'scored',
         source: 'manual'
       };
       
@@ -408,6 +408,9 @@ const ScoringSystem = () => {
         title: "Opportunity Saved",
         description: `"${productName}" has been saved to your opportunities list.`,
       });
+
+      // Navigate to opportunities page
+      window.location.href = '/opportunities';
     } catch (error) {
       console.error('Failed to save opportunity:', error);
       toast({

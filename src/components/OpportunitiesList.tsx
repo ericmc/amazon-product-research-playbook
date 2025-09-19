@@ -24,49 +24,7 @@ import DecisionTree from "./DecisionTree";
 import SourcingPacket from "./SourcingPacket";
 import RefreshCadence from "./RefreshCadence";
 
-interface SavedOpportunity {
-  productName: string;
-  criteria: Array<{
-    id: string;
-    name: string;
-    weight: number;
-    value: number;
-    maxValue: number;
-    threshold: number;
-  }>;
-  finalScore: number;
-  createdAt: string;
-  checklist?: OpportunityChecklist;
-  sourcingPacket?: {
-    keywords: string[];
-    competitorASINs: string[];
-    differentiation: string;
-    screenshots: string[];
-    links: string[];
-    status: "requested-quotes" | "samples" | "in-tooling" | "not-started";
-    notes: string;
-  };
-  refreshData?: {
-    lastRefreshed: string;
-    nextRefreshDue: string;
-    refreshFrequency: number;
-    isOverdue: boolean;
-    trendNotes: Array<{
-      date: string;
-      oldScore: number;
-      newScore: number;
-      note: string;
-      keyChanges: string[];
-    }>;
-    checklist: {
-      dataRetrieved: boolean;
-      scoreRecalculated: boolean;
-      trendsAnalyzed: boolean;
-      notesLogged: boolean;
-      competitorsChecked: boolean;
-    };
-  };
-}
+import { SavedOpportunity } from "@/utils/OpportunityStorage";
 
 interface WeakCriterion {
   id: string;
@@ -82,11 +40,11 @@ const OpportunitiesList = () => {
   const [viewingSourcingPacket, setViewingSourcingPacket] = useState<number | null>(null);
   const [viewingRefreshCadence, setViewingRefreshCadence] = useState<number | null>(null);
 
-  const loadOpportunities = () => {
+  const loadOpportunities = async () => {
     setIsLoading(true);
     try {
-      const stored = localStorage.getItem("amazon-research-opportunities");
-      const data = stored ? JSON.parse(stored) : [];
+      const { opportunityStorage } = await import("@/utils/OpportunityStorage");
+      const data = await opportunityStorage.getOpportunities();
       setOpportunities(data);
     } catch (error) {
       console.error("Error loading opportunities:", error);
@@ -159,16 +117,17 @@ const OpportunitiesList = () => {
     }
   };
 
-  const handleDeleteSelected = () => {
-    const indicesToDelete = Array.from(selectedIds).map(id => parseInt(id)).sort((a, b) => b - a);
-    let updatedOpportunities = [...opportunities];
+  const handleDeleteSelected = async () => {
+    const indicesToDelete = Array.from(selectedIds).map(id => parseInt(id));
+    const { opportunityStorage } = await import("@/utils/OpportunityStorage");
     
-    indicesToDelete.forEach(index => {
-      updatedOpportunities.splice(index, 1);
-    });
+    for (const index of indicesToDelete) {
+      if (opportunities[index]) {
+        await opportunityStorage.deleteOpportunity(opportunities[index].id);
+      }
+    }
     
-    localStorage.setItem("amazon-research-opportunities", JSON.stringify(updatedOpportunities));
-    setOpportunities(updatedOpportunities);
+    await loadOpportunities();
     setSelectedIds(new Set());
   };
 
@@ -179,37 +138,46 @@ const OpportunitiesList = () => {
       .slice(0, 3); // Limit to 3 for comparison
   };
 
-  const updateOpportunityChecklist = (index: number, checklist: OpportunityChecklist) => {
-    const updatedOpportunities = [...opportunities];
-    updatedOpportunities[index] = {
-      ...updatedOpportunities[index],
+  const updateOpportunityChecklist = async (index: number, checklist: OpportunityChecklist) => {
+    const opportunity = opportunities[index];
+    if (!opportunity) return;
+    
+    const { opportunityStorage } = await import("@/utils/OpportunityStorage");
+    const updatedOpportunity = {
+      ...opportunity,
       checklist
     };
     
-    localStorage.setItem("amazon-research-opportunities", JSON.stringify(updatedOpportunities));
-    setOpportunities(updatedOpportunities);
+    await opportunityStorage.saveOpportunity(updatedOpportunity);
+    await loadOpportunities();
   };
 
-  const updateOpportunityRefreshData = (index: number, refreshData: any) => {
-    const updatedOpportunities = [...opportunities];
-    updatedOpportunities[index] = {
-      ...updatedOpportunities[index],
+  const updateOpportunityRefreshData = async (index: number, refreshData: any) => {
+    const opportunity = opportunities[index];
+    if (!opportunity) return;
+    
+    const { opportunityStorage } = await import("@/utils/OpportunityStorage");
+    const updatedOpportunity = {
+      ...opportunity,
       refreshData
     };
     
-    localStorage.setItem("amazon-research-opportunities", JSON.stringify(updatedOpportunities));
-    setOpportunities(updatedOpportunities);
+    await opportunityStorage.saveOpportunity(updatedOpportunity);
+    await loadOpportunities();
   };
 
-  const updateOpportunitySourcingPacket = (index: number, sourcingPacket: any) => {
-    const updatedOpportunities = [...opportunities];
-    updatedOpportunities[index] = {
-      ...updatedOpportunities[index],
+  const updateOpportunitySourcingPacket = async (index: number, sourcingPacket: any) => {
+    const opportunity = opportunities[index];
+    if (!opportunity) return;
+    
+    const { opportunityStorage } = await import("@/utils/OpportunityStorage");
+    const updatedOpportunity = {
+      ...opportunity,
       sourcingPacket
     };
     
-    localStorage.setItem("amazon-research-opportunities", JSON.stringify(updatedOpportunities));
-    setOpportunities(updatedOpportunities);
+    await opportunityStorage.saveOpportunity(updatedOpportunity);
+    await loadOpportunities();
   };
 
   if (isLoading) {

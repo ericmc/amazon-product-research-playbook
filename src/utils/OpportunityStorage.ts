@@ -9,6 +9,40 @@ export interface SavedOpportunity {
   status: 'draft' | 'scored' | 'analyzing' | 'sourcing' | 'archived';
   source?: string;
   notes?: string;
+  checklist?: {
+    items: any[];
+    completionRate: number;
+    lastUpdated: string;
+  };
+  sourcingPacket?: {
+    keywords: string[];
+    competitorASINs: string[];
+    differentiation: string;
+    screenshots: string[];
+    links: string[];
+    status: "requested-quotes" | "samples" | "in-tooling" | "not-started";
+    notes: string;
+  };
+  refreshData?: {
+    lastRefreshed: string;
+    nextRefreshDue: string;
+    refreshFrequency: number;
+    isOverdue: boolean;
+    trendNotes: Array<{
+      date: string;
+      oldScore: number;
+      newScore: number;
+      note: string;
+      keyChanges: string[];
+    }>;
+    checklist: {
+      dataRetrieved: boolean;
+      scoreRecalculated: boolean;
+      trendsAnalyzed: boolean;
+      notesLogged: boolean;
+      competitorsChecked: boolean;
+    };
+  };
 }
 
 export interface StorageSettings {
