@@ -14,10 +14,12 @@ import {
   Trash2,
   RefreshCw,
   ClipboardList,
-  ChevronRight
+  ChevronRight,
+  Package
 } from "lucide-react";
 import OpportunityChecklistComponent, { OpportunityChecklist } from "./OpportunityChecklist";
 import DecisionTree from "./DecisionTree";
+import SourcingPacket from "./SourcingPacket";
 
 interface SavedOpportunity {
   productName: string;
@@ -32,6 +34,15 @@ interface SavedOpportunity {
   finalScore: number;
   createdAt: string;
   checklist?: OpportunityChecklist;
+  sourcingPacket?: {
+    keywords: string[];
+    competitorASINs: string[];
+    differentiation: string;
+    screenshots: string[];
+    links: string[];
+    status: "requested-quotes" | "samples" | "in-tooling" | "not-started";
+    notes: string;
+  };
 }
 
 interface WeakCriterion {
@@ -45,6 +56,7 @@ const OpportunitiesList = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [viewingChecklist, setViewingChecklist] = useState<number | null>(null);
+  const [viewingSourcingPacket, setViewingSourcingPacket] = useState<number | null>(null);
 
   const loadOpportunities = () => {
     setIsLoading(true);
@@ -148,10 +160,42 @@ const OpportunitiesList = () => {
     setOpportunities(updatedOpportunities);
   };
 
+  const updateOpportunitySourcingPacket = (index: number, sourcingPacket: any) => {
+    const updatedOpportunities = [...opportunities];
+    updatedOpportunities[index] = {
+      ...updatedOpportunities[index],
+      sourcingPacket
+    };
+    
+    localStorage.setItem("amazon-research-opportunities", JSON.stringify(updatedOpportunities));
+    setOpportunities(updatedOpportunities);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Show sourcing packet view if selected
+  if (viewingSourcingPacket !== null && opportunities[viewingSourcingPacket]) {
+    return (
+      <div className="space-y-6">
+        <Button 
+          variant="outline" 
+          onClick={() => setViewingSourcingPacket(null)}
+          className="mb-4"
+        >
+          ← Back to Opportunities
+        </Button>
+        <SourcingPacket
+          opportunityIndex={viewingSourcingPacket}
+          productName={opportunities[viewingSourcingPacket].productName}
+          opportunity={opportunities[viewingSourcingPacket]}
+          onUpdate={(packet) => updateOpportunitySourcingPacket(viewingSourcingPacket, packet)}
+        />
       </div>
     );
   }
@@ -296,29 +340,55 @@ const OpportunitiesList = () => {
                                 ))}
                               </div>
                             </div>
-                           )}
+                          )}
 
-                           <div className="border-t pt-3">
-                             <h4 className="text-sm font-medium text-foreground mb-2">Decision Tree</h4>
-                             <DecisionTree criteria={opportunity.criteria} />
-                           </div>
-                           
-                           <div className="flex items-center justify-between pt-2 border-t">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setViewingChecklist(index)}
-                              className="flex items-center space-x-2"
-                            >
-                              <ClipboardList className="w-4 h-4" />
-                              <span>Research Checklist</span>
-                              {opportunity.checklist && (
-                                <Badge variant="secondary" className="ml-1">
-                                  {opportunity.checklist.completionRate}%
-                                </Badge>
-                              )}
-                              <ChevronRight className="w-4 h-4" />
-                            </Button>
+                          <div className="border-t pt-3">
+                            <h4 className="text-sm font-medium text-foreground mb-2">Decision Tree</h4>
+                            <DecisionTree criteria={opportunity.criteria} />
+                          </div>
+                          
+                          <div className="flex items-center justify-between pt-2 border-t">
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setViewingChecklist(index)}
+                                className="flex items-center space-x-2"
+                              >
+                                <ClipboardList className="w-4 h-4" />
+                                <span>Research Checklist</span>
+                                {opportunity.checklist && (
+                                  <Badge variant="secondary" className="ml-1">
+                                    {opportunity.checklist.completionRate}%
+                                  </Badge>
+                                )}
+                                <ChevronRight className="w-4 h-4" />
+                              </Button>
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setViewingSourcingPacket(index)}
+                                className="flex items-center space-x-2"
+                              >
+                                <Package className="w-4 h-4" />
+                                <span>Sourcing Packet</span>
+                                {opportunity.sourcingPacket && (
+                                  <Badge 
+                                    variant={
+                                      opportunity.sourcingPacket.status === "in-tooling" ? "default" :
+                                      opportunity.sourcingPacket.status === "samples" ? "secondary" :
+                                      opportunity.sourcingPacket.status === "requested-quotes" ? "outline" :
+                                      "destructive"
+                                    }
+                                    className="ml-1"
+                                  >
+                                    {opportunity.sourcingPacket.status.replace("-", " ")}
+                                  </Badge>
+                                )}
+                                <ChevronRight className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
