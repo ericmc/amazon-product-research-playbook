@@ -39,7 +39,7 @@ export const Navigation = () => {
             </div>
             <div className="flex flex-col">
               <span className="text-lg font-semibold leading-none">Amazon Research</span>
-              <span className="text-sm text-muted-foreground leading-none">Playbook</span>
+              <span className="text-sm text-muted-foreground leading-none">Playbook <span className="text-xs opacity-75">by IPS</span></span>
             </div>
           </Link>
 

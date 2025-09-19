@@ -52,6 +52,9 @@ const Index = () => {
             A systematic, repeatable process to identify profitable product opportunities on Amazon. 
             From discovery to sourcing - make data-driven decisions with confidence.
           </p>
+          <p className="text-sm text-muted-foreground max-w-2xl mx-auto opacity-75">
+            Professional research tool by IPS • Independent software, not affiliated with Amazon
+          </p>
           <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
             <Link to="/discovery">
               Start Your Research <ArrowRight className="w-4 h-4 ml-2" />
