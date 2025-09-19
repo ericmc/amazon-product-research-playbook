@@ -123,6 +123,7 @@ const ScoringSystem = () => {
 
   const finalScore = calculateScore();
   const recommendation = getRecommendation(finalScore);
+  const totalWeight = criteria.reduce((s, c) => s + c.weight, 0);
   
   const scoreIntent = finalScore >= 80 ? "success" : finalScore >= 60 ? "warning" : "danger";
   const intentClass =
