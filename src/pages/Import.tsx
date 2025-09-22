@@ -312,12 +312,11 @@ const HeliumImportWizard = () => {
         </TabsContent>
 
         <TabsContent value="magnet" className="space-y-6">
-          <MagnetImporter
-            onFileSelect={handleMagnetFile}
-            isProcessing={isProcessingMagnet}
-            processedData={magnetData}
-            importSummary={magnetSummary}
-          />
+          {/* Legacy Magnet Importer - disabled in favor of DataIntakeV2 */}
+          <div className="p-8 text-center text-muted-foreground border-2 border-dashed rounded-lg">
+            <p className="mb-2">Magnet import is now available in the new streamlined import flow.</p>
+            <p>Please use the main import page for all data uploads.</p>
+          </div>
         </TabsContent>
       </Tabs>
 

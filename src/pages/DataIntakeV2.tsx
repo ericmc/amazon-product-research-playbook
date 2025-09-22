@@ -4,14 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { FileCheck, ArrowRight } from "lucide-react";
+import { FileCheck, ArrowRight, TrendingUp } from "lucide-react";
 import { BlackBoxImporter } from "@/components/import/BlackBoxImporter";
+import { MagnetImporter } from "@/components/import/MagnetImporter";
 import { parseCSVFile } from "@/lib/parseCsv";
 import { processBlackBoxData, AutoMappedProduct } from "@/lib/normalizeBlackBox";
+import { ProductWithKeywords } from "@/lib/matchKeyword";
 
 const DataIntakeV2 = () => {
   const [products, setProducts] = useState<AutoMappedProduct[] | null>(null);
+  const [enrichedProducts, setEnrichedProducts] = useState<ProductWithKeywords[] | null>(null);
   const [importSummary, setImportSummary] = useState<{count: number, revenueSource: string} | null>(null);
+  const [enrichmentSummary, setEnrichmentSummary] = useState<{enriched: number, total: number, keywords: number} | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
   const navigate = useNavigate();
@@ -43,10 +47,30 @@ const DataIntakeV2 = () => {
     }
   };
 
+  const handleMagnetEnrichment = (enhanced: ProductWithKeywords[]) => {
+    setEnrichedProducts(enhanced);
+    
+    // Calculate enrichment summary
+    const enrichedCount = enhanced.filter(p => p.primaryKeyword).length;
+    const keywordCount = enhanced.reduce((acc, p) => acc + (p.suggestedKeywords?.length || 0), 0);
+    
+    setEnrichmentSummary({
+      enriched: enrichedCount,
+      total: enhanced.length,
+      keywords: keywordCount
+    });
+
+    toast({
+      title: "Keyword Enhancement Complete",
+      description: `Enhanced ${enrichedCount} of ${enhanced.length} products with keyword data`
+    });
+  };
+
   const handleContinue = () => {
-    if (products) {
+    const finalProducts = enrichedProducts || products;
+    if (finalProducts) {
       // Store products in localStorage for the next step
-      localStorage.setItem('importedProducts', JSON.stringify(products));
+      localStorage.setItem('importedProducts', JSON.stringify(finalProducts));
       navigate('/score');
     }
   };
@@ -106,20 +130,28 @@ const DataIntakeV2 = () => {
           </Card>
         )}
 
-        {/* Placeholder for Magnet Import */}
-        <Card className="border-dashed">
-          <CardHeader>
-            <CardTitle className="text-muted-foreground">Helium 10 Magnet Import</CardTitle>
-            <CardDescription>
-              Coming soon - enhance your product data with keyword insights
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Keyword enhancement capabilities will be added here</p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Magnet/Cerebro Import */}
+        {products && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Enhance with Keyword Data (Optional)
+              </CardTitle>
+              <CardDescription>
+                Upload Helium 10 Magnet or Cerebro CSV to auto-fill search volume and keyword metrics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <MagnetImporter
+                products={products}
+                onEnriched={handleMagnetEnrichment}
+                isProcessing={isProcessing}
+                enrichmentSummary={enrichmentSummary}
+              />
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

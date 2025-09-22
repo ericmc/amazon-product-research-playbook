@@ -3,27 +3,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Upload, TrendingUp, CheckCircle } from "lucide-react";
-import { AutoMappedMagnet } from "@/lib/normalizeMagnet";
+import { AutoMappedProduct } from "@/lib/normalizeBlackBox";
+import { ProductWithKeywords } from "@/lib/matchKeyword";
 
 interface MagnetImporterProps {
-  onFileSelect: (file: File) => void;
+  products: AutoMappedProduct[];
+  onEnriched: (enrichedProducts: ProductWithKeywords[]) => void;
   isProcessing: boolean;
-  processedData: AutoMappedMagnet[] | null;
-  importSummary: {count: number, source: string} | null;
+  enrichmentSummary: {enriched: number, total: number, keywords: number} | null;
 }
 
 export const MagnetImporter: React.FC<MagnetImporterProps> = ({
-  onFileSelect,
+  products,
+  onEnriched,
   isProcessing,
-  processedData,
-  importSummary
+  enrichmentSummary
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      onFileSelect(file);
+      try {
+        const { parseMagnetCSV } = await import('@/lib/parseMagnet');
+        const { mergeMagnetWithProducts } = await import('@/lib/mergeMagnet');
+        
+        const magnetData = await parseMagnetCSV(file);
+        const result = mergeMagnetWithProducts(products, magnetData);
+        
+        onEnriched(result.products);
+      } catch (error) {
+        console.error('Magnet import error:', error);
+      }
     }
   };
 
@@ -43,7 +54,7 @@ export const MagnetImporter: React.FC<MagnetImporterProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!processedData ? (
+        {!enrichmentSummary ? (
           <>
             <input
               ref={fileInputRef}
@@ -59,38 +70,42 @@ export const MagnetImporter: React.FC<MagnetImporterProps> = ({
             >
               <Upload className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground mb-2">
-                Drop your Magnet/Cerebro CSV here or click to browse
+                Drop your Magnet/Cerebro CSV here to enrich with keyword data
               </p>
-              <Button variant="outline" disabled={isProcessing}>
-                {isProcessing ? "Processing..." : "Select File"}
+              <Button variant="outline" disabled={isProcessing || products.length === 0}>
+                {isProcessing ? "Processing..." : "Select Keyword File"}
               </Button>
             </div>
             
             <div className="text-xs text-muted-foreground space-y-1">
-              <p>• Auto-maps: Keywords, Search Volume, Competition, CPC</p>
-              <p>• Supports both Magnet and Cerebro exports</p>
-              <p>• Can backfill Black Box data with keyword insights</p>
+              <p>• Auto-matches keywords to your {products.length} products</p>
+              <p>• Fills in Search Volume and Competing Products</p>
+              <p>• Suggests Primary Keywords for each product</p>
             </div>
           </>
         ) : (
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-green-600">
               <CheckCircle className="h-5 w-5" />
-              <span className="font-medium">Import Complete</span>
+              <span className="font-medium">Keyword Enhancement Complete</span>
             </div>
             
-            {importSummary && (
-              <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
-                <div>
-                  <p className="text-sm font-medium">Keywords Processed</p>
-                  <p className="text-2xl font-bold">{importSummary.count}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Source Type</p>
-                  <Badge variant="outline" className="capitalize">{importSummary.source}</Badge>
-                </div>
+            <div className="grid grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
+              <div>
+                <p className="text-sm font-medium">Products Enhanced</p>
+                <p className="text-2xl font-bold">{enrichmentSummary.enriched}/{enrichmentSummary.total}</p>
               </div>
-            )}
+              <div>
+                <p className="text-sm font-medium">Keywords Processed</p>
+                <p className="text-2xl font-bold">{enrichmentSummary.keywords}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Match Rate</p>
+                <Badge variant="outline">
+                  {Math.round((enrichmentSummary.enriched / enrichmentSummary.total) * 100)}%
+                </Badge>
+              </div>
+            </div>
           </div>
         )}
       </CardContent>
