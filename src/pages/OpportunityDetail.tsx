@@ -63,6 +63,14 @@ const OpportunityDetail = () => {
     if (!opportunity) return;
 
     const validation = {
+      checklist: {
+        demandProof: { completed: false, notes: '', links: '' },
+        marginCalculation: { completed: false, notes: '', cogs: 0, fbaFee: 0, freight: 0, duty: 0, computedMargin: 0 },
+        competitiveLandscape: { completed: false, notes: '', competitors: [] },
+        differentiationPlan: { completed: false, notes: '', levers: [] },
+        operationalRisks: { completed: false, notes: '', risks: { tooling: false, certifications: false, hazmat: false, oversize: false, fragile: false, moq: false } },
+      },
+      confidenceScore: 0,
       ...opportunity.validation,
       ...updates,
       lastUpdated: new Date().toISOString(),
@@ -138,6 +146,59 @@ const OpportunityDetail = () => {
       toast({
         title: "Error",
         description: "Failed to update profitability.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const applyToBarriers = async () => {
+    if (!opportunity?.validation?.checklist?.operationalRisks?.risks) return;
+
+    const risks = opportunity.validation.checklist.operationalRisks.risks;
+    const riskCount = Object.values(risks).filter(Boolean).length;
+    const barrierScore = Math.max(0, Math.min(100, riskCount * 15)); // Scale risk count to 0-100
+
+    const updatedCriteria = opportunity.criteria.map(criterion => {
+      if (criterion.id === 'barriers') {
+        return { ...criterion, value: barrierScore };
+      }
+      return criterion;
+    });
+
+    // Recalculate score
+    const totalScore = updatedCriteria.reduce((sum, criterion) => {
+      const normalized = ['competition', 'barriers', 'seasonality'].includes(criterion.id) 
+        ? criterion.maxValue - criterion.value 
+        : criterion.value;
+      const percentage = (normalized / criterion.maxValue) * 100;
+      return sum + (percentage * criterion.weight) / 100;
+    }, 0);
+
+    const updatedOpportunity = {
+      ...opportunity,
+      criteria: updatedCriteria,
+      finalScore: Math.round(totalScore),
+      history: [
+        ...(opportunity.history || []),
+        {
+          date: new Date().toISOString(),
+          summary: `Applied operational risks to barriers score (${barrierScore})`,
+          type: 'validation' as const,
+        }
+      ]
+    };
+
+    try {
+      await opportunityStorage.saveOpportunity(updatedOpportunity);
+      setOpportunity(updatedOpportunity);
+      toast({
+        title: "Applied to Barriers",
+        description: `Barriers score updated to ${barrierScore} based on operational risks.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to apply barriers update.",
         variant: "destructive",
       });
     }
@@ -522,7 +583,313 @@ const OpportunityDetail = () => {
                 </CardContent>
               </Card>
 
-              {/* More checklist items would continue here */}
+              {/* Competitive Landscape */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="competitive-landscape"
+                        checked={opportunity.validation?.checklist?.competitiveLandscape?.completed || false}
+                        onCheckedChange={(checked) => {
+                          updateValidation({
+                            checklist: {
+                              ...opportunity.validation?.checklist,
+                              competitiveLandscape: {
+                                ...opportunity.validation?.checklist?.competitiveLandscape,
+                                completed: !!checked,
+                              }
+                            }
+                          });
+                        }}
+                      />
+                      <Label htmlFor="competitive-landscape" className="text-base font-medium">
+                        Competitive Landscape
+                      </Label>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const competitors = opportunity.validation?.checklist?.competitiveLandscape?.competitors || [];
+                        updateValidation({
+                          checklist: {
+                            ...opportunity.validation?.checklist,
+                            competitiveLandscape: {
+                              ...opportunity.validation?.checklist?.competitiveLandscape,
+                              competitors: [...competitors, { asin: '', price: 0, reviews: 0 }]
+                            }
+                          }
+                        });
+                      }}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add Competitor
+                    </Button>
+                  </div>
+                  <CardDescription>
+                    Table of up to 10 competitors: ASIN, price, reviews, monthly revenue
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {opportunity.validation?.checklist?.competitiveLandscape?.competitors?.map((competitor, index) => (
+                    <div key={index} className="grid grid-cols-4 gap-2 items-center p-2 border rounded">
+                      <Input
+                        placeholder="ASIN"
+                        value={competitor.asin}
+                        onChange={(e) => {
+                          const competitors = [...(opportunity.validation?.checklist?.competitiveLandscape?.competitors || [])];
+                          competitors[index] = { ...competitor, asin: e.target.value };
+                          updateValidation({
+                            checklist: {
+                              ...opportunity.validation?.checklist,
+                              competitiveLandscape: {
+                                ...opportunity.validation?.checklist?.competitiveLandscape,
+                                competitors
+                              }
+                            }
+                          });
+                        }}
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Price"
+                        value={competitor.price || ''}
+                        onChange={(e) => {
+                          const competitors = [...(opportunity.validation?.checklist?.competitiveLandscape?.competitors || [])];
+                          competitors[index] = { ...competitor, price: parseFloat(e.target.value) || 0 };
+                          updateValidation({
+                            checklist: {
+                              ...opportunity.validation?.checklist,
+                              competitiveLandscape: {
+                                ...opportunity.validation?.checklist?.competitiveLandscape,
+                                competitors
+                              }
+                            }
+                          });
+                        }}
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Reviews"
+                        value={competitor.reviews || ''}
+                        onChange={(e) => {
+                          const competitors = [...(opportunity.validation?.checklist?.competitiveLandscape?.competitors || [])];
+                          competitors[index] = { ...competitor, reviews: parseInt(e.target.value) || 0 };
+                          updateValidation({
+                            checklist: {
+                              ...opportunity.validation?.checklist,
+                              competitiveLandscape: {
+                                ...opportunity.validation?.checklist?.competitiveLandscape,
+                                competitors
+                              }
+                            }
+                          });
+                        }}
+                      />
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          const competitors = [...(opportunity.validation?.checklist?.competitiveLandscape?.competitors || [])];
+                          competitors.splice(index, 1);
+                          updateValidation({
+                            checklist: {
+                              ...opportunity.validation?.checklist,
+                              competitiveLandscape: {
+                                ...opportunity.validation?.checklist?.competitiveLandscape,
+                                competitors
+                              }
+                            }
+                          });
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div>
+                    <Label htmlFor="competitive-notes">Notes</Label>
+                    <Textarea
+                      id="competitive-notes"
+                      placeholder="Competitive analysis notes..."
+                      value={opportunity.validation?.checklist?.competitiveLandscape?.notes || ''}
+                      onChange={(e) => {
+                        updateValidation({
+                          checklist: {
+                            ...opportunity.validation?.checklist,
+                            competitiveLandscape: {
+                              ...opportunity.validation?.checklist?.competitiveLandscape,
+                              notes: e.target.value,
+                            }
+                          }
+                        });
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Differentiation Plan */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="differentiation-plan"
+                      checked={opportunity.validation?.checklist?.differentiationPlan?.completed || false}
+                      onCheckedChange={(checked) => {
+                        updateValidation({
+                          checklist: {
+                            ...opportunity.validation?.checklist,
+                            differentiationPlan: {
+                              ...opportunity.validation?.checklist?.differentiationPlan,
+                              completed: !!checked,
+                            }
+                          }
+                        });
+                      }}
+                    />
+                    <Label htmlFor="differentiation-plan" className="text-base font-medium">
+                      Differentiation Plan
+                    </Label>
+                  </div>
+                  <CardDescription>
+                    Bundle/design/material/branding; require at least 2 levers to mark complete
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Differentiation Levers</Label>
+                    {['Bundle', 'Design', 'Material', 'Branding', 'Price', 'Features'].map((lever) => (
+                      <div key={lever} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`lever-${lever}`}
+                          checked={opportunity.validation?.checklist?.differentiationPlan?.levers?.includes(lever) || false}
+                          onCheckedChange={(checked) => {
+                            const currentLevers = opportunity.validation?.checklist?.differentiationPlan?.levers || [];
+                            const newLevers = checked 
+                              ? [...currentLevers, lever]
+                              : currentLevers.filter(l => l !== lever);
+                            updateValidation({
+                              checklist: {
+                                ...opportunity.validation?.checklist,
+                                differentiationPlan: {
+                                  ...opportunity.validation?.checklist?.differentiationPlan,
+                                  levers: newLevers,
+                                }
+                              }
+                            });
+                          }}
+                        />
+                        <Label htmlFor={`lever-${lever}`}>{lever}</Label>
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <Label htmlFor="differentiation-notes">Notes</Label>
+                    <Textarea
+                      id="differentiation-notes"
+                      placeholder="Differentiation strategy notes..."
+                      value={opportunity.validation?.checklist?.differentiationPlan?.notes || ''}
+                      onChange={(e) => {
+                        updateValidation({
+                          checklist: {
+                            ...opportunity.validation?.checklist,
+                            differentiationPlan: {
+                              ...opportunity.validation?.checklist?.differentiationPlan,
+                              notes: e.target.value,
+                            }
+                          }
+                        });
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Operational Risks */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="operational-risks"
+                        checked={opportunity.validation?.checklist?.operationalRisks?.completed || false}
+                        onCheckedChange={(checked) => {
+                          updateValidation({
+                            checklist: {
+                              ...opportunity.validation?.checklist,
+                              operationalRisks: {
+                                ...opportunity.validation?.checklist?.operationalRisks,
+                                completed: !!checked,
+                              }
+                            }
+                          });
+                        }}
+                      />
+                      <Label htmlFor="operational-risks" className="text-base font-medium">
+                        Operational Risks
+                      </Label>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={applyToBarriers}
+                      disabled={!opportunity.validation?.checklist?.operationalRisks?.risks}
+                    >
+                      Apply to Barriers
+                    </Button>
+                  </div>
+                  <CardDescription>
+                    Barriers: tooling, certifications, hazmat/oversize/fragile/MOQ
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Risk Factors</Label>
+                    {['tooling', 'certifications', 'hazmat', 'oversize', 'fragile', 'moq'].map((risk) => (
+                      <div key={risk} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`risk-${risk}`}
+                          checked={opportunity.validation?.checklist?.operationalRisks?.risks?.[risk as keyof typeof opportunity.validation.checklist.operationalRisks.risks] || false}
+                          onCheckedChange={(checked) => {
+                            updateValidation({
+                              checklist: {
+                                ...opportunity.validation?.checklist,
+                                operationalRisks: {
+                                  ...opportunity.validation?.checklist?.operationalRisks,
+                                  risks: {
+                                    ...opportunity.validation?.checklist?.operationalRisks?.risks,
+                                    [risk]: !!checked,
+                                  }
+                                }
+                              }
+                            });
+                          }}
+                        />
+                        <Label htmlFor={`risk-${risk}`} className="capitalize">{risk}</Label>
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <Label htmlFor="operational-notes">Notes</Label>
+                    <Textarea
+                      id="operational-notes"
+                      placeholder="Operational risk notes..."
+                      value={opportunity.validation?.checklist?.operationalRisks?.notes || ''}
+                      onChange={(e) => {
+                        updateValidation({
+                          checklist: {
+                            ...opportunity.validation?.checklist,
+                            operationalRisks: {
+                              ...opportunity.validation?.checklist?.operationalRisks,
+                              notes: e.target.value,
+                            }
+                          }
+                        });
+                      }}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 

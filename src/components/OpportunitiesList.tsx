@@ -431,16 +431,11 @@ const OpportunitiesList = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setViewingChecklist(index)}
+                            onClick={() => navigate(`/opportunities/${opportunity.id}`)}
                             className="flex items-center space-x-2"
                           >
                             <ClipboardList className="w-4 h-4" />
-                            <span>Research Checklist</span>
-                            {opportunity.checklist && (
-                              <Badge variant="secondary" className="ml-1">
-                                {opportunity.checklist.completionRate}%
-                              </Badge>
-                            )}
+                            <span>View Details</span>
                             <ChevronRight className="w-4 h-4" />
                           </Button>
                           
