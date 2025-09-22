@@ -1,19 +1,32 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, FileText, TrendingUp } from "lucide-react";
+import { ArrowLeft, Plus, FileText, TrendingUp, Search, Filter, ArrowUpDown, ChevronUp, ChevronDown } from "lucide-react";
 import ScoringSystem from "@/components/ScoringSystem";
 import { AutoMappedProduct } from "@/lib/normalizeBlackBox";
 import { ProductWithKeywords } from "@/lib/matchKeyword";
+
+type SortField = 'title' | 'revenue' | 'price' | 'searchVolume' | 'reviewCount' | 'rating';
+type SortDirection = 'asc' | 'desc';
 
 const Score = () => {
   const [importedProducts, setImportedProducts] = useState<(AutoMappedProduct | ProductWithKeywords)[] | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<AutoMappedProduct | ProductWithKeywords | null>(null);
   const [hasImportedData, setHasImportedData] = useState(false);
+  
+  // Filtering and sorting state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [revenueFilter, setRevenueFilter] = useState("all");
+  const [keywordFilter, setKeywordFilter] = useState("all");
+  const [sortField, setSortField] = useState<SortField>('revenue');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -64,10 +77,99 @@ const Score = () => {
     setSelectedProduct(product);
     prepareProductForScoring(product);
     
-    // Force re-render of ScoringSystem by clearing and setting data
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
+    toast({
+      title: "Product Selected",
+      description: `Now configuring scoring for: ${product.productData.title}`,
+    });
+  };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  // Filter and sort products
+  const filteredAndSortedProducts = useMemo(() => {
+    if (!importedProducts) return [];
+
+    let filtered = importedProducts.filter(product => {
+      // Search filter
+      if (searchQuery && !product.productData.title.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+
+      // Revenue filter
+      if (revenueFilter !== "all") {
+        const revenue = product.productData.revenue || 0;
+        switch (revenueFilter) {
+          case "low": if (revenue >= 5000) return false; break;
+          case "medium": if (revenue < 5000 || revenue >= 15000) return false; break;
+          case "high": if (revenue < 15000) return false; break;
+        }
+      }
+
+      // Keyword filter
+      if (keywordFilter !== "all") {
+        const hasKeyword = !!(product as ProductWithKeywords).primaryKeyword;
+        if (keywordFilter === "with-keywords" && !hasKeyword) return false;
+        if (keywordFilter === "without-keywords" && hasKeyword) return false;
+      }
+
+      return true;
+    });
+
+    // Sort
+    filtered.sort((a, b) => {
+      let aValue: any, bValue: any;
+
+      switch (sortField) {
+        case 'title':
+          aValue = a.productData.title || '';
+          bValue = b.productData.title || '';
+          break;
+        case 'revenue':
+          aValue = a.productData.revenue || 0;
+          bValue = b.productData.revenue || 0;
+          break;
+        case 'price':
+          aValue = a.productData.price || 0;
+          bValue = b.productData.price || 0;
+          break;
+        case 'searchVolume':
+          aValue = (a as ProductWithKeywords).searchVolume || a.productData.searchVolume || 0;
+          bValue = (b as ProductWithKeywords).searchVolume || b.productData.searchVolume || 0;
+          break;
+        case 'reviewCount':
+          aValue = a.productData.reviewCount || 0;
+          bValue = b.productData.reviewCount || 0;
+          break;
+        case 'rating':
+          aValue = a.productData.rating || 0;
+          bValue = b.productData.rating || 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (typeof aValue === 'string') {
+        return sortDirection === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+
+      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+    });
+
+    return filtered;
+  }, [importedProducts, searchQuery, revenueFilter, keywordFilter, sortField, sortDirection]);
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
+    return sortDirection === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />;
   };
 
   const handleBackToImport = () => {
@@ -132,36 +234,182 @@ const Score = () => {
               Select Product to Score
             </CardTitle>
             <CardDescription>
-              Choose a product from your import to configure scoring criteria
+              Choose from your {importedProducts?.length || 0} imported products
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-64 overflow-y-auto">
-              {importedProducts?.map((product, index) => (
-                <Card 
-                  key={index}
-                  className={`cursor-pointer transition-colors hover:bg-muted/50 ${
-                    selectedProduct === product ? 'ring-2 ring-primary' : ''
-                  }`}
-                  onClick={() => handleProductSelect(product)}
-                >
-                  <CardContent className="p-4">
-                    <h4 className="font-medium text-sm mb-2 line-clamp-2">
-                      {product.productData.title || 'Unknown Product'}
-                    </h4>
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>${product.productData.revenue?.toLocaleString() || 0}/mo</span>
-                      <span>${product.productData.price || 0}</span>
-                    </div>
-                    {(product as ProductWithKeywords).primaryKeyword && (
-                      <Badge variant="outline" className="mt-2 text-xs">
-                        {(product as ProductWithKeywords).primaryKeyword}
-                      </Badge>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+            {/* Filters and Search */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              
+              <Select value={revenueFilter} onValueChange={setRevenueFilter}>
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue placeholder="Revenue" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Revenue</SelectItem>
+                  <SelectItem value="low">Under $5K</SelectItem>
+                  <SelectItem value="medium">$5K - $15K</SelectItem>
+                  <SelectItem value="high">$15K+</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={keywordFilter} onValueChange={setKeywordFilter}>
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue placeholder="Keywords" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Products</SelectItem>
+                  <SelectItem value="with-keywords">With Keywords</SelectItem>
+                  <SelectItem value="without-keywords">Without Keywords</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Badge variant="outline" className="flex items-center gap-1 px-3 py-2">
+                <Filter className="h-3 w-3" />
+                {filteredAndSortedProducts.length} shown
+              </Badge>
             </div>
+
+            {/* Product Table */}
+            <div className="rounded-md border max-h-96 overflow-auto">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background">
+                  <TableRow>
+                    <TableHead className="w-12">Image</TableHead>
+                    <TableHead className="min-w-64">
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => handleSort('title')}
+                        className="h-auto p-0 font-medium"
+                      >
+                        Product Title {getSortIcon('title')}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => handleSort('revenue')}
+                        className="h-auto p-0 font-medium"
+                      >
+                        Revenue {getSortIcon('revenue')}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => handleSort('price')}
+                        className="h-auto p-0 font-medium"
+                      >
+                        Price {getSortIcon('price')}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => handleSort('searchVolume')}
+                        className="h-auto p-0 font-medium"
+                      >
+                        Search Vol {getSortIcon('searchVolume')}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => handleSort('reviewCount')}
+                        className="h-auto p-0 font-medium"
+                      >
+                        Reviews {getSortIcon('reviewCount')}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => handleSort('rating')}
+                        className="h-auto p-0 font-medium"
+                      >
+                        Rating {getSortIcon('rating')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>Keywords</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAndSortedProducts.map((product, index) => {
+                    const isSelected = selectedProduct === product;
+                    const imageUrl = (product.rawData?.['Image URL'] || product.rawData?.['image url'] || '').trim();
+                    
+                    return (
+                      <TableRow 
+                        key={index}
+                        className={`cursor-pointer hover:bg-muted/50 ${isSelected ? 'bg-muted' : ''}`}
+                        onClick={() => handleProductSelect(product)}
+                      >
+                        <TableCell>
+                          <div className="w-10 h-10 rounded border bg-muted flex items-center justify-center overflow-hidden">
+                            {imageUrl ? (
+                              <img 
+                                src={imageUrl} 
+                                alt="Product"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = '/placeholder.svg';
+                                }}
+                              />
+                            ) : (
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          <div className="max-w-sm truncate" title={product.productData.title}>
+                            {product.productData.title || 'Unknown Product'}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          ${(product.productData.revenue || 0).toLocaleString()}/mo
+                        </TableCell>
+                        <TableCell className="text-right">
+                          ${(product.productData.price || 0).toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {((product as ProductWithKeywords).searchVolume || product.productData.searchVolume || 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {(product.productData.reviewCount || 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {product.productData.rating ? `${product.productData.rating}★` : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {(product as ProductWithKeywords).primaryKeyword ? (
+                            <Badge variant="secondary" className="text-xs">
+                              {(product as ProductWithKeywords).primaryKeyword}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">No keyword</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+
+            {filteredAndSortedProducts.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No products match your current filters
+              </div>
+            )}
           </CardContent>
         </Card>
 
