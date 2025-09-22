@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { getBadgeClass, getScoreClass, getProgressClass } from "@/utils/classMap";
 import { TrendingUp, Target, AlertCircle, CheckCircle } from "lucide-react";
 
 const Score = () => {
@@ -72,7 +73,7 @@ const Score = () => {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-2xl font-bold">{item.score}</span>
-                      <Badge variant={item.color === "success" ? "default" : item.color === "warning" ? "secondary" : "outline"}>
+                      <Badge className={getBadgeClass(item.color === "success" ? "proceed" : item.color === "warning" ? "gather-data" : "reject")}>
                         {item.status}
                       </Badge>
                     </div>

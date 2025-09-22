@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { safeParseLocalStorage, safeStringify } from './safeJson';
 
 export interface SavedOpportunity {
   id: string;
@@ -90,13 +91,16 @@ class OpportunityStorage {
   }
 
   private getSettings(): StorageSettings {
-    const stored = localStorage.getItem('app_settings');
-    return stored ? JSON.parse(stored) : { useSupabase: false };
+    return safeParseLocalStorage('app_settings', { useSupabase: false });
   }
 
   private saveSettings(settings: StorageSettings) {
     this.settings = settings;
-    localStorage.setItem('app_settings', JSON.stringify(settings));
+    try {
+      localStorage.setItem('app_settings', safeStringify(settings));
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+    }
   }
 
   async toggleStorage(useSupabase: boolean) {
@@ -154,14 +158,12 @@ class OpportunityStorage {
   }
 
   private getFromLocalStorage(): SavedOpportunity[] {
-    const stored = localStorage.getItem('saved_opportunities');
-    return stored ? JSON.parse(stored) : [];
+    return safeParseLocalStorage('saved_opportunities', []);
   }
 
   private deleteFromLocalStorage(id: string) {
-    const stored = localStorage.getItem('saved_opportunities');
-    if (stored) {
-      const opportunities: SavedOpportunity[] = JSON.parse(stored);
+    const opportunities: SavedOpportunity[] = safeParseLocalStorage('saved_opportunities', []);
+    if (opportunities.length > 0) {
       const filtered = opportunities.filter(op => op.id !== id);
       localStorage.setItem('saved_opportunities', JSON.stringify(filtered));
     }

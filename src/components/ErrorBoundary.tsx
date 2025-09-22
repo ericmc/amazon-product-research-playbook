@@ -29,6 +29,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   private handleReset = () => {
     this.setState({ hasError: false, error: undefined });
+    // Optionally reload the page for a fresh start
+    if (this.state.error?.message?.includes('ChunkLoadError')) {
+      window.location.reload();
+    }
   };
 
   public render() {

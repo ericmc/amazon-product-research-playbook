@@ -390,7 +390,7 @@ const OpportunitiesList = () => {
             <div className="flex gap-2">
               <div className="flex items-center gap-2">
                 <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-40" aria-label="Sort opportunities by">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

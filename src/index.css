@@ -156,24 +156,77 @@ All colors MUST be HSL.
     }
   }
 
-  /* Ensure print styles work in dark mode */
+  /* Comprehensive print styles */
   @media print {
+    /* Hide navigation and non-essential elements */
+    nav, header nav, .no-print, button:not(.print-keep) {
+      display: none !important;
+    }
+    
+    /* Force accurate colors */
     * {
       color-adjust: exact !important;
       -webkit-print-color-adjust: exact !important;
     }
     
+    /* Force light mode for print */
     .dark * {
       color: black !important;
       background: white !important;
+      border-color: #d1d5db !important;
     }
     
-    .dark .print\:text-black {
-      color: black !important;
+    /* Page layout for print */
+    body {
+      font-size: 12pt;
+      line-height: 1.4;
     }
     
-    .dark .print\:bg-white {
-      background: white !important;
+    /* Add page numbers and date */
+    @page {
+      margin: 1in;
+      @bottom-right {
+        content: "Page " counter(page);
+      }
+      @bottom-left {
+        content: "Generated: " date();
+      }
+    }
+    
+    /* Prevent awkward page breaks */
+    .avoid-break, .card, .opportunity-item {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    /* Keep tables together */
+    table, .table-container, .competitive-table {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    /* Headers before page breaks */
+    h1, h2, h3 {
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+    
+    /* Adjust margins for print */
+    .container {
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    
+    /* Remove shadows and rounded corners for cleaner print */
+    * {
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
+    
+    /* Ensure text is readable */
+    .text-muted-foreground {
+      color: #374151 !important;
     }
   }
 }
