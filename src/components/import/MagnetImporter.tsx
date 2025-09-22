@@ -5,21 +5,25 @@ import { Badge } from "@/components/ui/badge";
 import { Upload, TrendingUp, CheckCircle } from "lucide-react";
 import { AutoMappedProduct } from "@/lib/normalizeBlackBox";
 import { ProductWithKeywords } from "@/lib/matchKeyword";
+import { useToast } from "@/hooks/use-toast";
 
 interface MagnetImporterProps {
   products: AutoMappedProduct[];
   onEnriched: (enrichedProducts: ProductWithKeywords[]) => void;
   isProcessing: boolean;
   enrichmentSummary: {enriched: number, total: number, keywords: number} | null;
+  onParseWarnings?: (warnings: string[]) => void;
 }
 
 export const MagnetImporter: React.FC<MagnetImporterProps> = ({
   products,
   onEnriched,
   isProcessing,
-  enrichmentSummary
+  enrichmentSummary,
+  onParseWarnings
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -28,12 +32,37 @@ export const MagnetImporter: React.FC<MagnetImporterProps> = ({
         const { parseMagnetCSV } = await import('@/lib/parseMagnet');
         const { mergeMagnetWithProducts } = await import('@/lib/mergeMagnet');
         
-        const magnetData = await parseMagnetCSV(file);
-        const result = mergeMagnetWithProducts(products, magnetData);
+        const parseResult = await parseMagnetCSV(file);
         
+        if (!parseResult.success) {
+          toast({
+            title: "Import Failed",
+            description: parseResult.errors.join('. '),
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Show warnings if any
+        if (parseResult.warnings.length > 0) {
+          onParseWarnings?.(parseResult.warnings);
+          toast({
+            title: "Import Completed with Warnings",
+            description: `${parseResult.warnings.length} warnings found. Check the details below.`,
+            variant: "default"
+          });
+        }
+        
+        const result = mergeMagnetWithProducts(products, parseResult.data);
         onEnriched(result.products);
+        
       } catch (error) {
         console.error('Magnet import error:', error);
+        toast({
+          title: "Import Error",
+          description: error instanceof Error ? error.message : "Failed to process file",
+          variant: "destructive"
+        });
       }
     }
   };

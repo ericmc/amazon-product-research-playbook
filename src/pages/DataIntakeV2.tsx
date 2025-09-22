@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { FileCheck, ArrowRight, TrendingUp } from "lucide-react";
 import { BlackBoxImporter } from "@/components/import/BlackBoxImporter";
 import { MagnetImporter } from "@/components/import/MagnetImporter";
+import { KeywordReviewPanel } from "@/components/import/KeywordReviewPanel";
 import { parseCSVFile } from "@/lib/parseCsv";
 import { processBlackBoxData, AutoMappedProduct } from "@/lib/normalizeBlackBox";
 import { ProductWithKeywords } from "@/lib/matchKeyword";
@@ -16,6 +17,8 @@ const DataIntakeV2 = () => {
   const [enrichedProducts, setEnrichedProducts] = useState<ProductWithKeywords[] | null>(null);
   const [importSummary, setImportSummary] = useState<{count: number, revenueSource: string} | null>(null);
   const [enrichmentSummary, setEnrichmentSummary] = useState<{enriched: number, total: number, keywords: number} | null>(null);
+  const [parseWarnings, setParseWarnings] = useState<string[]>([]);
+  const [showReviewPanel, setShowReviewPanel] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   
   const navigate = useNavigate();
@@ -60,10 +63,20 @@ const DataIntakeV2 = () => {
       keywords: keywordCount
     });
 
+    // Auto-show review panel if we have enriched products
+    if (enrichedCount > 0) {
+      setShowReviewPanel(true);
+    }
+
     toast({
       title: "Keyword Enhancement Complete",
       description: `Enhanced ${enrichedCount} of ${enhanced.length} products with keyword data`
     });
+  };
+
+  const handleReviewComplete = (finalProducts: ProductWithKeywords[]) => {
+    setEnrichedProducts(finalProducts);
+    setShowReviewPanel(false);
   };
 
   const handleContinue = () => {
@@ -131,7 +144,7 @@ const DataIntakeV2 = () => {
         )}
 
         {/* Magnet/Cerebro Import */}
-        {products && (
+        {products && !showReviewPanel && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -148,9 +161,31 @@ const DataIntakeV2 = () => {
                 onEnriched={handleMagnetEnrichment}
                 isProcessing={isProcessing}
                 enrichmentSummary={enrichmentSummary}
+                onParseWarnings={setParseWarnings}
               />
+              
+              {/* Show warnings if any */}
+              {parseWarnings.length > 0 && (
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <h4 className="font-medium text-yellow-800 mb-2">Import Warnings:</h4>
+                  <ul className="text-sm text-yellow-700 space-y-1">
+                    {parseWarnings.map((warning, idx) => (
+                      <li key={idx}>• {warning}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </CardContent>
           </Card>
+        )}
+
+        {/* Keyword Review Panel */}
+        {showReviewPanel && enrichedProducts && (
+          <KeywordReviewPanel
+            products={enrichedProducts}
+            onProductsUpdate={handleReviewComplete}
+            onContinue={() => setShowReviewPanel(false)}
+          />
         )}
       </div>
     </div>
