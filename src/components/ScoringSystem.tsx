@@ -14,6 +14,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ExternalTools } from "@/components/ExternalTools";
 import { opportunityStorage, SavedOpportunity } from "@/utils/OpportunityStorage";
 import { useToast } from "@/hooks/use-toast";
+import { FusedCriterion, migrateLegacyCriterion, fuseValues, updateCriterionWithSourceData } from "@/utils/dataFusion";
+import ProvenancePopover from "@/components/ProvenancePopover";
+import VerifyBadge from "@/components/VerifyBadge";
 
 interface ScoringCriteria {
   id: string;
@@ -228,118 +231,149 @@ const defaultCriteria: ScoringCriteria[] = [
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
-const ScoringSystem = () => {
-  const [criteria, setCriteria] = useState<ScoringCriteria[]>(defaultCriteria);
+const ScoringSystemV2 = () => {
+  const [criteria, setCriteria] = useState<FusedCriterion[]>([]);
   const [productName, setProductName] = useState("Bamboo Kitchen Utensil Set");
   const [expandedGuidance, setExpandedGuidance] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
+  // Initialize with migrated legacy criteria
+  React.useEffect(() => {
+    const migrated = defaultCriteria.map(criterion => migrateLegacyCriterion(criterion));
+    setCriteria(migrated);
+  }, []);
+
   // Check for prefilled data from Data Intake
   React.useEffect(() => {
     const prefilledData = sessionStorage.getItem('prefilledScoringData');
-    if (prefilledData) {
+    if (prefilledData && criteria.length > 0) {
       const data = safeParse<any>(prefilledData, {});
       setProductName(data.productName || "");
       
       // Update criteria with imported values and source tracking
       setCriteria(prev => prev.map(criterion => {
-        let updatedCriterion = { ...criterion };
-        
         if (data[criterion.id] !== undefined) {
-          updatedCriterion.value = data[criterion.id];
-          updatedCriterion.source = data.source || 'manual';
+          return updateCriterionWithSourceData(
+            criterion,
+            data.source || 'manual',
+            data[criterion.id],
+            0.8,
+            'Imported from data intake'
+          );
         }
-        
-        return updatedCriterion;
+        return criterion;
       }));
       
       // Clear the session storage after use
       sessionStorage.removeItem('prefilledScoringData');
     }
-  }, []);
+  }, [criteria.length]);
 
-  const generateActionableSuggestion = (criterion: ScoringCriteria): string => {
+  const generateActionableSuggestion = (criterion: FusedCriterion): string => {
     const isInverted = criterion.isInverted || false;
+    const value = criterion.fusedValue;
     
     switch (criterion.id) {
       case 'revenue':
-        if (criterion.value < criterion.threshold) {
-          const needed = criterion.threshold - criterion.value;
-          return `Revenue $${criterion.value.toLocaleString()} → increase target market by $${Math.round(needed/1000)}K/mo or explore higher-priced variants`;
+        if (value < criterion.threshold) {
+          const needed = criterion.threshold - value;
+          return `Revenue $${value.toLocaleString()} → increase target market by $${Math.round(needed/1000)}K/mo or explore higher-priced variants`;
         }
-        return `Strong revenue potential at $${criterion.value.toLocaleString()}/month`;
+        return `Strong revenue potential at $${value.toLocaleString()}/month`;
         
       case 'demand':
-        if (criterion.value < criterion.threshold) {
-          const needed = criterion.threshold - criterion.value;
-          return `Search volume ${criterion.value} → research ${Math.round(needed/100)}+ additional related keywords or consider broader market`;
+        if (value < criterion.threshold) {
+          const needed = criterion.threshold - value;
+          return `Search volume ${value} → research ${Math.round(needed/100)}+ additional related keywords or consider broader market`;
         }
-        return `Solid demand with ${criterion.value.toLocaleString()} monthly searches`;
+        return `Solid demand with ${value.toLocaleString()} monthly searches`;
         
       case 'competition':
-        if (criterion.value > criterion.threshold) {
-          return `Competition ${criterion.value}% → focus on underserved sub-niches or improve differentiation strategy`;
+        if (value > criterion.threshold) {
+          return `Competition ${value}% → focus on underserved sub-niches or improve differentiation strategy`;
         }
-        return `Manageable competition at ${criterion.value}%`;
+        return `Manageable competition at ${value}%`;
         
       case 'margin':
-        if (criterion.value < criterion.threshold) {
-          const needed = criterion.threshold - criterion.value;
-          return `Margin ${criterion.value}% → test +$${Math.round(needed * 0.5)} price increase or reduce freight costs by $${(needed * 0.01).toFixed(2)}/unit`;
+        if (value < criterion.threshold) {
+          const needed = criterion.threshold - value;
+          return `Margin ${value}% → test +$${Math.round(needed * 0.5)} price increase or reduce freight costs by $${(needed * 0.01).toFixed(2)}/unit`;
         }
-        return `Healthy margins at ${criterion.value}%`;
+        return `Healthy margins at ${value}%`;
         
       case 'barriers':
-        if (criterion.value < criterion.threshold) {
-          return `Low barriers ${criterion.value}% → consider products requiring certifications, custom tooling, or specialized expertise`;
+        if (value < criterion.threshold) {
+          return `Low barriers ${value}% → consider products requiring certifications, custom tooling, or specialized expertise`;
         }
-        return `Good protective barriers at ${criterion.value}%`;
+        return `Good protective barriers at ${value}%`;
         
       case 'seasonality':
-        if (criterion.value > criterion.threshold) {
-          return `High seasonality ${criterion.value}% → plan inventory cycles or bundle with complementary year-round products`;
+        if (value > criterion.threshold) {
+          return `High seasonality ${value}% → plan inventory cycles or bundle with complementary year-round products`;
         }
-        return `Stable year-round demand (${criterion.value}% variation)`;
+        return `Stable year-round demand (${value}% variation)`;
         
       default:
         return 'Review and optimize this metric';
     }
   };
 
-  const getSourceLabel = (source?: string): string => {
-    switch (source) {
-      case 'jungle_scout': return 'JS';
-      case 'helium_10': return 'H10';
-      case 'amazon_poe': return 'POE';
-      case 'manual': return 'Manual';
-      default: return 'Manual';
+  const getSourceLabel = (criterion: FusedCriterion): string => {
+    const sources = Object.keys(criterion.bySource);
+    if (sources.length === 0) return 'Manual';
+    if (sources.length === 1) {
+      const source = sources[0];
+      switch (source) {
+        case 'jungle_scout': return 'JS';
+        case 'helium_10': return 'H10';
+        case 'amazon_poe': return 'POE';
+        case 'validation': return 'Val';
+        case 'manual': return 'Manual';
+        default: return 'Manual';
+      }
     }
+    return `${sources.length} sources`;
   };
 
   const evaluateGates = (): NextStepsAnalysis => {
     const gateResults: GateResult[] = criteria.map(criterion => {
       const isInverted = criterion.isInverted || false;
-      const normalizedValue = isInverted ? criterion.maxValue - criterion.value : criterion.value;
+      const value = criterion.fusedValue;
+      const normalizedValue = isInverted ? criterion.maxValue - value : value;
       const normalizedScore = (normalizedValue / criterion.maxValue) * 100;
       const weightedScore = (normalizedScore * criterion.weight) / 100;
       
+      // Use conservative fusion for gates when disagreement is high
+      let gateValue = value;
+      if (['margin', 'seasonality'].includes(criterion.id) && criterion.fusionMetadata.disagreementIndex > 20) {
+        const sources = Object.values(criterion.bySource).filter(s => s !== undefined);
+        if (sources.length > 1) {
+          const values = sources.map(s => s!.value);
+          if (isInverted) {
+            gateValue = Math.max(...values); // More conservative for inverted criteria
+          } else {
+            gateValue = Math.min(...values); // More conservative for normal criteria
+          }
+        }
+      }
+      
       let passes = false;
       if (isInverted) {
-        passes = criterion.value <= criterion.threshold;
+        passes = gateValue <= criterion.threshold;
       } else {
-        passes = criterion.value >= criterion.threshold;
+        passes = gateValue >= criterion.threshold;
       }
 
       return {
         id: criterion.id,
         name: criterion.name,
         passes,
-        currentValue: criterion.value,
+        currentValue: gateValue,
         threshold: criterion.threshold,
         normalizedScore,
         weightedScore,
-        source: getSourceLabel(criterion.source),
+        source: getSourceLabel(criterion),
         suggestion: generateActionableSuggestion(criterion)
       };
     });
@@ -382,7 +416,9 @@ const ScoringSystem = () => {
   const updateCriteriaValue = (id: string, value: number) => {
     setCriteria(prev => 
       prev.map(criterion => 
-        criterion.id === id ? { ...criterion, value } : criterion
+        criterion.id === id 
+          ? updateCriterionWithSourceData(criterion, 'manual', value, 0.9, 'User input')
+          : criterion
       )
     );
   };
@@ -393,7 +429,7 @@ const ScoringSystem = () => {
       const opportunity: SavedOpportunity = {
         id: crypto.randomUUID(),
         productName,
-        criteria,
+        criteria: criteria, // Store fused criteria
         finalScore,
         createdAt: new Date().toISOString(),
         status: 'scored',
@@ -425,7 +461,7 @@ const ScoringSystem = () => {
     return Math.round(
       criteria.reduce((sum, criterion) => {
         const isInverted = criterion.isInverted || false;
-        const normalizedValue = isInverted ? criterion.maxValue - criterion.value : criterion.value;
+        const normalizedValue = isInverted ? criterion.maxValue - criterion.fusedValue : criterion.fusedValue;
         const normalizedScore = (normalizedValue / criterion.maxValue) * 100;
         return sum + (normalizedScore * criterion.weight) / 100;
       }, 0)
@@ -442,340 +478,130 @@ const ScoringSystem = () => {
     } else if (score >= 60 && passedGates >= 2) {
       return { text: "Good", icon: TrendingUp, color: "warning" };
     } else {
-      return { text: "Poor", icon: AlertTriangle, color: "destructive" };
+      return { text: "Needs Work", icon: AlertTriangle, color: "destructive" };
     }
   };
 
   const finalScore = calculateScore();
   const recommendation = getRecommendation(finalScore);
-  const totalWeight = criteria.reduce((s, c) => s + c.weight, 0);
   const gateAnalysis = evaluateGates();
-  
-  const scoreColorMap = {
-    excellent: "bg-success text-success-foreground",
-    good: "bg-warning text-warning-foreground",
-    poor: "bg-destructive text-destructive-foreground"
-  };
-
-  const getScoreIntentClass = (score: number) => {
-    if (score >= 80) return scoreColorMap.excellent;
-    if (score >= 60) return scoreColorMap.good;
-    return scoreColorMap.poor;
-  };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center space-y-4">
-        <h2 className="text-3xl font-bold text-foreground">Product Scoring System</h2>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Quantitative framework to score and rank product opportunities
-        </p>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Scoring Criteria */}
-        <div className="lg:col-span-2 space-y-4">
+    <div className="container max-w-6xl mx-auto px-4 py-8">
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Left column - Criteria */}
+        <div className="lg:w-2/3 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Calculator className="w-5 h-5 text-primary" />
-                <span>Product Analysis</span>
-              </CardTitle>
-              <CardDescription>
-                Adjust the values based on your research data
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calculator className="h-5 w-5" />
+                    Scoring System
+                  </CardTitle>
+                  <CardDescription>
+                    Multi-source data fusion with provenance tracking
+                  </CardDescription>
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  V2 Fusion
+                </Badge>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label htmlFor="product-name" className="text-sm font-medium text-foreground">Product Name</label>
-                <Input 
+            
+            <CardContent className="space-y-6">
+              {/* Product Name */}
+              <div className="space-y-2">
+                <label htmlFor="product-name" className="text-sm font-medium">
+                  Product Name
+                </label>
+                <Input
                   id="product-name"
                   value={productName}
                   onChange={(e) => setProductName(e.target.value)}
-                  className="mt-1"
-                  aria-describedby="product-name-description"
+                  placeholder="Enter product name..."
                 />
               </div>
-            </CardContent>
-          </Card>
 
-          {criteria.map((criterion) => {
-            const isInverted = criterion.isInverted || false;
-            const normalizedValue = isInverted ? criterion.maxValue - criterion.value : criterion.value;
-            const percentage = (normalizedValue / criterion.maxValue) * 100;
-            const meetsThreshold = isInverted ? criterion.value <= criterion.threshold : criterion.value >= criterion.threshold;
+              <Separator />
 
-            return (
-              <Card key={criterion.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      {criterion.name}
-                      <span className="text-sm text-muted-foreground font-normal">({criterion.unit})</span>
-                      {criterion.id === 'margin' && (
-                        <HelpTooltip
-                          title="Profit Margin Formula"
-                          content="Profit Margin % = (Selling Price - All Costs) / Selling Price × 100. Include: COGS, FBA fees, freight, duties, Amazon referral fee (15%), storage, returns, and PPC costs. Aim for 30%+ for sustainability."
-                          helpLink="/help#profitability"
-                          helpLinkText="See detailed calculation guide"
-                          size="sm"
-                        />
-                      )}
-                    </CardTitle>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={meetsThreshold ? "default" : "destructive"}>
-                        {criterion.weight}% weight
-                      </Badge>
-                      {criterion.source && (
-                        <Badge variant="outline" className="text-xs">
-                          {getSourceLabel(criterion.source)}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <CardDescription id={`${criterion.id}-description`}>{criterion.description}</CardDescription>
-                  
-                  {/* Guidance Toggle */}
-                  <Collapsible 
-                    open={expandedGuidance === criterion.id} 
-                    onOpenChange={() => setExpandedGuidance(expandedGuidance === criterion.id ? '' : criterion.id)}
-                  >
-                    <CollapsibleTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="w-fit p-0 h-auto text-xs text-primary hover:text-primary/80"
-                      >
-                        <HelpCircle className="w-3 h-3 mr-1" />
-                        <span>How do I fill this?</span>
-                        {expandedGuidance === criterion.id ? (
-                          <ChevronUp className="w-3 h-3 ml-1" />
-                        ) : (
-                          <ChevronDown className="w-3 h-3 ml-1" />
-                        )}
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="mt-3">
-                      <Card className="bg-muted/30">
-                        <CardContent className="p-4 space-y-4">
-                          {/* Overview */}
-                          <div>
-                            <p className="text-sm text-foreground">{criterion.guidance.overview}</p>
-                          </div>
-
-                          <Separator />
-
-                          {/* Steps by Tool */}
-                          <div className="space-y-3">
-                            <h5 className="text-sm font-medium">Step-by-Step Instructions</h5>
-                            {criterion.guidance.steps.map((step, index) => (
-                              <div key={index} className="space-y-1">
-                                <div className="flex items-start space-x-2">
-                                  <Badge variant="outline" className="text-xs min-w-fit">
-                                    {step.tool}
-                                  </Badge>
-                                  <p className="text-xs text-foreground">{step.instruction}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-
-                          <Separator />
-
-                          {/* Pro Tips */}
-                          <div className="space-y-2">
-                            <h5 className="text-sm font-medium">💡 Pro Tips</h5>
-                            <div className="space-y-1">
-                              {criterion.guidance.tips.map((tip, index) => (
-                                <p key={index} className="text-xs text-muted-foreground">
-                                  • {tip}
-                                </p>
-                              ))}
-                            </div>
-                          </div>
-
-                          <Separator />
-
-                          {/* Examples */}
-                          <div className="space-y-2">
-                            <h5 className="text-sm font-medium">📋 Examples</h5>
-                            <div className="space-y-1">
-                              {criterion.guidance.examples.map((example, index) => (
-                                <p key={index} className="text-xs text-muted-foreground font-mono bg-muted/50 p-2 rounded">
-                                  {example}
-                                </p>
-                              ))}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-4">
-                    <Input
-                      type="number"
-                      value={criterion.value}
-                      onChange={(e) => updateCriteriaValue(criterion.id, clamp(Number(e.target.value), 0, criterion.maxValue))}
-                      className="w-32"
-                      aria-label={`${criterion.name} value`}
-                      aria-describedby={`${criterion.id}-description`}
-                    />
-                    <div className="flex-1">
-                      <Slider
-                        value={[criterion.value]}
-                        onValueChange={(value) => updateCriteriaValue(criterion.id, value[0])}
-                        max={criterion.maxValue}
-                        step={criterion.id === 'revenue' ? 1000 : 1}
-                        className="flex-1"
-                        aria-label={`${criterion.name} slider`}
-                        aria-describedby={`${criterion.id}-description`}
-                      />
-                    </div>
-                    <div className="text-sm text-muted-foreground w-20">
-                      0 - {criterion.maxValue.toLocaleString()}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Threshold: {criterion.threshold.toLocaleString()}
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <Progress value={percentage} className="w-20" />
-                      <span className="text-sm font-medium">
-                        {Math.round(percentage)}%
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Score Summary */}
-        <div className="space-y-6">
-          {/* External Tools */}
-          <ExternalTools 
-            productName={productName}
-            context="scoring"
-          />
-          
-          <Card>
-            <CardHeader className="text-center">
-              <CardTitle>Overall Score</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center space-y-4">
-              {totalWeight !== 100 && (
-                <p className="text-sm text-amber-600">Heads up: weights sum to {totalWeight}. Consider adjusting to 100 for a true % score.</p>
-              )}
-              <div className="text-6xl font-bold text-foreground">{finalScore}</div>
-              <Progress value={finalScore} className="w-full" />
-              <Badge 
-                className={cn("text-lg px-4 py-2", getScoreIntentClass(finalScore))}
-              >
-                {finalScore >= 80 ? "Excellent" : finalScore >= 60 ? "Good" : "Poor"}
-              </Badge>
-            </CardContent>
-          </Card>
-
-          {/* Gate Analysis & Next Steps */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <CheckCircle className="w-5 h-5 text-foreground" />
-                <span>Gate Analysis & Next Steps</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Overall Status */}
-              <div className={cn(
-                "p-4 rounded-lg border-2",
-                gateAnalysis.overallStatus === 'strong' ? 'bg-success/10 border-success' :
-                gateAnalysis.overallStatus === 'moderate' ? 'bg-warning/10 border-warning' :
-                'bg-destructive/10 border-destructive'
-              )}>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium">
-                    {gateAnalysis.overallStatus === 'strong' ? '🎯 Strong Opportunity' :
-                     gateAnalysis.overallStatus === 'moderate' ? '⚠️ Moderate Opportunity' :
-                     '❌ Weak Opportunity'}
-                  </h4>
-                  <Badge variant={
-                    gateAnalysis.overallStatus === 'strong' ? 'default' :
-                    gateAnalysis.overallStatus === 'moderate' ? 'secondary' : 'destructive'
-                  }>
-                    {gateAnalysis.gateResults.filter(g => g.passes).length}/{gateAnalysis.gateResults.length} Gates Passed
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  {gateAnalysis.recommendedActions.map((action, index) => (
-                    <p key={index} className="text-sm">{action}</p>
-                  ))}
-                </div>
-              </div>
-
-              {/* Gate Results */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <h5 className="font-medium">Criteria Gate Status</h5>
-                  <HelpTooltip
-                    title="Scoring Gates"
-                    content="Gates are minimum thresholds each criterion must pass. Revenue ≥ $50k, Competition ≤ 70, Demand ≥ 60, Profitability ≥ 30%. Products must pass at least 3/4 gates to be considered viable."
-                    helpLink="/help#scoring-gates"
-                    helpLinkText="Learn about gate thresholds"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  {gateAnalysis.gateResults.map((gate) => (
-                    <div key={gate.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        {gate.passes ? (
-                          <CheckCircle className="w-4 h-4 text-success" />
-                        ) : (
-                          <AlertCircle className="w-4 h-4 text-destructive" />
-                        )}
-                        <div>
-                          <span className="text-sm font-medium">{gate.name}</span>
-                          <div className="flex items-center space-x-2">
-                            <Badge variant="outline" className="text-xs">
-                              {gate.source}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {gate.currentValue} {gate.passes ? '≥' : '<'} {gate.threshold}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <Badge variant={gate.passes ? "default" : "destructive"} className="text-xs">
-                        {Math.round(gate.weightedScore)}/25
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Weakest Criteria Focus */}
-              <div className="space-y-3">
-                <h5 className="font-medium">🎯 Top 2 Improvement Areas</h5>
-                {gateAnalysis.weakestCriteria.map((weak, index) => (
-                  <Card key={weak.id} className="bg-muted/30">
+              {/* Criteria */}
+              <div className="space-y-4">
+                {criteria.map((criterion) => (
+                  <Card key={criterion.id} className="relative">
                     <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="outline">{index + 1}</Badge>
-                          <span className="font-medium">{weak.name}</span>
-                          <Badge variant="secondary" className="text-xs">{weak.source}</Badge>
+                      <div className="space-y-4">
+                        {/* Header */}
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-medium">{criterion.name}</h4>
+                              <Badge variant="secondary" className="text-xs">
+                                {criterion.weight}%
+                              </Badge>
+                              <ProvenancePopover criterion={criterion} />
+                              <VerifyBadge disagreementIndex={criterion.fusionMetadata.disagreementIndex} />
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {criterion.description}
+                            </p>
+                          </div>
+                          
+                          <div className="text-right">
+                            <div className="text-lg font-semibold">
+                              {criterion.unit === '%' && `${criterion.fusedValue}%`}
+                              {criterion.unit === 'USD' && `$${criterion.fusedValue.toLocaleString()}`}
+                              {criterion.unit === 'searches' && criterion.fusedValue.toLocaleString()}
+                              {!['%', 'USD', 'searches'].includes(criterion.unit) && `${criterion.fusedValue}${criterion.unit}`}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {getSourceLabel(criterion)}
+                            </div>
+                          </div>
                         </div>
-                        <Badge variant="destructive" className="text-xs">
-                          {Math.round(weak.weightedScore)}/25 pts
-                        </Badge>
+
+                        {/* Slider */}
+                        <div className="space-y-2">
+                          <Slider
+                            value={[criterion.fusedValue]}
+                            onValueChange={([value]) => updateCriteriaValue(criterion.id, value)}
+                            max={criterion.maxValue}
+                            step={criterion.unit === '%' ? 1 : criterion.maxValue / 100}
+                            className="flex-1"
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>0{criterion.unit}</span>
+                            <span>{criterion.maxValue}{criterion.unit}</span>
+                          </div>
+                        </div>
+
+                        {/* Guidance Toggle */}
+                        <Collapsible open={expandedGuidance === criterion.id} onOpenChange={(open) => setExpandedGuidance(open ? criterion.id : '')}>
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="sm" className="w-full justify-between">
+                              <span className="flex items-center gap-2">
+                                <HelpCircle className="h-4 w-4" />
+                                Research Guidance
+                              </span>
+                              {expandedGuidance === criterion.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </Button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="space-y-4 pt-4">
+                            <div className="p-3 bg-muted/50 rounded-lg">
+                              <p className="text-sm mb-3">{criterion.guidance.overview}</p>
+                              
+                              <div className="space-y-2">
+                                <h6 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Research Steps</h6>
+                                {criterion.guidance.steps.map((step, i) => (
+                                  <div key={i} className="text-xs">
+                                    <span className="font-medium text-primary">{step.tool}:</span> {step.instruction}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
                       </div>
-                      <p className="text-sm text-foreground bg-background p-3 rounded border-l-4 border-primary">
-                        💡 {weak.suggestion}
-                      </p>
                     </CardContent>
                   </Card>
                 ))}
@@ -783,95 +609,104 @@ const ScoringSystem = () => {
             </CardContent>
           </Card>
 
+          {/* External Tools */}
+          <ExternalTools />
+        </div>
+
+        {/* Right column - Results */}
+        <div className="lg:w-1/3 space-y-6">
+          {/* Score Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                {(() => {
-                  const Icon = recommendation.icon;
-                  return <Icon className="w-5 h-5 text-foreground" />;
-                })()}
-                <span>Recommendation</span>
+              <CardTitle className="flex items-center gap-2">
+                <recommendation.icon className="h-5 w-5" />
+                Overall Score
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                {recommendation.text}
-              </p>
-              
-              <div className="space-y-2">
-                <h4 className="font-medium text-foreground">Next Steps:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  {finalScore >= 80 ? (
-                    <>
-                      <li>• Proceed to competitive analysis</li>
-                      <li>• Research top competitors</li>
-                      <li>• Analyze keyword gaps</li>
-                    </>
-                  ) : finalScore >= 60 ? (
-                    <>
-                      <li>• Review weak criteria</li>
-                      <li>• Gather more data</li>
-                      <li>• Consider improvements</li>
-                    </>
-                  ) : (
-                    <>
-                      <li>• Find alternative products</li>
-                      <li>• Reassess market selection</li>
-                      <li>• Review search criteria</li>
-                    </>
-                  )}
-                </ul>
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-primary mb-2">
+                    {finalScore}
+                  </div>
+                  <Badge 
+                    variant={recommendation.color === "success" ? "default" : recommendation.color === "warning" ? "secondary" : "destructive"}
+                    className="text-sm"
+                  >
+                    {recommendation.text}
+                  </Badge>
+                </div>
+
+                <Progress value={finalScore} className="h-2" />
+
+                <div className="text-center">
+                  <Button 
+                    onClick={saveOpportunity}
+                    disabled={isSaving}
+                    className="w-full"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {isSaving ? "Saving..." : "Save Opportunity"}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
 
+          {/* Gate Analysis */}
           <Card>
             <CardHeader>
-              <CardTitle>Criteria Breakdown</CardTitle>
+              <CardTitle>Gate Analysis</CardTitle>
+              <CardDescription>
+                {gateAnalysis.gateResults.filter(g => g.passes).length} of {gateAnalysis.gateResults.length} gates passed
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {criteria.map((criterion) => {
-                const normalizedValue = ['competition', 'barriers', 'seasonality'].includes(criterion.id) 
-                  ? criterion.maxValue - criterion.value
-                  : criterion.value;
-                const percentage = (normalizedValue / criterion.maxValue) * 100;
-                const weightedScore = (percentage * criterion.weight) / 100;
-                
-                return (
-                  <div key={criterion.id} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-foreground">{criterion.name}</span>
-                      <span className="font-medium">{Math.round(weightedScore)}</span>
+            <CardContent>
+              <div className="space-y-3">
+                {gateAnalysis.gateResults.map((gate) => (
+                  <div key={gate.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {gate.passes ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                      )}
+                      <span className="text-sm font-medium">{gate.name}</span>
                     </div>
-                    <Progress value={percentage} className="h-2" />
+                    <div className="text-right text-xs">
+                      <div className={gate.passes ? "text-green-600" : "text-red-600"}>
+                        {gate.currentValue.toLocaleString()}
+                      </div>
+                      <div className="text-muted-foreground">
+                        vs {gate.threshold.toLocaleString()}
+                      </div>
+                    </div>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </CardContent>
           </Card>
 
-          <Button 
-            className="w-full" 
-            size="lg" 
-            onClick={saveOpportunity}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <>
-                <div className="w-4 h-4 mr-2 animate-spin border-2 border-current border-t-transparent rounded-full" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Save Opportunity
-              </>
-            )}
-          </Button>
+          {/* Recommendations */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Next Steps</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {gateAnalysis.recommendedActions.map((action, i) => (
+                  <div key={i} className="text-sm flex items-start gap-2">
+                    <span className="text-muted-foreground">{i + 1}.</span>
+                    <span>{action}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   );
 };
 
-export default ScoringSystem;
+export default ScoringSystemV2;
