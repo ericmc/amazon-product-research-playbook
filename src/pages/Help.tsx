@@ -50,12 +50,22 @@ const Help = () => {
   // Load help content
   useEffect(() => {
     fetch("/src/content/help.md")
-      .then(response => response.text())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.text();
+      })
       .then(content => {
+        // Basic content validation
+        if (typeof content !== 'string' || content.trim().length === 0) {
+          throw new Error('Invalid content format');
+        }
         setHelpContent(content);
         parseContentSections(content);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.warn('Failed to load help content:', error);
         // Fallback content if file can't be loaded
         const fallbackContent = `# Help
 

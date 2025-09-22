@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Calculator, TrendingUp, AlertTriangle, CheckCircle, HelpCircle, ChevronDown, ChevronUp, AlertCircle, Save } from "lucide-react";
 import { HelpTooltip } from "@/components/HelpTooltip";
+import { safeParse } from "@/utils/safeJson";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ExternalTools } from "@/components/ExternalTools";
 import { opportunityStorage, SavedOpportunity } from "@/utils/OpportunityStorage";
@@ -238,27 +239,23 @@ const ScoringSystem = () => {
   React.useEffect(() => {
     const prefilledData = sessionStorage.getItem('prefilledScoringData');
     if (prefilledData) {
-      try {
-        const data = JSON.parse(prefilledData);
-        setProductName(data.productName || "");
+      const data = safeParse<any>(prefilledData, {});
+      setProductName(data.productName || "");
+      
+      // Update criteria with imported values and source tracking
+      setCriteria(prev => prev.map(criterion => {
+        let updatedCriterion = { ...criterion };
         
-        // Update criteria with imported values and source tracking
-        setCriteria(prev => prev.map(criterion => {
-          let updatedCriterion = { ...criterion };
-          
-          if (data[criterion.id] !== undefined) {
-            updatedCriterion.value = data[criterion.id];
-            updatedCriterion.source = data.source || 'manual';
-          }
-          
-          return updatedCriterion;
-        }));
+        if (data[criterion.id] !== undefined) {
+          updatedCriterion.value = data[criterion.id];
+          updatedCriterion.source = data.source || 'manual';
+        }
         
-        // Clear the session storage after use
-        sessionStorage.removeItem('prefilledScoringData');
-      } catch (error) {
-        console.error('Error parsing prefilled data:', error);
-      }
+        return updatedCriterion;
+      }));
+      
+      // Clear the session storage after use
+      sessionStorage.removeItem('prefilledScoringData');
     }
   }, []);
 
