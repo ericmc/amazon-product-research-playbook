@@ -79,6 +79,12 @@ export function lockApp(): void {
 
 // Verify password against stored hash
 export async function verifyPassword(password: string): Promise<boolean> {
+  // Plaintext password fallback (for immediate access / simple setups)
+  const plain = import.meta.env.VITE_APP_LOCK_PASSWORD as string | undefined;
+  if (plain && typeof plain === 'string') {
+    return password === plain;
+  }
+
   const { hash, salt } = getAppLockCredentials();
   
   if (!hash || !salt) {
