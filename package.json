@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@axe-core/react": "^4.10.2",
+    "@floating-ui/react": "^0.27.16",
     "@hookform/resolvers": "^3.10.0",
     "@playwright/test": "^1.55.0",
     "@radix-ui/react-accordion": "^1.2.11",

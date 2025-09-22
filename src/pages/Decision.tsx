@@ -247,7 +247,7 @@ const Decision = () => {
               Choose the recommended path forward for this opportunity
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent data-tour="btn-decision">
             <RadioGroup 
               value={selectedBranch} 
               onValueChange={(value) => setSelectedBranch(value as any)}
@@ -343,7 +343,7 @@ const Decision = () => {
               </div>
               <div className="pt-4">
                 <Link to={`/opportunities/${id}/packet`}>
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full" data-tour="btn-packet">
                     Generate Sourcing Packet
                   </Button>
                 </Link>

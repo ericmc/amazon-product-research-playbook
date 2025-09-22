@@ -249,7 +249,7 @@ const OpportunityDetail = () => {
         <Tabs defaultValue="validation" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="validation">Validation</TabsTrigger>
+            <TabsTrigger value="validation" data-tour="tab-validation">Validation</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 

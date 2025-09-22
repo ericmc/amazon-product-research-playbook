@@ -3,10 +3,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Navigation } from "./components/Navigation";
 import Footer from "./components/Footer";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ProductTour, useTour } from "./components/ProductTour";
+import { FirstRunPrompt } from "./components/FirstRunPrompt";
 import Score from "./pages/Score";
 import Opportunities from "./pages/Opportunities";
 import OpportunityDetail from "./pages/OpportunityDetail";
@@ -27,62 +29,99 @@ if (import.meta.env.DEV) {
 
 const queryClient = new QueryClient();
 
+const AppContent = () => {
+  const { isOpen, hasSeenTour, startTour, closeTour, completeTour } = useTour();
+
+  // Show first-run prompt for new users
+  useEffect(() => {
+    if (!hasSeenTour) {
+      const timer = setTimeout(() => {
+        // Only show if user hasn't already started the tour
+        const tourElement = document.querySelector('[data-tour]');
+        if (tourElement && !isOpen) {
+          // Show first-run prompt after a delay
+        }
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasSeenTour, isOpen]);
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <header>
+        <Navigation />
+      </header>
+      <main id="main-content" className="flex-1" tabIndex={-1}>
+        <Routes>
+          <Route path="/" element={<Score />} />
+          <Route path="/score" element={<Score />} />
+          <Route path="/opportunities" element={<Opportunities />} />
+          <Route path="/opportunities/:id" element={<OpportunityDetail />} />
+          <Route path="/opportunities/:id/decision" element={<Decision />} />
+          <Route 
+            path="/opportunities/:id/packet" 
+            element={
+              <ErrorBoundary fallbackTitle="Sourcing Packet Error">
+                <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]">Loading...</div>}>
+                  <SourcingPacket />
+                </Suspense>
+              </ErrorBoundary>
+            } 
+          />
+          <Route 
+            path="/import" 
+            element={
+              <ErrorBoundary fallbackTitle="Import Error" fallbackMessage="There was a problem with the import feature. Please check your data and try again.">
+                <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]">Loading...</div>}>
+                  <Import />
+                </Suspense>
+              </ErrorBoundary>
+            } 
+          />
+          <Route path="/integrations" element={<Integrations />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route 
+            path="/help" 
+            element={
+              <ErrorBoundary fallbackTitle="Help Error">
+                <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]">Loading help...</div>}>
+                  <Help />
+                </Suspense>
+              </ErrorBoundary>
+            } 
+          />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+      <footer>
+        <Footer />
+      </footer>
+
+      {/* Product Tour */}
+      <ProductTour 
+        isOpen={isOpen}
+        onClose={closeTour}
+        onComplete={completeTour}
+      />
+
+      {/* First Run Prompt */}
+      {!hasSeenTour && !isOpen && (
+        <FirstRunPrompt
+          onStartTour={startTour}
+          onDismiss={completeTour}
+        />
+      )}
+    </div>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <div className="min-h-screen flex flex-col">
-          <header>
-            <Navigation />
-          </header>
-          <main id="main-content" className="flex-1" tabIndex={-1}>
-            <Routes>
-              <Route path="/" element={<Score />} />
-              <Route path="/score" element={<Score />} />
-              <Route path="/opportunities" element={<Opportunities />} />
-              <Route path="/opportunities/:id" element={<OpportunityDetail />} />
-              <Route path="/opportunities/:id/decision" element={<Decision />} />
-              <Route 
-                path="/opportunities/:id/packet" 
-                element={
-                  <ErrorBoundary fallbackTitle="Sourcing Packet Error">
-                    <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]">Loading...</div>}>
-                      <SourcingPacket />
-                    </Suspense>
-                  </ErrorBoundary>
-                } 
-              />
-              <Route 
-                path="/import" 
-                element={
-                  <ErrorBoundary fallbackTitle="Import Error" fallbackMessage="There was a problem with the import feature. Please check your data and try again.">
-                    <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]">Loading...</div>}>
-                      <Import />
-                    </Suspense>
-                  </ErrorBoundary>
-                } 
-              />
-              <Route path="/integrations" element={<Integrations />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route 
-                path="/help" 
-                element={
-                  <ErrorBoundary fallbackTitle="Help Error">
-                    <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]">Loading help...</div>}>
-                      <Help />
-                    </Suspense>
-                  </ErrorBoundary>
-                } 
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <footer>
-            <Footer />
-          </footer>
-        </div>
+        <AppContent />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -15,10 +15,10 @@ import {
 } from "lucide-react";
 
 const navigationItems = [
-  { name: "Score", href: "/score", icon: BarChart3 },
-  { name: "Opportunities", href: "/opportunities", icon: Database },
-  { name: "Import", href: "/import", icon: Upload },
-  { name: "Integrations", href: "/integrations", icon: Puzzle },
+  { name: "Score", href: "/score", icon: BarChart3, tour: "nav-score" },
+  { name: "Opportunities", href: "/opportunities", icon: Database, tour: "nav-opportunities" },
+  { name: "Import", href: "/import", icon: Upload, tour: "nav-import" },
+  { name: "Integrations", href: "/integrations", icon: Puzzle, tour: "nav-integrations" },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -50,6 +50,7 @@ export const Navigation = () => {
                   <Link
                     key={item.name}
                     to={item.href}
+                    data-tour={item.tour}
                     className={cn(
                       "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
                       isActive
@@ -118,6 +119,7 @@ export const Navigation = () => {
                     <Link
                       key={item.name}
                       to={item.href}
+                      data-tour={item.tour}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className={cn(
                         "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",

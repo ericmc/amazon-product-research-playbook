@@ -345,7 +345,7 @@ const OpportunitiesList = () => {
               {selectedIds.size >= 2 && selectedIds.size <= 3 && (
                 <Dialog open={showCompareModal} onOpenChange={setShowCompareModal}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" data-tour="btn-compare">
                       <GitCompare className="w-4 h-4 mr-2" />
                       Compare ({selectedIds.size})
                     </Button>
