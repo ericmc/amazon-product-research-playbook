@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { safeParseLocalStorage } from "@/utils/safeJson";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -247,16 +248,11 @@ export const QuickTutorial = ({ isOpen, onClose, onComplete, initialStep = 1 }: 
   // Load progress from localStorage
   useEffect(() => {
     if (isOpen) {
-      const savedProgress = localStorage.getItem('quickTutorialStep');
-      const savedCompleted = localStorage.getItem('quickTutorialCompleted');
+      const savedProgress = safeParseLocalStorage('quickTutorialStep', 1);
+      const savedCompleted = safeParseLocalStorage('quickTutorialCompleted', []);
       
-      if (savedProgress) {
-        setCurrentStep(parseInt(savedProgress));
-      }
-      
-      if (savedCompleted) {
-        setCompletedSteps(new Set(JSON.parse(savedCompleted)));
-      }
+      setCurrentStep(savedProgress);
+      setCompletedSteps(new Set(Array.isArray(savedCompleted) ? savedCompleted : []));
     }
   }, [isOpen]);
 
@@ -567,7 +563,7 @@ export const useQuickTutorial = () => {
   const [hasSeenTutorial, setHasSeenTutorial] = useState(false);
 
   useEffect(() => {
-    const seen = localStorage.getItem('hasSeenQuickTutorial') === 'true';
+    const seen = safeParseLocalStorage('hasSeenQuickTutorial', false);
     setHasSeenTutorial(seen);
   }, []);
 

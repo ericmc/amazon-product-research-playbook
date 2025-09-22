@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { safeParseLocalStorage } from "@/utils/safeJson";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -370,7 +371,7 @@ export const useTour = () => {
   const [hasSeenTour, setHasSeenTour] = useState(false);
 
   useEffect(() => {
-    const seen = localStorage.getItem('hasSeenTour') === 'true';
+    const seen = safeParseLocalStorage('hasSeenTour', false);
     setHasSeenTour(seen);
   }, []);
 

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { safeParseLocalStorage, safeStringify } from "@/utils/safeJson";
 import { 
   Search, 
   FileText, 
@@ -79,15 +80,17 @@ For more detailed information, please refer to the documentation.`;
 
   // Load expanded sections from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem("help-expanded-sections");
-    if (saved) {
-      setExpandedSections(new Set(JSON.parse(saved)));
-    }
+    const saved = safeParseLocalStorage("help-expanded-sections", []);
+    setExpandedSections(new Set(Array.isArray(saved) ? saved : []));
   }, []);
 
   // Save expanded sections to localStorage
   useEffect(() => {
-    localStorage.setItem("help-expanded-sections", JSON.stringify(Array.from(expandedSections)));
+    try {
+      localStorage.setItem("help-expanded-sections", safeStringify(Array.from(expandedSections)));
+    } catch (error) {
+      console.warn('Failed to save help preferences:', error);
+    }
   }, [expandedSections]);
 
   // Parse markdown content into sections

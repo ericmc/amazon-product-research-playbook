@@ -144,8 +144,7 @@ class OpportunityStorage {
 
   // localStorage methods
   private saveToLocalStorage(opportunity: SavedOpportunity) {
-    const stored = localStorage.getItem('saved_opportunities');
-    const opportunities: SavedOpportunity[] = stored ? JSON.parse(stored) : [];
+    const opportunities: SavedOpportunity[] = safeParseLocalStorage('saved_opportunities', []);
     
     const existingIndex = opportunities.findIndex(op => op.id === opportunity.id);
     if (existingIndex >= 0) {
@@ -154,7 +153,12 @@ class OpportunityStorage {
       opportunities.push(opportunity);
     }
     
-    localStorage.setItem('saved_opportunities', JSON.stringify(opportunities));
+    try {
+      localStorage.setItem('saved_opportunities', safeStringify(opportunities));
+    } catch (error) {
+      console.error('Failed to save opportunity:', error);
+      throw new Error('Unable to save opportunity. Storage may be full.');
+    }
   }
 
   private getFromLocalStorage(): SavedOpportunity[] {
@@ -165,7 +169,12 @@ class OpportunityStorage {
     const opportunities: SavedOpportunity[] = safeParseLocalStorage('saved_opportunities', []);
     if (opportunities.length > 0) {
       const filtered = opportunities.filter(op => op.id !== id);
-      localStorage.setItem('saved_opportunities', JSON.stringify(filtered));
+      try {
+        localStorage.setItem('saved_opportunities', safeStringify(filtered));
+      } catch (error) {
+        console.error('Failed to delete opportunity:', error);
+        throw new Error('Unable to delete opportunity. Storage may be full.');
+      }
     }
   }
 
