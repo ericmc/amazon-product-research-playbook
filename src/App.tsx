@@ -20,7 +20,7 @@ import NotFound from "./pages/NotFound";
 import Lock from "./pages/Lock";
 
 // Lazy load heavy routes
-const Import = lazy(() => import("./pages/Import"));
+const DataIntakeV2 = lazy(() => import("./pages/DataIntakeV2"));
 const SourcingPacket = lazy(() => import("./pages/SourcingPacket"));
 const Help = lazy(() => import("./pages/Help"));
 
@@ -87,7 +87,7 @@ const AppContent = () => {
               element={
                 <ErrorBoundary fallbackTitle="Import Error" fallbackMessage="There was a problem with the import feature. Please check your data and try again.">
                   <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]">Loading...</div>}>
-                    <Import />
+                    <DataIntakeV2 />
                   </Suspense>
                 </ErrorBoundary>
               } 
