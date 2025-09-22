@@ -54,62 +54,32 @@ const helium10AutoMap = (headers: string[]): Record<string, string> => {
   
   headers.forEach(header => {
     const lowerHeader = header.toLowerCase().trim();
-    switch (lowerHeader) {
-      case 'asin':
-        mapping['asin'] = header;
-        break;
-      case 'product title':
-      case 'title':
-        mapping['title'] = header;
-        break;
-      case 'brand':
-        mapping['brand'] = header;
-        break;
-      case 'keyword':
-      case 'main keyword':
-        mapping['keyword'] = header;
-        break;
-      case 'search volume':
-      case 'monthly search volume':
-        mapping['searchVolume'] = header;
-        break;
-      case 'revenue':
-      case 'monthly revenue':
-        mapping['revenue'] = header;
-        break;
-      case 'units sold':
-      case 'monthly units':
-        mapping['unitsSold'] = header;
-        break;
-      case 'price':
-      case 'selling price':
-        mapping['price'] = header;
-        break;
-      case 'competition':
-      case 'competition level':
-        mapping['competition'] = header;
-        break;
-      case 'dimensions':
-      case 'product dimensions':
-        mapping['dimensions'] = header;
-        break;
-      case 'weight':
-      case 'product weight':
-        mapping['weight'] = header;
-        break;
-      case 'rating':
-      case 'star rating':
-        mapping['rating'] = header;
-        break;
-      case 'review count':
-      case 'reviews':
-        mapping['reviewCount'] = header;
-        break;
-      case 'competing products':
-      case 'competitors':
-        mapping['competingProducts'] = header;
-        break;
-    }
+    
+    // Core Black Box fields - exact matches
+    if (lowerHeader === 'asin') mapping['asin'] = header;
+    else if (lowerHeader === 'title') mapping['title'] = header;
+    else if (lowerHeader === 'brand') mapping['brand'] = header;
+    else if (lowerHeader === 'url') mapping['url'] = header;
+    else if (lowerHeader === 'image url') mapping['imageUrl'] = header;
+    else if (lowerHeader === 'category') mapping['category'] = header;
+    else if (lowerHeader === 'best seller rank' || lowerHeader === 'bsr' || lowerHeader === 'category bsr') mapping['bsr'] = header;
+    else if (lowerHeader === 'fulfillment') mapping['fulfillment'] = header;
+    else if (lowerHeader === 'price') mapping['price'] = header;
+    else if (lowerHeader === 'asin revenue') mapping['revenue'] = header;
+    else if (lowerHeader === 'parent level revenue') mapping['parentRevenue'] = header;
+    else if (lowerHeader === 'reviews') mapping['reviewCount'] = header;
+    else if (lowerHeader === 'reviews rating') mapping['rating'] = header;
+    else if (lowerHeader === 'weight' || lowerHeader === 'weight (lb)') mapping['weight'] = header;
+    else if (lowerHeader === 'length') mapping['length'] = header;
+    else if (lowerHeader === 'width') mapping['width'] = header;
+    else if (lowerHeader === 'height') mapping['height'] = header;
+    
+    // Fallback patterns for optional Magnet/Cerebro fields
+    else if (lowerHeader.includes('search volume')) mapping['searchVolume'] = header;
+    else if (lowerHeader.includes('competing products') || lowerHeader.includes('competitors')) mapping['competingProducts'] = header;
+    else if (lowerHeader.includes('units sold') || lowerHeader.includes('monthly units')) mapping['unitsSold'] = header;
+    else if (lowerHeader.includes('keyword') && !mapping['keyword']) mapping['keyword'] = header;
+    else if (lowerHeader.includes('competition') && !mapping['competition']) mapping['competition'] = header;
   });
   
   return mapping;
@@ -160,13 +130,24 @@ const HeliumImportWizard = () => {
 
   const buildDimensions = (rawData: Record<string, string>, mapping: Record<string, string>): string => {
     const dims = [];
-    if (mapping.dimensions && rawData[mapping.dimensions]) {
-      dims.push(`D: ${rawData[mapping.dimensions]}`);
+    
+    // Build dimensions from individual L/W/H fields or use combined dimensions field
+    if (mapping.length && mapping.width && mapping.height) {
+      const length = rawData[mapping.length];
+      const width = rawData[mapping.width];
+      const height = rawData[mapping.height];
+      if (length && width && height) {
+        dims.push(`${length} x ${width} x ${height}`);
+      }
+    } else if (mapping.dimensions && rawData[mapping.dimensions]) {
+      dims.push(rawData[mapping.dimensions]);
     }
+    
     if (mapping.weight && rawData[mapping.weight]) {
-      dims.push(`W: ${rawData[mapping.weight]}`);
+      dims.push(`Weight: ${rawData[mapping.weight]}`);
     }
-    return dims.join(', ');
+    
+    return dims.join(' | ');
   };
 
   const detectDelimiter = (text: string): string => {
@@ -210,9 +191,9 @@ const HeliumImportWizard = () => {
         asin: rawData[mapping.asin] || '',
         title: rawData[mapping.title] || '',
         brand: rawData[mapping.brand] || '',
-        keyword: rawData[mapping.keyword] || '',
+        keyword: rawData[mapping.keyword] || rawData[mapping.title] || '', // Fallback to title if no keyword
         searchVolume: normalizeValue(rawData[mapping.searchVolume] || '0'),
-        revenue: normalizeValue(rawData[mapping.revenue] || '0'),
+        revenue: normalizeValue(rawData[mapping.revenue] || rawData[mapping.parentRevenue] || '0'),
         unitsSold: normalizeValue(rawData[mapping.unitsSold] || '0'),
         price: normalizeValue(rawData[mapping.price] || '0'),
         competition: rawData[mapping.competition] || 'Medium',
