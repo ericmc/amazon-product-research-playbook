@@ -180,50 +180,50 @@ const appFields: AppField[] = [
   },
   {
     key: 'revenue',
-    name: 'Monthly Revenue',
-    description: 'Estimated monthly revenue potential',
+    name: 'Revenue',
+    description: 'USD/month (number, can include $ and commas)',
     required: true,
-    unit: 'USD',
+    unit: 'USD/month',
     type: 'number'
   },
   {
     key: 'demand',
-    name: 'Market Demand',
-    description: 'Monthly search volume or demand score',
+    name: 'Demand',
+    description: 'Monthly search volume (integer)',
     required: true,
     unit: 'searches/month',
     type: 'number'
   },
   {
     key: 'competition',
-    name: 'Competition Level',
-    description: 'Competition score or review count',
+    name: 'Competition',
+    description: 'Review count proxy or competition score (0–100; lower is better in scoring)',
     required: true,
-    unit: 'score/reviews',
-    type: 'number'
-  },
-  {
-    key: 'barriers',
-    name: 'Entry Barriers',
-    description: 'Barriers to entry score',
-    required: false,
-    unit: 'score',
+    unit: '0-100 score',
     type: 'number'
   },
   {
     key: 'seasonality',
-    name: 'Seasonality Risk',
-    description: 'Seasonal variation score',
+    name: 'Seasonality',
+    description: '0–100 risk (lower = steadier); if unknown, leave blank and set default',
     required: false,
-    unit: 'score',
+    unit: '0-100 risk',
+    type: 'number'
+  },
+  {
+    key: 'barriers',
+    name: 'Barriers',
+    description: '0–100 (lower = easier); optional checklist or manual entry',
+    required: false,
+    unit: '0-100 difficulty',
     type: 'number'
   },
   {
     key: 'profitability',
-    name: 'Profit Margin',
-    description: 'Expected profit margin percentage',
+    name: 'Profitability',
+    description: 'Margin % (0–100); if user provides decimal (e.g., 0.32) convert to 32%',
     required: false,
-    unit: '%',
+    unit: 'margin %',
     type: 'number'
   }
 ];
@@ -239,10 +239,21 @@ const DataImportWizard = () => {
   const [productName, setProductName] = useState('');
   const [expandedHelp, setExpandedHelp] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedRowIndex, setSelectedRowIndex] = useState(0);
+  const [showPreview, setShowPreview] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Get URL params for source preselection
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sourceParam = urlParams.get('source');
+    if (sourceParam) {
+      setSelectedSource(sourceParam);
+    }
+  }, []);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -316,6 +327,11 @@ const DataImportWizard = () => {
     // Remove common prefixes and formatting
     let cleaned = value.replace(/[$,\s%]/g, '');
     
+    // Handle percentage conversion (0.32 → 32%)
+    if (field.key === 'profitability' && parseFloat(cleaned) <= 1) {
+      return parseFloat(cleaned) * 100;
+    }
+    
     // Handle different number formats
     if (cleaned.includes('K') || cleaned.includes('k')) {
       cleaned = cleaned.replace(/[Kk]/g, '');
@@ -326,10 +342,53 @@ const DataImportWizard = () => {
       return parseFloat(cleaned) * 1000000;
     }
     
-    return parseFloat(cleaned) || 0;
+    const numValue = parseFloat(cleaned) || 0;
+    
+    // Clamp to valid ranges
+    switch (field.key) {
+      case 'competition':
+      case 'seasonality':
+      case 'barriers':
+        return Math.max(0, Math.min(100, numValue));
+      case 'profitability':
+        return Math.max(0, Math.min(100, numValue));
+      default:
+        return Math.max(0, numValue);
+    }
   };
 
-  const handleSubmit = async () => {
+  const handlePrefillScoring = async () => {
+    if (!parsedData || !selectedSource) return;
+    
+    // Get selected row data
+    const selectedRow = parsedData.rows[selectedRowIndex];
+    const prefilledData: any = { productName: productName };
+    
+    // Map fields to prefilled data
+    appFields.forEach(field => {
+      const csvColumn = fieldMappings[field.key];
+      const columnIndex = csvColumn ? parsedData.headers.indexOf(csvColumn) : -1;
+      const rawValue = columnIndex >= 0 ? selectedRow[columnIndex] : '';
+      
+      if (field.type === 'number' && rawValue) {
+        prefilledData[field.key] = normalizeValue(rawValue, field);
+      } else if (field.key === 'product_name' && rawValue) {
+        prefilledData.productName = rawValue;
+      }
+    });
+
+    // Store in session for scoring page
+    sessionStorage.setItem('prefilledScoringData', JSON.stringify(prefilledData));
+    
+    toast({
+      title: "Data Ready",
+      description: "Redirecting to scoring page with your data..."
+    });
+    
+    navigate('/score');
+  };
+
+  const handleSaveAsOpportunity = async () => {
     if (!parsedData || !selectedSource) return;
     
     setIsProcessing(true);
@@ -346,12 +405,14 @@ const DataImportWizard = () => {
         return;
       }
 
+      // Get selected row data
+      const selectedRow = parsedData.rows[selectedRowIndex];
+      
       // Map and normalize the data
-      const mappedRow = parsedData.rows[0]; // For now, process first row
       const criteria = appFields.map(field => {
         const csvColumn = fieldMappings[field.key];
         const columnIndex = csvColumn ? parsedData.headers.indexOf(csvColumn) : -1;
-        const rawValue = columnIndex >= 0 ? mappedRow[columnIndex] : '';
+        const rawValue = columnIndex >= 0 ? selectedRow[columnIndex] : '';
         
         let value = 0;
         let maxValue = 100;
@@ -392,7 +453,7 @@ const DataImportWizard = () => {
         return {
           id: field.key,
           name: field.name,
-          weight: field.required ? 25 : 10, // Default weights
+          weight: field.required ? 25 : 10,
           value: Math.min(value, maxValue),
           maxValue,
           threshold,
@@ -415,7 +476,7 @@ const DataImportWizard = () => {
       // Get product name from mapping or use provided name
       const nameColumn = fieldMappings['product_name'];
       const nameIndex = nameColumn ? parsedData.headers.indexOf(nameColumn) : -1;
-      const finalProductName = nameIndex >= 0 ? mappedRow[nameIndex] : productName || 'Imported Product';
+      const finalProductName = nameIndex >= 0 ? selectedRow[nameIndex] : productName || 'Imported Product';
 
       // Save opportunity to database
       const { data: opportunity, error: opportunityError } = await supabase
@@ -426,7 +487,8 @@ const DataImportWizard = () => {
           source: selectedSource,
           criteria: criteria,
           final_score: finalScore,
-          status: 'draft'
+          status: 'draft',
+          notes: `Imported from ${selectedSource} on ${new Date().toLocaleDateString()}`
         })
         .select()
         .single();
@@ -442,38 +504,32 @@ const DataImportWizard = () => {
           source: selectedSource,
           raw_data: {
             headers: parsedData.headers,
-            rows: parsedData.rows,
+            rows: [selectedRow], // Only save the selected row
             file_name: csvFile?.name || 'pasted_data'
           },
           field_mappings: fieldMappings,
           import_metadata: {
             delimiter: parsedData.delimiter,
             upload_method: uploadMethod,
+            selected_row_index: selectedRowIndex,
             processed_at: new Date().toISOString()
           }
         });
 
       if (importError) throw importError;
 
-      // Prefill scoring page
-      sessionStorage.setItem('prefilledScoringData', JSON.stringify({
-        productName: finalProductName,
-        ...criteria.reduce((acc, c) => ({ ...acc, [c.id]: c.value }), {})
-      }));
-
       toast({
-        title: "Import Successful",
-        description: `${finalProductName} has been imported and saved.`
+        title: "Opportunity Saved",
+        description: `${finalProductName} has been saved to your opportunities.`
       });
 
-      // Navigate to scoring page
-      navigate('/score');
+      navigate('/opportunities');
       
     } catch (error) {
-      console.error('Import error:', error);
+      console.error('Save error:', error);
       toast({
-        title: "Import Failed",
-        description: "There was an error processing your import. Please try again.",
+        title: "Save Failed",
+        description: "There was an error saving your opportunity. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -485,29 +541,75 @@ const DataImportWizard = () => {
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="container max-w-4xl mx-auto px-4 py-8">
-        <div className="space-y-8">
-          {/* Header */}
-          <div className="text-center space-y-4">
-            <h1 className="text-3xl font-bold text-foreground">Data Import Wizard</h1>
-            <p className="text-muted-foreground">
-              Import your research data from external tools in 3 simple steps
-            </p>
-            <div className="space-y-2">
-              <Progress value={stepProgress} className="w-full max-w-md mx-auto" />
-              <div className="flex justify-center space-x-8 text-sm">
-                <span className={currentStep >= 1 ? "text-primary font-medium" : "text-muted-foreground"}>
-                  1. Source
-                </span>
-                <span className={currentStep >= 2 ? "text-primary font-medium" : "text-muted-foreground"}>
-                  2. Upload
-                </span>
-                <span className={currentStep >= 3 ? "text-primary font-medium" : "text-muted-foreground"}>
-                  3. Map Fields
-                </span>
+      <div className="container max-w-7xl mx-auto px-4 py-8">
+        <div className="flex gap-8">
+          {/* Sidebar - What to Capture Checklist */}
+          <div className="hidden lg:block w-72 shrink-0">
+            <Card className="sticky top-8">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-primary" />
+                  <span>What to Capture</span>
+                </CardTitle>
+                <CardDescription>
+                  Map these to your scoring fields
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {appFields.map(field => (
+                  <div key={field.key} className="flex items-start space-x-3">
+                    <div className={`w-2 h-2 rounded-full mt-2 ${
+                      fieldMappings[field.key] ? 'bg-primary' : 'bg-muted-foreground'
+                    }`} />
+                    <div>
+                      <p className="text-sm font-medium">{field.name}</p>
+                      <p className="text-xs text-muted-foreground">{field.unit}</p>
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Copy Keyword Helper */}
+                <div className="pt-4 border-t">
+                  <Label className="text-sm font-medium">Quick Actions</Label>
+                  <div className="mt-2 space-y-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full text-xs"
+                      onClick={() => copyToClipboard("sample product keyword")}
+                    >
+                      <Copy className="w-3 h-3 mr-1" />
+                      Copy Sample Keyword
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 space-y-8">
+            {/* Header */}
+            <div className="text-center space-y-4">
+              <h1 className="text-3xl font-bold text-foreground">Data Import Wizard</h1>
+              <p className="text-muted-foreground">
+                Import your research data from external tools in 3 simple steps
+              </p>
+              <div className="space-y-2">
+                <Progress value={stepProgress} className="w-full max-w-md mx-auto" />
+                <div className="flex justify-center space-x-8 text-sm">
+                  <span className={currentStep >= 1 ? "text-primary font-medium" : "text-muted-foreground"}>
+                    1. Source
+                  </span>
+                  <span className={currentStep >= 2 ? "text-primary font-medium" : "text-muted-foreground"}>
+                    2. Upload
+                  </span>
+                  <span className={currentStep >= 3 ? "text-primary font-medium" : "text-muted-foreground"}>
+                    3. Map Fields
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
           {/* Step 1: Source Selection */}
           {currentStep === 1 && (
@@ -682,6 +784,22 @@ const DataImportWizard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Source-specific export guidance */}
+                {selectedSource && (
+                  <Card className="bg-muted/30">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center space-x-2">
+                        <Info className="w-5 h-5 text-primary" />
+                        <span>How to export/copy from {sourceOptions.find(s => s.id === selectedSource)?.name}</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {sourceOptions.find(s => s.id === selectedSource)?.csvTemplate.notes.map((note, index) => (
+                        <p key={index} className="text-sm text-muted-foreground">• {note}</p>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
                 {/* Upload Method Selection */}
                 <div className="flex space-x-4">
                   <Button
@@ -928,32 +1046,104 @@ const DataImportWizard = () => {
                   </div>
                 </div>
 
+                {/* Row Selection for Multiple Rows */}
+                {parsedData && parsedData.rows.length > 1 && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">Select Row to Import</Label>
+                    <Select 
+                      value={selectedRowIndex.toString()} 
+                      onValueChange={(value) => setSelectedRowIndex(parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a row" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {parsedData.rows.map((row, index) => {
+                          const productNameCol = fieldMappings['product_name'];
+                          const nameIndex = productNameCol ? parsedData.headers.indexOf(productNameCol) : -1;
+                          const displayName = nameIndex >= 0 ? row[nameIndex] : `Row ${index + 1}`;
+                          return (
+                            <SelectItem key={index} value={index.toString()}>
+                              {displayName} (Row {index + 1})
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Review & Actions */}
+                <Card className="bg-muted/30">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Review & Prefill</CardTitle>
+                    <CardDescription>
+                      Your mapped values will be sent to the scoring system
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Preview mapped values */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {appFields.map(field => {
+                        const csvColumn = fieldMappings[field.key];
+                        const columnIndex = csvColumn ? parsedData.headers.indexOf(csvColumn) : -1;
+                        const rawValue = columnIndex >= 0 && parsedData ? parsedData.rows[selectedRowIndex][columnIndex] : '';
+                        const normalizedValue = field.type === 'number' && rawValue ? normalizeValue(rawValue, field) : rawValue;
+                        
+                        return (
+                          <div key={field.key} className="flex justify-between items-center text-sm">
+                            <span className="font-medium">{field.name}:</span>
+                            <span className="text-muted-foreground">
+                              {normalizedValue || 'Not mapped'}
+                              {field.unit && normalizedValue && ` ${field.unit}`}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+
                 <div className="flex justify-between">
                   <Button variant="outline" onClick={() => setCurrentStep(2)}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back
                   </Button>
-                  <Button 
-                    onClick={handleSubmit}
-                    disabled={
-                      isProcessing || 
-                      !appFields.filter(f => f.required).every(f => fieldMappings[f.key])
-                    }
-                    className="min-w-32"
-                  >
-                    {isProcessing ? (
-                      <>Processing...</>
-                    ) : (
-                      <>
-                        Import & Score
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline"
+                      onClick={handleSaveAsOpportunity}
+                      disabled={
+                        isProcessing || 
+                        !appFields.filter(f => f.required).every(f => fieldMappings[f.key])
+                      }
+                      className="min-w-32"
+                    >
+                      {isProcessing ? (
+                        <>Saving...</>
+                      ) : (
+                        <>
+                          Save as Opportunity
+                          <Database className="w-4 h-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                    <Button 
+                      onClick={handlePrefillScoring}
+                      disabled={
+                        !appFields.filter(f => f.required).every(f => fieldMappings[f.key])
+                      }
+                      className="min-w-32"
+                    >
+                      Prefill Scoring
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           )}
+          </div>
         </div>
       </div>
     </main>
