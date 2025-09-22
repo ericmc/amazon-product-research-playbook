@@ -114,6 +114,17 @@ const Score = () => {
   const calculateProductScore = (product: AutoMappedProduct | ProductWithKeywords): number => {
     const scoringData = prepareProductForScoring(product);
     
+    // Load current thresholds from localStorage or use defaults
+    const savedThresholds = localStorage.getItem('scoringThresholds');
+    const thresholds = savedThresholds ? JSON.parse(savedThresholds) : {
+      revenue: 5000,
+      demand: 1000,
+      competition: 70,
+      reviews: 100,
+      rating: 4.0,
+      price: 15
+    };
+    
     // Same criteria as ScoringPreview but simplified for table display
     const criteria = [
       { value: scoringData.revenue, maxValue: 50000, weight: 25 },
