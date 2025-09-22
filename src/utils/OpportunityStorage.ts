@@ -6,9 +6,29 @@ export interface SavedOpportunity {
   criteria: any[];
   finalScore: number;
   createdAt: string;
+  updatedAt?: string;
   status: 'draft' | 'scored' | 'analyzing' | 'sourcing' | 'archived';
   source?: string;
   notes?: string;
+  importedAt?: string;
+  importNotes?: string;
+  recommendation?: string;
+  validation?: {
+    checklist: {
+      demandProof: { completed: boolean; notes: string; links: string };
+      marginCalculation: { completed: boolean; notes: string; cogs: number; fbaFee: number; freight: number; duty: number; computedMargin: number };
+      competitiveLandscape: { completed: boolean; notes: string; competitors: Array<{ asin: string; price: number; reviews: number; revenue?: number }> };
+      differentiationPlan: { completed: boolean; notes: string; levers: string[] };
+      operationalRisks: { completed: boolean; notes: string; risks: { tooling: boolean; certifications: boolean; hazmat: boolean; oversize: boolean; fragile: boolean; moq: boolean } };
+    };
+    confidenceScore: number;
+    lastUpdated: string;
+  };
+  history?: Array<{
+    date: string;
+    summary: string;
+    type: 'import' | 'validation' | 'score_update' | 'other';
+  }>;
   checklist?: {
     items: any[];
     completionRate: number;
@@ -76,11 +96,17 @@ class OpportunityStorage {
   }
 
   async saveOpportunity(opportunity: SavedOpportunity): Promise<void> {
+    opportunity.updatedAt = new Date().toISOString();
     if (this.settings.useSupabase) {
       await this.saveToSupabase(opportunity);
     } else {
       this.saveToLocalStorage(opportunity);
     }
+  }
+
+  async getOpportunityById(id: string): Promise<SavedOpportunity | null> {
+    const opportunities = await this.getOpportunities();
+    return opportunities.find(op => op.id === id) || null;
   }
 
   async getOpportunities(): Promise<SavedOpportunity[]> {
