@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@axe-core/react": "^4.10.2",
     "@hookform/resolvers": "^3.10.0",
     "@playwright/test": "^1.55.0",
     "@radix-ui/react-accordion": "^1.2.11",
@@ -54,6 +55,7 @@
     "embla-carousel-react": "^8.6.0",
     "html2canvas": "^1.4.1",
     "input-otp": "^1.4.2",
+    "jest-axe": "^10.0.0",
     "jsdom": "^23.2.0",
     "jspdf": "^3.0.3",
     "lucide-react": "^0.462.0",
