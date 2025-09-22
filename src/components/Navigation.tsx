@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { QuickStartButton, useQuickTutorial, QuickTutorial } from "@/components/QuickTutorial";
+import { lockApp } from "@/utils/appLock";
 import { 
   Search, 
   BarChart3, 
@@ -12,7 +13,8 @@ import {
   Database,
   Puzzle,
   Settings,
-  HelpCircle
+  HelpCircle,
+  LogOut
 } from "lucide-react";
 
 const navigationItems = [
@@ -27,6 +29,11 @@ export const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { isOpen, startTutorial, closeTutorial, completeTutorial } = useQuickTutorial();
+
+  const handleLogout = () => {
+    lockApp();
+    window.location.href = '/lock';
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -82,6 +89,18 @@ export const Navigation = () => {
             >
               <HelpCircle className="h-4 w-4" />
             </Link>
+
+            {/* Logout Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              aria-label="Lock app"
+              title="Lock App"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
 
           {/* Mobile Navigation & Help */}
@@ -155,6 +174,15 @@ export const Navigation = () => {
                   <HelpCircle className="h-4 w-4" />
                   <span>Help</span>
                 </Link>
+                
+                {/* Mobile Logout Button */}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-muted-foreground hover:bg-accent hover:text-accent-foreground w-full text-left"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Lock App</span>
+                </button>
               </div>
             </div>
           </div>
