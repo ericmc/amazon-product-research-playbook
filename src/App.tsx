@@ -12,6 +12,7 @@ import Decision from "./pages/Decision";
 import Import from "./pages/Import";
 import Integrations from "./pages/Integrations";
 import Settings from "./components/Settings";
+import SourcingPacket from "./pages/SourcingPacket";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
               <Route path="/opportunities" element={<Opportunities />} />
               <Route path="/opportunities/:id" element={<OpportunityDetail />} />
               <Route path="/opportunities/:id/decision" element={<Decision />} />
+              <Route path="/opportunities/:id/packet" element={<SourcingPacket />} />
               <Route path="/import" element={<Import />} />
               <Route path="/integrations" element={<Integrations />} />
               <Route path="/settings" element={<Settings />} />
