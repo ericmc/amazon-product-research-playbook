@@ -237,7 +237,7 @@ const OpportunityDetail = () => {
             </Link>
           </Button>
           <Button asChild>
-            <Link to={`/decision/${opportunity.id}`}>
+            <Link to={`/opportunities/${opportunity.id}/decision`}>
               Go to Decision
             </Link>
           </Button>

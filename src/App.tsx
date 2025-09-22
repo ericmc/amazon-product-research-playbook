@@ -8,6 +8,7 @@ import Footer from "./components/Footer";
 import Score from "./pages/Score";
 import Opportunities from "./pages/Opportunities";
 import OpportunityDetail from "./pages/OpportunityDetail";
+import Decision from "./pages/Decision";
 import Import from "./pages/Import";
 import Integrations from "./pages/Integrations";
 import Settings from "./components/Settings";
@@ -29,6 +30,7 @@ const App = () => (
               <Route path="/score" element={<Score />} />
               <Route path="/opportunities" element={<Opportunities />} />
               <Route path="/opportunities/:id" element={<OpportunityDetail />} />
+              <Route path="/opportunities/:id/decision" element={<Decision />} />
               <Route path="/import" element={<Import />} />
               <Route path="/integrations" element={<Integrations />} />
               <Route path="/settings" element={<Settings />} />

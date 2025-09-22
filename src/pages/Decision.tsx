@@ -1,326 +1,412 @@
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { CheckCircle, XCircle, AlertTriangle, DollarSign, TrendingUp, Package, Clock } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { opportunityStorage, SavedOpportunity } from "@/utils/OpportunityStorage";
+import { useToast } from "@/hooks/use-toast";
 
-const decisionCriteria = [
-  {
-    id: 1,
-    name: "Revenue Potential",
-    weight: 25,
-    score: 8.5,
-    status: "strong",
-    details: "$18-25K monthly potential"
-  },
-  {
-    id: 2,
-    name: "Competition Level",
-    weight: 20,
-    score: 7.2,
-    status: "moderate",
-    details: "Medium competition, clear differentiators"
-  },
-  {
-    id: 3,
-    name: "Market Trend",
-    weight: 15,
-    score: 9.1,
-    status: "strong",
-    details: "Growing market, stable demand"
-  },
-  {
-    id: 4,
-    name: "Sourcing Feasibility",
-    weight: 15,
-    score: 8.8,
-    status: "strong",
-    details: "Multiple reliable suppliers available"
-  },
-  {
-    id: 5,
-    name: "Investment Required",
-    weight: 15,
-    score: 7.8,
-    status: "moderate",
-    details: "$15K initial investment needed"
-  },
-  {
-    id: 6,
-    name: "Risk Level",
-    weight: 10,
-    score: 8.0,
-    status: "strong",
-    details: "Low risk, high reward potential"
-  }
-];
+const Decision = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [opportunity, setOpportunity] = useState<SavedOpportunity | null>(null);
+  const [selectedBranch, setSelectedBranch] = useState<'proceed' | 'gather-data' | 'reject'>('gather-data');
+  const [reason, setReason] = useState('');
+  const [sourcingChecklist, setSourcingChecklist] = useState({
+    quotes: false,
+    samples: false,
+    compliance: false
+  });
+  const [targetedTasks, setTargetedTasks] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
-const financialProjections = {
-  initialInvestment: 15000,
-  monthlyRevenue: 22000,
-  grossMargin: 35,
-  breakEvenMonths: 4,
-  roi12Months: 185
-};
+  useEffect(() => {
+    const loadOpportunity = async () => {
+      if (!id) return;
+      
+      try {
+        const opp = await opportunityStorage.getOpportunityById(id);
+        if (opp) {
+          setOpportunity(opp);
+          
+          // Auto-select branch based on gates and score
+          const gates = calculateGates(opp);
+          const passedGatesCount = Object.values(gates).filter(Boolean).length;
+          
+          if (opp.finalScore >= 80 && passedGatesCount === 4) {
+            setSelectedBranch('proceed');
+          } else if (opp.finalScore >= 60 && passedGatesCount >= 2) {
+            setSelectedBranch('gather-data');
+            generateTargetedTasks(opp);
+          } else {
+            setSelectedBranch('reject');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading opportunity:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load opportunity data",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-const riskFactors = [
-  { risk: "Seasonal demand fluctuation", probability: "Low", impact: "Medium", mitigation: "Diversify product line" },
-  { risk: "Supplier dependency", probability: "Medium", impact: "High", mitigation: "Multiple supplier contracts" },
-  { risk: "Amazon policy changes", probability: "Medium", impact: "Medium", mitigation: "Multi-channel strategy" },
-  { risk: "Competitive response", probability: "High", impact: "Medium", mitigation: "Strong brand building" }
-];
+    loadOpportunity();
+  }, [id, toast]);
 
-export default function Decision() {
-  const [selectedAction, setSelectedAction] = useState<string | null>(null);
-  
-  const weightedScore = decisionCriteria.reduce((total, criteria) => {
-    return total + (criteria.score * criteria.weight / 100);
-  }, 0);
+  const calculateGates = (opp: SavedOpportunity) => {
+    const criteria = opp.criteria || [];
+    const demandCriterion = criteria.find(c => c.name?.toLowerCase().includes('demand'));
+    const marginCriterion = criteria.find(c => c.name?.toLowerCase().includes('margin') || c.name?.toLowerCase().includes('profit'));
+    const competitionCriterion = criteria.find(c => c.name?.toLowerCase().includes('competition'));
+    const barriersCriterion = criteria.find(c => c.name?.toLowerCase().includes('barrier'));
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "strong": return <CheckCircle className="w-4 h-4 text-success" />;
-      case "moderate": return <AlertTriangle className="w-4 h-4 text-warning" />;
-      case "weak": return <XCircle className="w-4 h-4 text-destructive" />;
-      default: return null;
+    return {
+      demand: demandCriterion ? demandCriterion.value >= 7 : false,
+      margin: marginCriterion ? marginCriterion.value >= 20 : false,
+      competition: competitionCriterion ? competitionCriterion.value <= 6 : false,
+      barriers: barriersCriterion ? barriersCriterion.value <= 5 : false
+    };
+  };
+
+  const getWeakestCriteria = (opp: SavedOpportunity) => {
+    const criteria = opp.criteria || [];
+    return criteria
+      .sort((a, b) => a.value - b.value)
+      .slice(0, 2)
+      .map(c => c.name);
+  };
+
+  const generateTargetedTasks = (opp: SavedOpportunity) => {
+    const weakest = getWeakestCriteria(opp);
+    const tasks = [];
+    
+    weakest.forEach(criterion => {
+      if (criterion?.toLowerCase().includes('margin')) {
+        tasks.push('Re-check margin with ocean freight and updated COGS');
+      } else if (criterion?.toLowerCase().includes('demand')) {
+        tasks.push('Validate trend seasonality with additional data sources');
+      } else if (criterion?.toLowerCase().includes('competition')) {
+        tasks.push('Analyze top 10 competitors in detail');
+      } else if (criterion?.toLowerCase().includes('barrier')) {
+        tasks.push('Research regulatory and operational barriers');
+      } else {
+        tasks.push(`Gather more data for ${criterion}`);
+      }
+    });
+    
+    setTargetedTasks(tasks);
+  };
+
+  const handleSaveDecision = async () => {
+    if (!opportunity || !id) return;
+
+    try {
+      const gates = calculateGates(opportunity);
+      const weakestCriteria = getWeakestCriteria(opportunity);
+      
+      const updatedOpportunity: SavedOpportunity = {
+        ...opportunity,
+        status: selectedBranch === 'proceed' ? 'sourcing' : 
+                selectedBranch === 'gather-data' ? 'analyzing' : 'archived',
+        decision: {
+          branch: selectedBranch,
+          reason: selectedBranch === 'reject' ? reason : undefined,
+          decidedAt: new Date().toISOString(),
+          gates,
+          weakestCriteria
+        },
+        updatedAt: new Date().toISOString(),
+        history: [
+          ...(opportunity.history || []),
+          {
+            date: new Date().toISOString(),
+            summary: `Decision: ${selectedBranch === 'proceed' ? 'Proceed to Sourcing' : 
+                     selectedBranch === 'gather-data' ? 'Gather More Data' : 'Rejected/Archived'}`,
+            type: 'decision' as const
+          }
+        ]
+      };
+
+      await opportunityStorage.saveOpportunity(updatedOpportunity);
+      
+      toast({
+        title: "Decision Saved",
+        description: `Opportunity status updated to ${updatedOpportunity.status}`,
+      });
+
+      navigate(`/opportunities/${id}`);
+    } catch (error) {
+      console.error('Error saving decision:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save decision",
+        variant: "destructive",
+      });
     }
   };
 
-  const getDecisionRecommendation = () => {
-    if (weightedScore >= 8.0) return { decision: "GO", color: "success", reason: "Strong opportunity with high potential" };
-    if (weightedScore >= 6.5) return { decision: "CONDITIONAL GO", color: "warning", reason: "Good opportunity with manageable risks" };
-    return { decision: "NO GO", color: "destructive", reason: "Risks outweigh potential benefits" };
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading opportunity...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const recommendation = getDecisionRecommendation();
+  if (!opportunity) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Opportunity Not Found</h1>
+          <Link to="/opportunities">
+            <Button>Back to Opportunities</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const gates = calculateGates(opportunity);
+  const weakestCriteria = getWeakestCriteria(opportunity);
+  const passedGatesCount = Object.values(gates).filter(Boolean).length;
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto p-6 space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-foreground">Phase 4: Final Decision</h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Comprehensive evaluation and go/no-go decision based on weighted criteria analysis
-          </p>
+      <div className="container max-w-4xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <Link to={`/opportunities/${id}`}>
+            <Button variant="ghost" size="sm" className="mb-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Opportunity
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold mb-2">Decision Tree</h1>
+          <p className="text-muted-foreground">{opportunity.productName}</p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Decision Matrix */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Overall Score */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Overall Decision Score</span>
-                  <Badge variant={recommendation.color === "success" ? "default" : recommendation.color === "warning" ? "secondary" : "destructive"}>
-                    {recommendation.decision}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <div className="text-5xl font-bold text-foreground">{weightedScore.toFixed(1)}/10</div>
-                  <Progress value={weightedScore * 10} className="w-full mt-4" />
-                </div>
-                <div className="p-4 bg-accent rounded-lg">
-                  <h3 className="font-semibold text-foreground mb-2">Recommendation: {recommendation.decision}</h3>
-                  <p className="text-sm text-muted-foreground">{recommendation.reason}</p>
-                </div>
-              </CardContent>
-            </Card>
+        {/* Decision Summary */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Decision Summary
+            </CardTitle>
+            <CardDescription>
+              Based on gates analysis and scoring criteria
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                {gates.demand ? <CheckCircle className="h-4 w-4 text-green-600" /> : <XCircle className="h-4 w-4 text-red-600" />}
+                <span className="text-sm">Demand Gate</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {gates.margin ? <CheckCircle className="h-4 w-4 text-green-600" /> : <XCircle className="h-4 w-4 text-red-600" />}
+                <span className="text-sm">Margin Gate</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {gates.competition ? <CheckCircle className="h-4 w-4 text-green-600" /> : <XCircle className="h-4 w-4 text-red-600" />}
+                <span className="text-sm">Competition Gate</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {gates.barriers ? <CheckCircle className="h-4 w-4 text-green-600" /> : <XCircle className="h-4 w-4 text-red-600" />}
+                <span className="text-sm">Barriers Gate</span>
+              </div>
+            </div>
+            <div className="bg-muted p-3 rounded-lg">
+              <p className="text-sm font-medium mb-1">Analysis:</p>
+              <p className="text-sm text-muted-foreground">
+                Score: {opportunity.finalScore}/100 • Gates Passed: {passedGatesCount}/4
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Weakest Areas: {weakestCriteria.join(', ')}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
-            {/* Criteria Breakdown */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Decision Criteria Analysis</CardTitle>
-                <CardDescription>Weighted evaluation across key decision factors</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {decisionCriteria.map((criteria) => (
-                  <div key={criteria.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        {getStatusIcon(criteria.status)}
-                        <span className="font-medium text-foreground">{criteria.name}</span>
-                        <Badge variant="outline">{criteria.weight}% weight</Badge>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-bold text-foreground">{criteria.score}/10</span>
-                      </div>
+        {/* Decision Options */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Select Decision</CardTitle>
+            <CardDescription>
+              Choose the recommended path forward for this opportunity
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RadioGroup 
+              value={selectedBranch} 
+              onValueChange={(value) => setSelectedBranch(value as any)}
+              className="space-y-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="proceed" id="proceed" />
+                <Label htmlFor="proceed" className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-medium">Proceed to Sourcing</span>
+                      <p className="text-sm text-muted-foreground">Ready for supplier outreach and samples</p>
                     </div>
-                    <div className="ml-6">
-                      <Progress value={criteria.score * 10} className="w-full mb-1" />
-                      <p className="text-xs text-muted-foreground">{criteria.details}</p>
+                    <Badge variant={opportunity.finalScore >= 80 && passedGatesCount === 4 ? "default" : "secondary"}>
+                      Recommended
+                    </Badge>
+                  </div>
+                </Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="gather-data" id="gather-data" />
+                <Label htmlFor="gather-data" className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-medium">Gather More Data</span>
+                      <p className="text-sm text-muted-foreground">Additional research needed before proceeding</p>
                     </div>
+                    <Badge variant={opportunity.finalScore >= 60 && passedGatesCount >= 2 ? "default" : "secondary"}>
+                      {opportunity.finalScore >= 60 && passedGatesCount >= 2 ? "Recommended" : "Option"}
+                    </Badge>
+                  </div>
+                </Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="reject" id="reject" />
+                <Label htmlFor="reject" className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-medium">Reject / Archive</span>
+                      <p className="text-sm text-muted-foreground">Not viable, move to archive</p>
+                    </div>
+                    <Badge variant={opportunity.finalScore < 60 || passedGatesCount < 2 ? "destructive" : "secondary"}>
+                      {opportunity.finalScore < 60 || passedGatesCount < 2 ? "Recommended" : "Option"}
+                    </Badge>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </CardContent>
+        </Card>
+
+        {/* Branch-Specific Content */}
+        {selectedBranch === 'proceed' && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Sourcing Checklist</CardTitle>
+              <CardDescription>
+                Next steps to move forward with this opportunity
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="quotes"
+                  checked={sourcingChecklist.quotes}
+                  onCheckedChange={(checked) => 
+                    setSourcingChecklist(prev => ({ ...prev, quotes: !!checked }))
+                  }
+                />
+                <Label htmlFor="quotes">Request quotes from suppliers</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="samples"
+                  checked={sourcingChecklist.samples}
+                  onCheckedChange={(checked) => 
+                    setSourcingChecklist(prev => ({ ...prev, samples: !!checked }))
+                  }
+                />
+                <Label htmlFor="samples">Order samples for testing</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="compliance"
+                  checked={sourcingChecklist.compliance}
+                  onCheckedChange={(checked) => 
+                    setSourcingChecklist(prev => ({ ...prev, compliance: !!checked }))
+                  }
+                />
+                <Label htmlFor="compliance">Complete compliance checks</Label>
+              </div>
+              <div className="pt-4">
+                <Button variant="outline" className="w-full">
+                  Generate Sourcing Packet
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {selectedBranch === 'gather-data' && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Targeted Research Tasks</CardTitle>
+              <CardDescription>
+                Focus areas based on your weakest criteria
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {targetedTasks.map((task, index) => (
+                  <div key={index} className="flex items-start gap-2 p-3 bg-muted rounded-lg">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
+                    <span className="text-sm">{task}</span>
                   </div>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-            {/* Financial Projections */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <DollarSign className="w-5 h-5 text-success" />
-                  <span>Financial Projections</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                      <span className="text-sm font-medium">Initial Investment</span>
-                      <span className="font-bold text-foreground">${financialProjections.initialInvestment.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                      <span className="text-sm font-medium">Monthly Revenue</span>
-                      <span className="font-bold text-success">${financialProjections.monthlyRevenue.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                      <span className="text-sm font-medium">Gross Margin</span>
-                      <span className="font-bold text-foreground">{financialProjections.grossMargin}%</span>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                      <span className="text-sm font-medium">Break-even</span>
-                      <span className="font-bold text-foreground">{financialProjections.breakEvenMonths} months</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                      <span className="text-sm font-medium">12-Month ROI</span>
-                      <span className="font-bold text-success">{financialProjections.roi12Months}%</span>
-                    </div>
-                    <div className="text-center p-4 bg-success/10 border border-success/20 rounded-lg">
-                      <div className="text-lg font-bold text-success">Projected Profit Year 1</div>
-                      <div className="text-2xl font-bold text-success">$92,400</div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        {selectedBranch === 'reject' && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Rejection Reason</CardTitle>
+              <CardDescription>
+                Please provide a brief explanation for archiving this opportunity
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                placeholder="Explain why this opportunity is not viable..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="min-h-20"
+                required
+              />
+            </CardContent>
+          </Card>
+        )}
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Decision Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button 
-                  className="w-full justify-start bg-success hover:bg-success/90"
-                  onClick={() => setSelectedAction("proceed")}
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Proceed to Sourcing
-                </Button>
-                <Button 
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => setSelectedAction("conditional")}
-                >
-                  <AlertTriangle className="w-4 h-4 mr-2" />
-                  Proceed with Conditions
-                </Button>
-                <Button 
-                  variant="secondary"
-                  className="w-full justify-start"
-                  onClick={() => setSelectedAction("revisit")}
-                >
-                  <Clock className="w-4 h-4 mr-2" />
-                  Revisit in 3 Months
-                </Button>
-                <Button 
-                  variant="destructive"
-                  className="w-full justify-start"
-                  onClick={() => setSelectedAction("reject")}
-                >
-                  <XCircle className="w-4 h-4 mr-2" />
-                  Reject Opportunity
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Key Metrics */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Key Success Metrics</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  <span className="text-sm">Market Growth: 15% YoY</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Package className="w-4 h-4 text-primary" />
-                  <span className="text-sm">Inventory Turnover: 8x/year</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <DollarSign className="w-4 h-4 text-success" />
-                  <span className="text-sm">Payback Period: 4 months</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Risk Assessment */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Risk Assessment</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {riskFactors.map((risk, index) => (
-                  <div key={index} className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-foreground">{risk.risk}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {risk.probability}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Impact: {risk.impact} | {risk.mitigation}
-                    </p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Next Steps */}
-            {selectedAction && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Next Steps</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {selectedAction === "proceed" && (
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Recommended actions:</p>
-                      <ul className="text-sm space-y-1">
-                        <li>• Contact top 3 suppliers</li>
-                        <li>• Request product samples</li>
-                        <li>• Negotiate pricing & MOQs</li>
-                        <li>• Set up trademark search</li>
-                      </ul>
-                    </div>
-                  )}
-                  {selectedAction === "conditional" && (
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Conditions to meet:</p>
-                      <ul className="text-sm space-y-1">
-                        <li>• Secure 2+ backup suppliers</li>
-                        <li>• Test market with smaller MOQ</li>
-                        <li>• Validate pricing strategy</li>
-                      </ul>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </div>
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <Button 
+            onClick={handleSaveDecision}
+            disabled={selectedBranch === 'reject' && !reason.trim()}
+            className="flex-1"
+          >
+            Save Decision
+          </Button>
+          <Link to={`/opportunities/${id}`}>
+            <Button variant="outline">Cancel</Button>
+          </Link>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default Decision;

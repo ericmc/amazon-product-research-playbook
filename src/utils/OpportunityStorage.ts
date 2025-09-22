@@ -24,10 +24,17 @@ export interface SavedOpportunity {
     confidenceScore: number;
     lastUpdated: string;
   };
+  decision?: {
+    branch: 'proceed' | 'gather-data' | 'reject';
+    reason?: string;
+    decidedAt: string;
+    gates: { [key: string]: boolean };
+    weakestCriteria: string[];
+  };
   history?: Array<{
     date: string;
     summary: string;
-    type: 'import' | 'validation' | 'score_update' | 'other';
+    type: 'import' | 'validation' | 'score_update' | 'decision' | 'other';
   }>;
   checklist?: {
     items: any[];
