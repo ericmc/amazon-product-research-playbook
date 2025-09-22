@@ -9,15 +9,28 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, FileText, TrendingUp, Search, Filter, ArrowUpDown, ChevronUp, ChevronDown } from "lucide-react";
 import ScoringSystem from "@/components/ScoringSystem";
+import { ScoringPreview } from "@/components/ScoringPreview";
 import { AutoMappedProduct } from "@/lib/normalizeBlackBox";
 import { ProductWithKeywords } from "@/lib/matchKeyword";
 
 type SortField = 'title' | 'revenue' | 'price' | 'searchVolume' | 'reviewCount' | 'rating';
 type SortDirection = 'asc' | 'desc';
 
+interface ScoringData {
+  productName: string;
+  source: string;
+  revenue: number;
+  demand: number;
+  competition: number;
+  price: number;
+  reviewCount: number;
+  rating: number;
+}
+
 const Score = () => {
   const [importedProducts, setImportedProducts] = useState<(AutoMappedProduct | ProductWithKeywords)[] | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<AutoMappedProduct | ProductWithKeywords | null>(null);
+  const [scoringData, setScoringData] = useState<ScoringData | null>(null);
   const [hasImportedData, setHasImportedData] = useState(false);
   
   // Filtering and sorting state
@@ -55,31 +68,46 @@ const Score = () => {
     }
   }, [toast]);
 
-  const prepareProductForScoring = (product: AutoMappedProduct | ProductWithKeywords) => {
-    // Convert product data to scoring format
-    const scoringData = {
+  const prepareProductForScoring = (product: AutoMappedProduct | ProductWithKeywords): ScoringData => {
+    // Convert product data to scoring format with better mapping
+    const revenue = product.productData.revenue || 0;
+    const searchVolume = (product as ProductWithKeywords).searchVolume || product.productData.searchVolume || 0;
+    const price = product.productData.price || 0;
+    const reviewCount = product.productData.reviewCount || 0;
+    const rating = product.productData.rating || 0;
+    
+    // Map competition text to numeric scale (0-100)
+    let competitionScore = 50; // default medium
+    const competitionText = product.productData.competition?.toLowerCase() || '';
+    if (competitionText.includes('low')) competitionScore = 20;
+    else if (competitionText.includes('high')) competitionScore = 80;
+    else if (competitionText.includes('medium')) competitionScore = 50;
+    
+    const scoringData: ScoringData = {
       productName: product.productData.title || 'Unknown Product',
       source: 'import',
-      revenue: product.productData.revenue || 0,
-      demand: (product as ProductWithKeywords).searchVolume || product.productData.searchVolume || 0,
-      competition: product.productData.competition === 'High' ? 80 : 
-                   product.productData.competition === 'Medium' ? 50 : 20,
-      price: product.productData.price || 0,
-      reviewCount: product.productData.reviewCount || 0,
-      rating: product.productData.rating || 0
+      revenue,
+      demand: searchVolume,
+      competition: competitionScore,
+      price,
+      reviewCount,
+      rating
     };
 
-    // Store in sessionStorage for ScoringSystem component
-    sessionStorage.setItem('prefilledScoringData', JSON.stringify(scoringData));
+    return scoringData;
   };
 
   const handleProductSelect = (product: AutoMappedProduct | ProductWithKeywords) => {
     setSelectedProduct(product);
-    prepareProductForScoring(product);
+    const newScoringData = prepareProductForScoring(product);
+    setScoringData(newScoringData);
+    
+    // Also store in sessionStorage for the ScoringSystem component
+    sessionStorage.setItem('prefilledScoringData', JSON.stringify(newScoringData));
     
     toast({
       title: "Product Selected",
-      description: `Now configuring scoring for: ${product.productData.title}`,
+      description: `Now scoring: ${product.productData.title}`,
     });
   };
 
@@ -413,19 +441,33 @@ const Score = () => {
           </CardContent>
         </Card>
 
-        {/* Scoring System */}
+        {/* Scoring Preview - Always show when we have data */}
+        {scoringData && (
+          <ScoringPreview 
+            scoringData={scoringData} 
+            onRefresh={() => {
+              if (selectedProduct) {
+                const refreshedData = prepareProductForScoring(selectedProduct);
+                setScoringData(refreshedData);
+                sessionStorage.setItem('prefilledScoringData', JSON.stringify(refreshedData));
+              }
+            }}
+          />
+        )}
+
+        {/* Advanced Scoring System - Only show when product is selected */}
         {selectedProduct && (
           <Card>
             <CardHeader>
               <CardTitle>
-                Scoring Configuration: {selectedProduct.productData.title}
+                Advanced Scoring Configuration
               </CardTitle>
               <CardDescription>
-                Configure scoring criteria and weights for this product
+                Fine-tune scoring criteria and weights for detailed analysis
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ScoringSystem />
+              <ScoringSystem key={selectedProduct.productData.title} />
             </CardContent>
           </Card>
         )}
