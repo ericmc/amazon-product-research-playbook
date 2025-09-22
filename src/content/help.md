@@ -6,48 +6,88 @@ Welcome to the comprehensive guide for using the Amazon Product Research Playboo
 
 ### Quick Start Guide
 
-1. **Import Your Data**: Start by importing CSV data from Jungle Scout, Helium 10, or Amazon POE via the Import page
-2. **Configure Scoring**: Set up your scoring criteria and weights on the Score page
-3. **Review Opportunities**: Browse and filter opportunities on the Opportunities page
-4. **Compare Products**: Select multiple products to compare side-by-side
-5. **Validate & Decide**: Use the validation checklist and decision framework
-6. **Generate Sourcing Packets**: Create comprehensive sourcing documents
+**Get from raw data to scored opportunities in 3 simple steps:**
+
+1. **Upload Product Data**: Import your Helium 10 Black Box CSV (no setup required)
+2. **Add Keyword Metrics**: Enhance with Magnet/Cerebro data (optional but recommended)
+3. **Score & Analyze**: Apply scoring and find your best opportunities
+
+### (A) Preparing Your CSVs in Helium 10
+
+**Step 1: Export Black Box Product Data**
+1. Open Helium 10 Black Box
+2. Set your search criteria (price range, revenue, reviews, etc.)
+3. Run your search and review the results
+4. Click **"Export"** → Download as CSV
+5. Save the file to your computer
+
+**Step 2: Export Keyword Data (Optional)**
+1. Open Helium 10 Magnet or Cerebro
+2. Enter seed keywords or ASINs related to your products
+3. Run the keyword analysis
+4. Click **"Export"** → Download as CSV
+5. Save the file separately
+
+*💡 Pro Tip: Use both tools for complete data - Black Box for products, Magnet/Cerebro for keywords*
+
+### (B) Uploading Into the App
+
+**Box 1: Upload Helium 10 Black Box CSV**
+1. Navigate to the **Import** page
+2. Find the "Import Product Data" section
+3. Drop your Black Box CSV into the upload area (or click to browse)
+4. ✅ **No column mapping needed** - the app auto-detects standard Helium 10 formats
+5. Review the import summary showing products imported and revenue source
+
+**Box 2: Add Keyword Metrics (Optional)**
+1. After your Black Box import completes, a second box appears
+2. Drop your Magnet/Cerebro CSV into the "Enhance with Keyword Data" area
+3. ✅ **Auto-fills Search Volume and Competing Products** for each product
+4. View the enhancement summary showing how many products were enriched
+5. Use the review panel to override auto-assigned keywords if needed
+
+**What Gets Imported Automatically:**
+- ✅ Product titles, ASIN, brand information
+- ✅ Revenue (ASIN Revenue or Parent Level Revenue)
+- ✅ Price, review count, star rating
+- ✅ Weight, dimensions (built from length × width × height)
+- ✅ Search volume and competing products (from keyword data)
+- ✅ Best Seller Rank, category, fulfillment method
+
+**Safeguards Built-In:**
+- ✅ Blank cells and missing columns handled automatically
+- ✅ No errors for empty rows or missing values
+- ✅ Mixed header casing supported (case-insensitive)
+- ✅ Large files (500+ products, 10k+ keywords) process smoothly
+
+### (C) What Happens Next
+
+**Immediate Results:**
+- Your products appear on the **Opportunities** page
+- Basic metrics are calculated and displayed
+- Products are ready for scoring and analysis
+
+**Next Steps:**
+1. **Apply Scoring** → Go to Score page to set your criteria weights
+2. **Review Opportunities** → Browse and filter your product list
+3. **Compare Products** → Select multiple items for side-by-side analysis
+4. **Validate & Decide** → Use the checklist to evaluate top opportunities
+5. **Generate Sourcing Packets** → Create supplier-ready documentation
+
+**Enhanced with Keywords (if you uploaded Magnet/Cerebro data):**
+- Search volume displays for each product
+- Competing products count shows market saturation
+- Primary keywords auto-assigned based on product titles
+- Keyword suggestions available for manual override
 
 ### Data Sources Supported
 
-- **Jungle Scout**: Product research and market data
-- **Helium 10**: Product research and keyword data
-- **Amazon POE (Product Opportunity Explorer)**: Amazon's own opportunity data
+- **Helium 10 Black Box**: Product research and market data ✅ Auto-mapped
+- **Helium 10 Magnet**: Keyword research and search volumes ✅ Auto-mapped  
+- **Helium 10 Cerebro**: Competitor keyword analysis ✅ Auto-mapped
 - **Manual Entry**: Add your own product data
 
-## Import & Data Management {#import-mapping}
-
-### CSV Import Process
-
-1. Navigate to the **Import** page
-2. Choose your data source format (Jungle Scout, Helium 10, or Amazon POE)
-3. Either upload a CSV file or paste CSV data directly
-4. Map your columns to the expected fields
-5. Review and confirm the import
-
-### Supported CSV Fields
-
-**Jungle Scout Format:**
-- Product Name, ASIN, Sales, Revenue, Price, BSR, Reviews, Rating
-
-**Helium 10 Format:**
-- Title, ASIN, Monthly Sales, Revenue, Selling Price, BSR, Review Count, Rating
-
-**Amazon POE Format:**
-- Product Title, ASIN, Search Volume, Opportunity Score, Niche Score
-
-### Data Validation
-
-The system automatically validates imported data and flags:
-- Missing required fields
-- Invalid ASIN formats
-- Duplicate entries
-- Data quality issues
+*Note: The new streamlined import replaces the old column-mapping workflow. Legacy formats are still supported on the advanced import page.*
 
 ## Scoring System {#scoring-gates} {#scoring-gates}
 
