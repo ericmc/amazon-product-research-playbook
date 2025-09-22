@@ -46,6 +46,7 @@ interface ProductData {
 interface AutoMappedProduct {
   productData: ProductData;
   rawData: Record<string, string>;
+  metadata: Record<string, string>;
 }
 
 // Auto-mapping for Helium 10 Black Box CSV headers
@@ -131,23 +132,20 @@ const HeliumImportWizard = () => {
   const buildDimensions = (rawData: Record<string, string>, mapping: Record<string, string>): string => {
     const dims = [];
     
-    // Build dimensions from individual L/W/H fields or use combined dimensions field
-    if (mapping.length && mapping.width && mapping.height) {
-      const length = rawData[mapping.length];
-      const width = rawData[mapping.width];
-      const height = rawData[mapping.height];
-      if (length && width && height) {
-        dims.push(`${length} x ${width} x ${height}`);
+    // Build dimensions from Length x Width x Height, skip missing parts gracefully
+    if (mapping.length || mapping.width || mapping.height) {
+      const length = rawData[mapping.length || ''];
+      const width = rawData[mapping.width || ''];
+      const height = rawData[mapping.height || ''];
+      
+      const dimensionParts = [length, width, height].filter(part => part && part.trim());
+      if (dimensionParts.length > 0) {
+        return dimensionParts.join(' x ');
       }
-    } else if (mapping.dimensions && rawData[mapping.dimensions]) {
-      dims.push(rawData[mapping.dimensions]);
     }
     
-    if (mapping.weight && rawData[mapping.weight]) {
-      dims.push(`Weight: ${rawData[mapping.weight]}`);
-    }
-    
-    return dims.join(' | ');
+    // If no dimensions available, return "N/A"
+    return "N/A";
   };
 
   const detectDelimiter = (text: string): string => {
@@ -191,20 +189,31 @@ const HeliumImportWizard = () => {
         asin: rawData[mapping.asin] || '',
         title: rawData[mapping.title] || '',
         brand: rawData[mapping.brand] || '',
-        keyword: rawData[mapping.keyword] || rawData[mapping.title] || '', // Fallback to title if no keyword
-        searchVolume: normalizeValue(rawData[mapping.searchVolume] || '0'),
+        keyword: rawData[mapping.title] || '', // Use title as keyword for now
+        searchVolume: 0, // Leave blank for now
         revenue: normalizeValue(rawData[mapping.revenue] || rawData[mapping.parentRevenue] || '0'),
-        unitsSold: normalizeValue(rawData[mapping.unitsSold] || '0'),
+        unitsSold: 0, // Leave blank for now
         price: normalizeValue(rawData[mapping.price] || '0'),
-        competition: rawData[mapping.competition] || 'Medium',
+        competition: '', // Leave blank for now
         dimensions: buildDimensions(rawData, mapping),
         weight: rawData[mapping.weight] || '',
         rating: normalizeValue(rawData[mapping.rating] || '0'),
         reviewCount: normalizeValue(rawData[mapping.reviewCount] || '0'),
-        competingProducts: normalizeValue(rawData[mapping.competingProducts] || '0')
+        competingProducts: 0 // Leave blank for now
       };
 
-      return { productData, rawData };
+      // Store metadata for detail views
+      const metadata = {
+        asin: rawData[mapping.asin] || '',
+        brand: rawData[mapping.brand] || '',
+        url: rawData[mapping.url] || '',
+        imageUrl: rawData[mapping.imageUrl] || '',
+        category: rawData[mapping.category] || '',
+        bsr: rawData[mapping.bsr] || '',
+        fulfillment: rawData[mapping.fulfillment] || ''
+      };
+
+      return { productData, rawData, metadata };
     });
   };
 
@@ -307,7 +316,7 @@ const HeliumImportWizard = () => {
       }
 
       // Import each product as an opportunity
-      const importPromises = processedProducts.map(async ({ productData }) => {
+      const importPromises = processedProducts.map(async ({ productData, rawData, metadata }) => {
         const criteria = [
           {
             id: 'product_name',
@@ -386,7 +395,7 @@ const HeliumImportWizard = () => {
           }, 0)
         );
 
-        return supabase
+        const opportunityResult = await supabase
           .from('opportunities')
           .insert({
             user_id: user.id,
@@ -395,8 +404,27 @@ const HeliumImportWizard = () => {
             criteria: criteria,
             final_score: finalScore,
             status: 'draft',
-            notes: `Auto-imported from Helium 10 - ASIN: ${productData.asin}, Dimensions: ${productData.dimensions || 'N/A'}`
-          });
+            notes: `Auto-imported from Helium 10 Black Box - ASIN: ${productData.asin}, Dimensions: ${productData.dimensions}`
+          })
+          .select()
+          .single();
+
+        if (opportunityResult.data) {
+          // Store raw import data with metadata
+          const mapping = helium10AutoMap(blackBoxData?.headers || []);
+          await supabase
+            .from('raw_imports')
+            .insert({
+              user_id: user.id,
+              opportunity_id: opportunityResult.data.id,
+              source: 'helium_10_blackbox',
+              raw_data: rawData,
+              field_mappings: mapping,
+              import_metadata: metadata
+            });
+        }
+
+        return opportunityResult;
       });
 
       await Promise.all(importPromises);
