@@ -18,6 +18,7 @@ import NotFound from "./pages/NotFound";
 // Lazy load heavy routes
 const Import = lazy(() => import("./pages/Import"));
 const SourcingPacket = lazy(() => import("./pages/SourcingPacket"));
+const Help = lazy(() => import("./pages/Help"));
 
 // Initialize axe in development
 if (import.meta.env.DEV) {
@@ -65,6 +66,16 @@ const App = () => (
               />
               <Route path="/integrations" element={<Integrations />} />
               <Route path="/settings" element={<Settings />} />
+              <Route 
+                path="/help" 
+                element={
+                  <ErrorBoundary fallbackTitle="Help Error">
+                    <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]">Loading help...</div>}>
+                      <Help />
+                    </Suspense>
+                  </ErrorBoundary>
+                } 
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

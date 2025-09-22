@@ -10,7 +10,8 @@ import {
   Upload,
   Database,
   Puzzle,
-  Settings
+  Settings,
+  HelpCircle
 } from "lucide-react";
 
 const navigationItems = [
@@ -41,7 +42,7 @@ export const Navigation = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex">
+          <div className="hidden lg:flex items-center gap-4">
             <div className="flex items-center space-x-1 rounded-lg bg-muted p-1">
               {navigationItems.map((item) => {
                 const isActive = location.pathname === item.href;
@@ -62,23 +63,48 @@ export const Navigation = () => {
                 );
               })}
             </div>
+            
+            {/* Help Button */}
+            <Link
+              to="/help"
+              className={cn(
+                "inline-flex items-center justify-center h-9 w-9 rounded-md border border-input bg-background text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                location.pathname === "/help" && "bg-accent text-accent-foreground"
+              )}
+              aria-label="Help"
+              title="Help & Documentation"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Link>
           </div>
 
-          {/* Mobile Navigation Toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle navigation menu"
-            aria-expanded={isMobileMenuOpen}
-          >
-            {isMobileMenuOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-          </Button>
+          {/* Mobile Navigation & Help */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <Link
+              to="/help"
+              className={cn(
+                "inline-flex items-center justify-center h-9 w-9 rounded-md border border-input bg-background text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                location.pathname === "/help" && "bg-accent text-accent-foreground"
+              )}
+              aria-label="Help"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Link>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle navigation menu"
+              aria-expanded={isMobileMenuOpen}
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Mobile Navigation Menu */}
@@ -105,6 +131,21 @@ export const Navigation = () => {
                     </Link>
                   );
                 })}
+                
+                {/* Mobile Help Link */}
+                <Link
+                  to="/help"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={cn(
+                    "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    location.pathname === "/help"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  <HelpCircle className="h-4 w-4" />
+                  <span>Help</span>
+                </Link>
               </div>
             </div>
           </div>
