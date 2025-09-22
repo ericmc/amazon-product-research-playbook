@@ -15,15 +15,15 @@ const LockScreen = () => {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Redirect if already unlocked or just unlocked
-  if (isAppUnlocked() || isUnlocked) {
-    return <Navigate to="/" replace />;
-  }
-
   // Focus input on mount
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  // Redirect if already unlocked or just unlocked
+  if (isAppUnlocked() || isUnlocked) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
