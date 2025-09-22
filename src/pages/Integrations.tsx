@@ -161,6 +161,17 @@ const integrationTools: IntegrationTool[] = [
 ];
 
 const Integrations = () => {
+  // Check for current product/keyword in state or URL params
+  const currentProduct = ""; // This would come from global state or URL params
+  
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      // Could add a toast here
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
   return (
     <main className="min-h-screen bg-background">
       <div className="container max-w-7xl mx-auto px-4 py-16">
@@ -249,6 +260,17 @@ const Integrations = () => {
                         </div>
                       </div>
                       <div className="flex space-x-2">
+                        {currentProduct && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => copyToClipboard(currentProduct)}
+                            className="text-xs"
+                          >
+                            <Copy className="w-3 h-3 mr-1" />
+                            Copy "{currentProduct}"
+                          </Button>
+                        )}
                         <Button asChild variant="outline">
                           <a href={tool.toolUrl} target="_blank" rel="noopener noreferrer">
                             <ExternalLink className="w-4 h-4 mr-2" />
