@@ -13,7 +13,7 @@ import { ScoringPreview } from "@/components/ScoringPreview";
 import { AutoMappedProduct } from "@/lib/normalizeBlackBox";
 import { ProductWithKeywords } from "@/lib/matchKeyword";
 
-type SortField = 'title' | 'revenue' | 'price' | 'searchVolume' | 'reviewCount' | 'rating';
+type SortField = 'title' | 'revenue' | 'price' | 'searchVolume' | 'reviewCount' | 'rating' | 'score';
 type SortDirection = 'asc' | 'desc';
 
 interface ScoringData {
@@ -37,7 +37,7 @@ const Score = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [revenueFilter, setRevenueFilter] = useState("all");
   const [keywordFilter, setKeywordFilter] = useState("all");
-  const [sortField, setSortField] = useState<SortField>('revenue');
+  const [sortField, setSortField] = useState<SortField>('score');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
   const navigate = useNavigate();
@@ -111,6 +111,41 @@ const Score = () => {
     });
   };
 
+  const calculateProductScore = (product: AutoMappedProduct | ProductWithKeywords): number => {
+    const scoringData = prepareProductForScoring(product);
+    
+    // Same criteria as ScoringPreview but simplified for table display
+    const criteria = [
+      { value: scoringData.revenue, maxValue: 50000, weight: 25 },
+      { value: scoringData.demand, maxValue: 50000, weight: 20 },
+      { value: 100 - scoringData.competition, maxValue: 100, weight: 20 }, // Inverted
+      { value: Math.min(scoringData.reviewCount, 5000), maxValue: 5000, weight: 15 },
+      { value: scoringData.rating * 20, maxValue: 100, weight: 10 },
+      { value: Math.min(scoringData.price, 100), maxValue: 100, weight: 10 }
+    ];
+
+    let totalScore = 0;
+    criteria.forEach(criterion => {
+      const normalized = (criterion.value / criterion.maxValue) * 100;
+      const weightedScore = (normalized * criterion.weight) / 100;
+      totalScore += weightedScore;
+    });
+
+    return Math.round(totalScore);
+  };
+
+  const getScoreColor = (score: number): string => {
+    if (score >= 80) return 'text-green-600 font-semibold';
+    if (score >= 60) return 'text-yellow-600 font-semibold';
+    return 'text-red-600 font-semibold';
+  };
+
+  const getScoreBadge = (score: number): string => {
+    if (score >= 80) return 'bg-green-100 text-green-800 border-green-200';
+    if (score >= 60) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    return 'bg-red-100 text-red-800 border-red-200';
+  };
+
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -178,6 +213,10 @@ const Score = () => {
         case 'rating':
           aValue = a.productData.rating || 0;
           bValue = b.productData.rating || 0;
+          break;
+        case 'score':
+          aValue = calculateProductScore(a);
+          bValue = calculateProductScore(b);
           break;
         default:
           return 0;
@@ -308,12 +347,12 @@ const Score = () => {
             </div>
 
             {/* Product Table */}
-            <div className="rounded-md border max-h-96 overflow-auto">
+            <div className="rounded-md border max-h-96 overflow-auto bg-background">
               <Table>
-                <TableHeader className="sticky top-0 bg-background">
+                <TableHeader className="sticky top-0 bg-background z-10 border-b shadow-sm">
                   <TableRow>
-                    <TableHead className="w-12">Image</TableHead>
-                    <TableHead className="min-w-64">
+                    <TableHead className="w-12 bg-background">Image</TableHead>
+                    <TableHead className="min-w-64 bg-background">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('title')}
@@ -322,7 +361,16 @@ const Score = () => {
                         Product Title {getSortIcon('title')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right">
+                    <TableHead className="text-right bg-background">
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => handleSort('score')}
+                        className="h-auto p-0 font-medium"
+                      >
+                        Viability Score {getSortIcon('score')}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-right bg-background">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('revenue')}
@@ -331,7 +379,7 @@ const Score = () => {
                         Revenue {getSortIcon('revenue')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right">
+                    <TableHead className="text-right bg-background">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('price')}
@@ -340,7 +388,7 @@ const Score = () => {
                         Price {getSortIcon('price')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right">
+                    <TableHead className="text-right bg-background">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('searchVolume')}
@@ -349,7 +397,7 @@ const Score = () => {
                         Search Vol {getSortIcon('searchVolume')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right">
+                    <TableHead className="text-right bg-background">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('reviewCount')}
@@ -358,7 +406,7 @@ const Score = () => {
                         Reviews {getSortIcon('reviewCount')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right">
+                    <TableHead className="text-right bg-background">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('rating')}
@@ -367,13 +415,14 @@ const Score = () => {
                         Rating {getSortIcon('rating')}
                       </Button>
                     </TableHead>
-                    <TableHead>Keywords</TableHead>
+                    <TableHead className="bg-background">Keywords</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredAndSortedProducts.map((product, index) => {
                     const isSelected = selectedProduct === product;
                     const imageUrl = (product.rawData?.['Image URL'] || product.rawData?.['image url'] || '').trim();
+                    const viabilityScore = calculateProductScore(product);
                     
                     return (
                       <TableRow 
@@ -401,6 +450,11 @@ const Score = () => {
                           <div className="max-w-sm truncate" title={product.productData.title}>
                             {product.productData.title || 'Unknown Product'}
                           </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge className={`${getScoreBadge(viabilityScore)} text-xs font-semibold`}>
+                            {viabilityScore}/100
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           ${(product.productData.revenue || 0).toLocaleString()}/mo
