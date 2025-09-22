@@ -19,6 +19,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { useTour, TourStartButton, TourRestartButton } from "@/components/ProductTour";
+import { useQuickTutorial, TutorialRestartButton } from "@/components/QuickTutorial";
 
 interface TocItem {
   id: string;
@@ -36,6 +37,7 @@ interface Section {
 
 const Help = () => {
   const { hasSeenTour, startTour, restartTour } = useTour();
+  const { restartTutorial } = useQuickTutorial();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [sections, setSections] = useState<Section[]>([]);
@@ -275,6 +277,8 @@ For more detailed information, please refer to the documentation.`;
 
               {/* Actions */}
               <div className="space-y-2">
+                <TutorialRestartButton onRestart={restartTutorial} />
+                
                 {!hasSeenTour ? (
                   <TourStartButton onStart={startTour} />
                 ) : (

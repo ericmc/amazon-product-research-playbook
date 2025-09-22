@@ -2,6 +2,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { QuickStartButton, useQuickTutorial, QuickTutorial } from "@/components/QuickTutorial";
 import { 
   Search, 
   BarChart3, 
@@ -25,6 +26,7 @@ const navigationItems = [
 export const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { isOpen, startTutorial, closeTutorial, completeTutorial } = useQuickTutorial();
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -65,6 +67,9 @@ export const Navigation = () => {
               })}
             </div>
             
+            {/* Quick Start Button */}
+            <QuickStartButton onStart={startTutorial} />
+            
             {/* Help Button */}
             <Link
               to="/help"
@@ -81,10 +86,12 @@ export const Navigation = () => {
 
           {/* Mobile Navigation & Help */}
           <div className="flex items-center gap-2 lg:hidden">
+            <QuickStartButton onStart={startTutorial} />
+            
             <Link
               to="/help"
               className={cn(
-                "inline-flex items-center justify-center h-9 w-9 rounded-md border border-input bg-background text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                "inline-flex items-center justify-center h-9 w-9 rounded-md border border-input bg-background text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-offset-2",
                 location.pathname === "/help" && "bg-accent text-accent-foreground"
               )}
               aria-label="Help"
@@ -153,6 +160,13 @@ export const Navigation = () => {
           </div>
         )}
       </div>
+
+      {/* Quick Tutorial */}
+      <QuickTutorial 
+        isOpen={isOpen}
+        onClose={closeTutorial}
+        onComplete={completeTutorial}
+      />
     </nav>
   );
 };
