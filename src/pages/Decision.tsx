@@ -342,9 +342,11 @@ const Decision = () => {
                 <Label htmlFor="compliance">Complete compliance checks</Label>
               </div>
               <div className="pt-4">
-                <Button variant="outline" className="w-full">
-                  Generate Sourcing Packet
-                </Button>
+                <Link to={`/opportunities/${id}/packet`}>
+                  <Button variant="outline" className="w-full">
+                    Generate Sourcing Packet
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
