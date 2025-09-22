@@ -9,9 +9,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, CheckCircle, XCircle, TrendingUp, DollarSign, Users, Star, Calendar, ExternalLink, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, TrendingUp, DollarSign, Users, Star, Calendar, ExternalLink, Plus, Trash2, RefreshCw, AlertTriangle, X } from "lucide-react";
 import { opportunityStorage, SavedOpportunity } from "@/utils/OpportunityStorage";
 import { useToast } from "@/hooks/use-toast";
+import { isStale, getStalenessDays } from "@/utils/refreshUtils";
+import RefreshModal from "@/components/RefreshModal";
+import HistoryTab from "@/components/HistoryTab";
 
 const OpportunityDetail = () => {
   const { id } = useParams();
@@ -19,6 +22,8 @@ const OpportunityDetail = () => {
   const { toast } = useToast();
   const [opportunity, setOpportunity] = useState<SavedOpportunity | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showRefreshModal, setShowRefreshModal] = useState(false);
+  const [showStalenessBanner, setShowStalenessBanner] = useState(true);
 
   useEffect(() => {
     const loadOpportunity = async () => {
@@ -204,6 +209,31 @@ const OpportunityDetail = () => {
     }
   };
 
+  const handleRefreshOpportunity = async (updatedOpportunity: SavedOpportunity) => {
+    try {
+      await opportunityStorage.saveOpportunity(updatedOpportunity);
+      setOpportunity(updatedOpportunity);
+      setShowRefreshModal(false);
+      setShowStalenessBanner(false);
+      toast({
+        title: "Opportunity refreshed",
+        description: "Data has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to refresh opportunity.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const snoozeStalenessBanner = () => {
+    setShowStalenessBanner(false);
+    // Could also set a localStorage flag with 7-day expiry
+  };
+  };
+
   if (loading) {
     return (
       <div className="container max-w-6xl mx-auto p-6">
@@ -273,6 +303,50 @@ const OpportunityDetail = () => {
             </div>
           </CardHeader>
         </Card>
+
+        {/* Staleness Banner */}
+        {opportunity && isStale(opportunity) && showStalenessBanner && (
+          <Card className="border-orange-200 bg-orange-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="h-5 w-5 text-orange-600" />
+                  <div>
+                    <p className="font-medium text-orange-800">
+                      Data is {getStalenessDays(opportunity)} days old
+                    </p>
+                    <p className="text-sm text-orange-600">
+                      Consider refreshing market data to ensure accuracy
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    onClick={() => setShowRefreshModal(true)}
+                    size="sm"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh Now
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={snoozeStalenessBanner}
+                  >
+                    Snooze (7 days)
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setShowStalenessBanner(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tabs */}
         <Tabs defaultValue="validation" className="w-full">
@@ -894,35 +968,20 @@ const OpportunityDetail = () => {
           </TabsContent>
 
           <TabsContent value="history" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Change History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {opportunity.history && opportunity.history.length > 0 ? (
-                  <div className="space-y-4">
-                    {opportunity.history.map((entry, index) => (
-                      <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
-                        <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                        <div className="flex-1">
-                          <div className="text-sm font-medium">{entry.summary}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {new Date(entry.date).toLocaleString()} • {entry.type}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center text-muted-foreground py-8">
-                    No history entries yet
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <HistoryTab opportunity={opportunity} />
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Refresh Modal */}
+      {showRefreshModal && opportunity && (
+        <RefreshModal
+          opportunity={opportunity}
+          open={showRefreshModal}
+          onOpenChange={setShowRefreshModal}
+          onRefresh={handleRefreshOpportunity}
+        />
+      )}
     </div>
   );
 };
