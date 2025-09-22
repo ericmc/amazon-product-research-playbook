@@ -101,22 +101,29 @@ const HeliumImportWizard = () => {
   const { toast } = useToast();
 
   const normalizeValue = (value: string): number => {
-    if (!value) return 0;
+    if (!value || typeof value !== 'string') return 0;
+    
+    // Trim whitespace
+    const trimmed = value.trim();
+    if (!trimmed) return 0;
     
     // Remove common prefixes and formatting
-    let cleaned = value.replace(/[$,\s%]/g, '');
+    let cleaned = trimmed.replace(/[$,\s%]/g, '');
     
     // Handle different number formats
     if (cleaned.includes('K') || cleaned.includes('k')) {
       cleaned = cleaned.replace(/[Kk]/g, '');
-      return parseFloat(cleaned) * 1000;
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : parsed * 1000;
     }
     if (cleaned.includes('M') || cleaned.includes('m')) {
       cleaned = cleaned.replace(/[Mm]/g, '');
-      return parseFloat(cleaned) * 1000000;
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : parsed * 1000000;
     }
     
-    return parseFloat(cleaned) || 0;
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
   };
 
   const normalizeCompetition = (competition: string): number => {
@@ -130,17 +137,18 @@ const HeliumImportWizard = () => {
   };
 
   const buildDimensions = (rawData: Record<string, string>, mapping: Record<string, string>): string => {
-    const dims = [];
+    const dimensionParts = [];
     
     // Build dimensions from Length x Width x Height, skip missing parts gracefully
     if (mapping.length || mapping.width || mapping.height) {
-      const length = rawData[mapping.length || ''];
-      const width = rawData[mapping.width || ''];
-      const height = rawData[mapping.height || ''];
+      const length = rawData[mapping.length || '']?.trim();
+      const width = rawData[mapping.width || '']?.trim();
+      const height = rawData[mapping.height || '']?.trim();
       
-      const dimensionParts = [length, width, height].filter(part => part && part.trim());
-      if (dimensionParts.length > 0) {
-        return dimensionParts.join(' x ');
+      // Only include non-empty dimension parts
+      const validParts = [length, width, height].filter(part => part && part.length > 0);
+      if (validParts.length > 0) {
+        return validParts.join(' x ');
       }
     }
     
@@ -167,11 +175,14 @@ const HeliumImportWizard = () => {
   };
 
   const parseCSV = (text: string, delimiter: string): ParsedData => {
-    const lines = text.trim().split('\n').filter(line => line.trim());
+    const lines = text.trim().split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0); // Skip empty rows
+    
     const headers = lines[0].split(delimiter).map(h => h.trim().replace(/['"]/g, ''));
     const rows = lines.slice(1).map(line => 
       line.split(delimiter).map(cell => cell.trim().replace(/['"]/g, ''))
-    );
+    ).filter(row => row.some(cell => cell.length > 0)); // Skip completely empty rows
     
     return { headers, rows, delimiter };
   };
@@ -186,31 +197,31 @@ const HeliumImportWizard = () => {
       });
 
       const productData: ProductData = {
-        asin: rawData[mapping.asin] || '',
-        title: rawData[mapping.title] || '',
-        brand: rawData[mapping.brand] || '',
-        keyword: rawData[mapping.title] || '', // Use title as keyword for now
+        asin: (rawData[mapping.asin] || '').trim(),
+        title: (rawData[mapping.title] || '').trim(),
+        brand: (rawData[mapping.brand] || '').trim(),
+        keyword: (rawData[mapping.title] || '').trim(), // Use title as keyword for now
         searchVolume: 0, // Leave blank for now
         revenue: normalizeValue(rawData[mapping.revenue] || rawData[mapping.parentRevenue] || '0'),
         unitsSold: 0, // Leave blank for now
         price: normalizeValue(rawData[mapping.price] || '0'),
         competition: '', // Leave blank for now
         dimensions: buildDimensions(rawData, mapping),
-        weight: rawData[mapping.weight] || '',
+        weight: (rawData[mapping.weight] || '').trim(),
         rating: normalizeValue(rawData[mapping.rating] || '0'),
         reviewCount: normalizeValue(rawData[mapping.reviewCount] || '0'),
         competingProducts: 0 // Leave blank for now
       };
 
-      // Store metadata for detail views
+      // Store metadata for detail views - sanitize all values
       const metadata = {
-        asin: rawData[mapping.asin] || '',
-        brand: rawData[mapping.brand] || '',
-        url: rawData[mapping.url] || '',
-        imageUrl: rawData[mapping.imageUrl] || '',
-        category: rawData[mapping.category] || '',
-        bsr: rawData[mapping.bsr] || '',
-        fulfillment: rawData[mapping.fulfillment] || ''
+        asin: (rawData[mapping.asin] || '').trim(),
+        brand: (rawData[mapping.brand] || '').trim(),
+        url: (rawData[mapping.url] || '').trim(),
+        imageUrl: (rawData[mapping.imageUrl] || '').trim(),
+        category: (rawData[mapping.category] || '').trim(),
+        bsr: (rawData[mapping.bsr] || '').trim(),
+        fulfillment: (rawData[mapping.fulfillment] || '').trim()
       };
 
       return { productData, rawData, metadata };
