@@ -1,73 +1,81 @@
-# Welcome to your Lovable project
+# Amazon Product Research Playbook
 
-## Project info
+> Professional Amazon product research and analysis tools for finding, validating, and sourcing profitable FBA opportunities.
 
-**URL**: https://lovable.dev/projects/3db50c44-7a5c-4ec0-ab6c-0a8d2bb8d717
+## Mission
 
-## How can I edit this code?
+Transform Amazon product research from guesswork into a systematic, data-driven process. Import data from Jungle Scout, Helium 10, or Amazon's Product Opportunity Explorer, score opportunities against proven criteria, validate through structured checklists, make go/no-go decisions, and generate sourcing packets—all while tracking market changes over time.
 
-There are several ways of editing your application.
+## Quickstart
 
-**Use Lovable**
+```bash
+# Install dependencies
+npm install
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3db50c44-7a5c-4ec0-ab6c-0a8d2bb8d717) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
+
+# Build for production
+npm run build
+
+# Run tests
+npm run test
+npm run test:e2e
 ```
 
-**Edit a file directly in GitHub**
+## Features
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- **Data Integration**: Import from Jungle Scout, Helium 10, Amazon POE via CSV/clipboard
+- **Intelligent Scoring**: 6 weighted criteria with automated recommendations  
+- **Validation Checklists**: Structured workflow with progress tracking
+- **Decision Framework**: Automated proceed/gather-data/reject recommendations
+- **Sourcing Packets**: Print-ready documentation for suppliers
+- **Market Refresh**: 7-day staleness tracking with quick update workflow
+- **Comparison Tools**: Side-by-side analysis with best-in-class highlighting
 
-**Use GitHub Codespaces**
+## Accessibility (WCAG AA)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- ✅ Skip to content link (Tab to reveal)
+- ✅ Semantic landmarks and proper heading structure
+- ✅ Full keyboard navigation support
+- ✅ Screen reader friendly with ARIA labels
+- ✅ Respects `prefers-reduced-motion`
+- ✅ AA-compliant color contrast
 
-## What technologies are used for this project?
+## Scripts
 
-This project is built with:
+```bash
+npm run dev          # Development server
+npm run build        # Production build  
+npm run test         # Unit tests
+npm run test:e2e     # End-to-end tests
+npm run lint         # Code linting
+npm run format       # Code formatting
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## CSV Data Mapping
 
-## How can I deploy this project?
+See `samples/` directory for import examples. Supports:
+- Jungle Scout exports (Revenue, Search Volume, Competition)
+- Helium 10 data (ASIN, Revenue, Competition)  
+- Amazon POE (Opportunity Score, Search Volume)
+- Manual entry with guided forms
 
-Simply open [Lovable](https://lovable.dev/projects/3db50c44-7a5c-4ec0-ab6c-0a8d2bb8d717) and click on Share -> Publish.
+## Privacy & Data
 
-## Can I connect a custom domain to my Lovable project?
+- No credentials stored or transmitted
+- CSV/clipboard import only - no direct API connections
+- Data stored locally (localStorage) by default
+- Optional Supabase integration for team sharing
 
-Yes, you can!
+## Deployment
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+**Vercel/Netlify**: Ensure SPA fallback redirects `/*` → `/index.html`
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+
+---
+
+**Built for Amazon FBA entrepreneurs who demand data-driven decisions.** 🚀

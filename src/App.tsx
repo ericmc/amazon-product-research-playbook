@@ -24,8 +24,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <div className="min-h-screen flex flex-col">
-          <Navigation />
-          <main className="flex-1">
+          <header>
+            <Navigation />
+          </header>
+          <main id="main-content" className="flex-1" tabIndex={-1}>
             <Routes>
               <Route path="/" element={<Score />} />
               <Route path="/score" element={<Score />} />
@@ -39,7 +41,9 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
-          <Footer />
+          <footer>
+            <Footer />
+          </footer>
         </div>
       </BrowserRouter>
     </TooltipProvider>
