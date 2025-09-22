@@ -12,10 +12,11 @@ const LockScreen = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState('');
   const [attempts, setAttempts] = useState(0);
+  const [isUnlocked, setIsUnlocked] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Redirect if already unlocked
-  if (isAppUnlocked()) {
+  // Redirect if already unlocked or just unlocked
+  if (isAppUnlocked() || isUnlocked) {
     return <Navigate to="/" replace />;
   }
 
@@ -40,7 +41,7 @@ const LockScreen = () => {
       
       if (isValid) {
         unlockApp();
-        // Navigation will happen automatically due to the redirect check above
+        setIsUnlocked(true); // Trigger immediate redirect
       } else {
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);
