@@ -231,7 +231,7 @@ const defaultCriteria: ScoringCriteria[] = [
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
-const ScoringSystemV2 = () => {
+const ScoringSystem = () => {
   const [criteria, setCriteria] = useState<FusedCriterion[]>([]);
   const [productName, setProductName] = useState("Bamboo Kitchen Utensil Set");
   const [expandedGuidance, setExpandedGuidance] = useState<string>('');
@@ -709,4 +709,4 @@ const ScoringSystemV2 = () => {
   );
 };
 
-export default ScoringSystemV2;
+export default ScoringSystem;

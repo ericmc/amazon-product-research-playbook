@@ -14,9 +14,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ExternalTools } from "@/components/ExternalTools";
 import { opportunityStorage, SavedOpportunity } from "@/utils/OpportunityStorage";
 import { useToast } from "@/hooks/use-toast";
-import { FusedCriterion, migrateLegacyCriterion, fuseValues } from "@/utils/dataFusion";
-import ProvenancePopover from "@/components/ProvenancePopover";
-import VerifyBadge from "@/components/VerifyBadge";
 
 interface ScoringCriteria {
   id: string;
@@ -232,64 +229,35 @@ const defaultCriteria: ScoringCriteria[] = [
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
 const ScoringSystem = () => {
-  const [criteria, setCriteria] = useState<FusedCriterion[]>([]);
+  const [criteria, setCriteria] = useState<ScoringCriteria[]>(defaultCriteria);
   const [productName, setProductName] = useState("Bamboo Kitchen Utensil Set");
   const [expandedGuidance, setExpandedGuidance] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  // Initialize with migrated legacy criteria
-  React.useEffect(() => {
-    const migrated = defaultCriteria.map(criterion => migrateLegacyCriterion(criterion));
-    setCriteria(migrated);
-  }, []);
-
   // Check for prefilled data from Data Intake
   React.useEffect(() => {
     const prefilledData = sessionStorage.getItem('prefilledScoringData');
-    if (prefilledData && criteria.length > 0) {
+    if (prefilledData) {
       const data = safeParse<any>(prefilledData, {});
       setProductName(data.productName || "");
       
       // Update criteria with imported values and source tracking
       setCriteria(prev => prev.map(criterion => {
+        let updatedCriterion = { ...criterion };
+        
         if (data[criterion.id] !== undefined) {
-          const source = data.source || 'manual';
-          const timestamp = new Date().toISOString();
-          
-          const updatedBySource = {
-            ...criterion.bySource,
-            [source]: {
-              value: data[criterion.id],
-              source,
-              timestamp,
-              confidence: 0.8
-            }
-          };
-          
-          // Re-fuse values with new data
-          const fusionResult = fuseValues(criterion.id, updatedBySource);
-          
-          return {
-            ...criterion,
-            fusedValue: fusionResult.fusedValue,
-            bySource: updatedBySource,
-            fusionMetadata: {
-              ...criterion.fusionMetadata,
-              disagreementIndex: fusionResult.disagreementIndex,
-              confidenceScore: fusionResult.confidenceScore,
-              lastFusedAt: timestamp,
-              fusionMethod: fusionResult.fusionMethod
-            }
-          };
+          updatedCriterion.value = data[criterion.id];
+          updatedCriterion.source = data.source || 'manual';
         }
-        return criterion;
+        
+        return updatedCriterion;
       }));
       
       // Clear the session storage after use
       sessionStorage.removeItem('prefilledScoringData');
     }
-  }, [criteria.length]);
+  }, []);
 
   const generateActionableSuggestion = (criterion: ScoringCriteria): string => {
     const isInverted = criterion.isInverted || false;
