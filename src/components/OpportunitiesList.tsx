@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Database, 
   GitCompare, 
@@ -18,7 +19,11 @@ import {
   ChevronRight,
   Package,
   Clock,
-  Plus
+  Plus,
+  Filter,
+  SortAsc,
+  AlertTriangle,
+  X
 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -27,8 +32,10 @@ import OpportunityChecklistComponent, { OpportunityChecklist } from "./Opportuni
 import DecisionTree from "./DecisionTree";
 import SourcingPacket from "./SourcingPacket";
 import RefreshCadence from "./RefreshCadence";
+import RefreshModal from "./RefreshModal";
 
 import { SavedOpportunity } from "@/utils/OpportunityStorage";
+import { isStale, getStalenessDays, sortOpportunities, filterStale } from "@/utils/refreshUtils";
 
 interface WeakCriterion {
   id: string;
@@ -39,12 +46,16 @@ interface WeakCriterion {
 const OpportunitiesList = () => {
   const navigate = useNavigate();
   const [opportunities, setOpportunities] = useState<SavedOpportunity[]>([]);
+  const [filteredOpportunities, setFilteredOpportunities] = useState<SavedOpportunity[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [viewingChecklist, setViewingChecklist] = useState<number | null>(null);
   const [viewingSourcingPacket, setViewingSourcingPacket] = useState<number | null>(null);
   const [viewingRefreshCadence, setViewingRefreshCadence] = useState<number | null>(null);
   const [showCompareModal, setShowCompareModal] = useState(false);
+  const [refreshingOpportunity, setRefreshingOpportunity] = useState<SavedOpportunity | null>(null);
+  const [sortBy, setSortBy] = useState<'newest' | 'highest-score' | 'stale-first'>('newest');
+  const [showStaleOnly, setShowStaleOnly] = useState(false);
 
   const loadOpportunities = async () => {
     setIsLoading(true);
@@ -63,6 +74,12 @@ const OpportunitiesList = () => {
   useEffect(() => {
     loadOpportunities();
   }, []);
+
+  useEffect(() => {
+    let filtered = showStaleOnly ? filterStale(opportunities) : opportunities;
+    filtered = sortOpportunities(filtered, sortBy);
+    setFilteredOpportunities(filtered);
+  }, [opportunities, sortBy, showStaleOnly]);
 
   const getWeakCriteria = (opportunity: SavedOpportunity): WeakCriterion[] => {
     return opportunity.criteria
@@ -190,6 +207,25 @@ const OpportunitiesList = () => {
     
     await opportunityStorage.saveOpportunity(updatedOpportunity);
     await loadOpportunities();
+  };
+
+  const handleRefreshOpportunity = async (updatedOpportunity: SavedOpportunity) => {
+    const { opportunityStorage } = await import("@/utils/OpportunityStorage");
+    await opportunityStorage.saveOpportunity(updatedOpportunity);
+    await loadOpportunities();
+    setRefreshingOpportunity(null);
+  };
+
+  const getStalenessBadge = (opportunity: SavedOpportunity) => {
+    if (!isStale(opportunity)) return null;
+    
+    const days = getStalenessDays(opportunity);
+    return (
+      <Badge variant="destructive" className="text-xs">
+        <AlertTriangle className="h-3 w-3 mr-1" />
+        Needs refresh ({days}d)
+      </Badge>
+    );
   };
 
   if (isLoading) {
@@ -351,6 +387,28 @@ const OpportunitiesList = () => {
               )}
             </div>
             <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="highest-score">Highest Score</SelectItem>
+                    <SelectItem value="stale-first">Stale First</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Button
+                  variant={showStaleOnly ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setShowStaleOnly(!showStaleOnly)}
+                >
+                  <Filter className="w-4 h-4 mr-2" />
+                  Stale {showStaleOnly && <X className="w-3 h-3 ml-1" />}
+                </Button>
+              </div>
+              
               <Button onClick={() => navigate('/score')}>
                 <Plus className="w-4 h-4 mr-2" />
                 New Score
@@ -363,18 +421,20 @@ const OpportunitiesList = () => {
           </div>
 
           <div className="grid gap-4">
-            {opportunities.map((opportunity, index) => {
+            {filteredOpportunities.map((opportunity, index) => {
+              const originalIndex = opportunities.findIndex(o => o.id === opportunity.id);
               const weakCriteria = getWeakCriteria(opportunity);
-              const isSelected = selectedIds.has(index.toString());
+              const isSelected = selectedIds.has(originalIndex.toString());
+              const opportunityIsStale = isStale(opportunity);
 
               return (
-                <Card key={index} className={isSelected ? "ring-2 ring-primary" : ""}>
+                <Card key={opportunity.id} className={isSelected ? "ring-2 ring-primary" : ""}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start space-x-3">
                         <Checkbox
                           checked={isSelected}
-                          onCheckedChange={(checked) => handleSelectOpportunity(index, checked as boolean)}
+                          onCheckedChange={(checked) => handleSelectOpportunity(originalIndex, checked as boolean)}
                           aria-label={`Select ${opportunity.productName}`}
                         />
                         <div className="space-y-1">
@@ -382,6 +442,7 @@ const OpportunitiesList = () => {
                           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                             <Calendar className="w-4 h-4" />
                             <span>{formatDate(opportunity.createdAt)}</span>
+                            {getStalenessBadge(opportunity)}
                           </div>
                         </div>
                       </div>
@@ -439,10 +500,22 @@ const OpportunitiesList = () => {
                             <ChevronRight className="w-4 h-4" />
                           </Button>
                           
+                          {opportunityIsStale && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => setRefreshingOpportunity(opportunity)}
+                              className="flex items-center space-x-2"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                              <span>Refresh Data</span>
+                            </Button>
+                          )}
+                          
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setViewingSourcingPacket(index)}
+                            onClick={() => setViewingSourcingPacket(originalIndex)}
                             className="flex items-center space-x-2"
                           >
                             <Package className="w-4 h-4" />
@@ -466,7 +539,7 @@ const OpportunitiesList = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setViewingRefreshCadence(index)}
+                            onClick={() => setViewingRefreshCadence(originalIndex)}
                             className="flex items-center space-x-2"
                           >
                             <Clock className="w-4 h-4" />
@@ -495,6 +568,16 @@ const OpportunitiesList = () => {
             })}
           </div>
         </>
+      )}
+      
+      {/* Refresh Modal */}
+      {refreshingOpportunity && (
+        <RefreshModal
+          opportunity={refreshingOpportunity}
+          open={!!refreshingOpportunity}
+          onOpenChange={(open) => !open && setRefreshingOpportunity(null)}
+          onRefresh={handleRefreshOpportunity}
+        />
       )}
     </div>
   );

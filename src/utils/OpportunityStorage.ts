@@ -7,6 +7,7 @@ export interface SavedOpportunity {
   finalScore: number;
   createdAt: string;
   updatedAt?: string;
+  lastRefreshedAt?: string;
   status: 'draft' | 'scored' | 'analyzing' | 'sourcing' | 'archived';
   source?: string;
   notes?: string;
@@ -34,7 +35,12 @@ export interface SavedOpportunity {
   history?: Array<{
     date: string;
     summary: string;
-    type: 'import' | 'validation' | 'score_update' | 'decision' | 'other';
+    type: 'import' | 'validation' | 'score_update' | 'decision' | 'refresh' | 'other';
+    source?: string;
+    notes?: string;
+    scoreChange?: number;
+    oldScore?: number;
+    newScore?: number;
   }>;
   checklist?: {
     items: any[];
