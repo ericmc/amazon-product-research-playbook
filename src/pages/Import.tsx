@@ -177,6 +177,10 @@ const HeliumImportWizard = () => {
       .map(line => line.trim())
       .filter(line => line.length > 0); // Skip empty rows
     
+    if (lines.length === 0) {
+      throw new Error('CSV file is empty');
+    }
+    
     const headers = lines[0].split(delimiter).map(h => h.trim().replace(/['"]/g, ''));
     const rows = lines.slice(1).map(line => 
       line.split(delimiter).map(cell => cell.trim().replace(/['"]/g, ''))
@@ -332,123 +336,141 @@ const HeliumImportWizard = () => {
         return;
       }
 
-      // Import each product as an opportunity
-      const importPromises = processedProducts.map(async ({ productData, rawData, metadata }) => {
-        const criteria = [
-          {
-            id: 'product_name',
-            name: 'Product Name',
-            weight: 0,
-            value: 0,
-            maxValue: 1,
-            threshold: 1,
-            description: productData.title
-          },
-          {
-            id: 'revenue',
-            name: 'Revenue',
-            weight: 25,
-            value: Math.min(productData.revenue, 50000),
-            maxValue: 50000,
-            threshold: 10000,
-            description: 'Monthly revenue estimate'
-          },
-          {
-            id: 'demand',
-            name: 'Demand',
-            weight: 25,
-            value: Math.min(productData.searchVolume, 10000),
-            maxValue: 10000,
-            threshold: 1000,
-            description: 'Monthly search volume'
-          },
-          {
-            id: 'competition',
-            name: 'Competition',
-            weight: 25,
-            value: normalizeCompetition(productData.competition),
-            maxValue: 100,
-            threshold: 70,
-            description: 'Competition level'
-          },
-          {
-            id: 'barriers',
-            name: 'Barriers',
-            weight: 10,
-            value: 50, // Default value
-            maxValue: 100,
-            threshold: 60,
-            description: 'Market entry barriers'
-          },
-          {
-            id: 'seasonality',
-            name: 'Seasonality',
-            weight: 10,
-            value: 30, // Default value
-            maxValue: 100,
-            threshold: 50,
-            description: 'Seasonality risk'
-          },
-          {
-            id: 'profitability',
-            name: 'Profitability',
-            weight: 5,
-            value: 30, // Default value
-            maxValue: 60,
-            threshold: 25,
-            description: 'Profit margin estimate'
-          }
-        ];
+      // Import each product as an opportunity - Use batch processing for performance
+      const batchSize = 50;
+      const batches = [];
+      for (let i = 0; i < processedProducts.length; i += batchSize) {
+        batches.push(processedProducts.slice(i, i + batchSize));
+      }
 
-        // Calculate preliminary score
-        const finalScore = Math.round(
-          criteria.reduce((total, criterion) => {
-            let normalizedValue = criterion.value;
-            if (['competition', 'barriers', 'seasonality'].includes(criterion.id)) {
-              normalizedValue = criterion.maxValue - criterion.value;
+      let totalImported = 0;
+      for (const batch of batches) {
+        const batchPromises = batch.map(async ({ productData, rawData, metadata }) => {
+          const criteria = [
+            {
+              id: 'product_name',
+              name: 'Product Name',
+              weight: 0,
+              value: 0,
+              maxValue: 1,
+              threshold: 1,
+              description: productData.title
+            },
+            {
+              id: 'revenue',
+              name: 'Revenue',
+              weight: 25,
+              value: Math.min(productData.revenue, 50000),
+              maxValue: 50000,
+              threshold: 10000,
+              description: 'Monthly revenue estimate'
+            },
+            {
+              id: 'demand',
+              name: 'Demand',
+              weight: 25,
+              value: Math.min(productData.searchVolume, 10000),
+              maxValue: 10000,
+              threshold: 1000,
+              description: 'Monthly search volume'
+            },
+            {
+              id: 'competition',
+              name: 'Competition',
+              weight: 25,
+              value: normalizeCompetition(productData.competition),
+              maxValue: 100,
+              threshold: 70,
+              description: 'Competition level'
+            },
+            {
+              id: 'barriers',
+              name: 'Barriers',
+              weight: 10,
+              value: 50, // Default value
+              maxValue: 100,
+              threshold: 60,
+              description: 'Market entry barriers'
+            },
+            {
+              id: 'seasonality',
+              name: 'Seasonality',
+              weight: 10,
+              value: 30, // Default value
+              maxValue: 100,
+              threshold: 50,
+              description: 'Seasonality risk'
+            },
+            {
+              id: 'profitability',
+              name: 'Profitability',
+              weight: 5,
+              value: 30, // Default value
+              maxValue: 60,
+              threshold: 25,
+              description: 'Profit margin estimate'
             }
-            const score = (normalizedValue / criterion.maxValue) * 100;
-            return total + (score * criterion.weight) / 100;
-          }, 0)
-        );
+          ];
 
-        const opportunityResult = await supabase
-          .from('opportunities')
-          .insert({
-            user_id: user.id,
-            product_name: productData.title,
-            source: 'helium_10',
-            criteria: criteria,
-            final_score: finalScore,
-            status: 'draft',
-            notes: `Auto-imported from Helium 10 Black Box - ASIN: ${productData.asin}, Dimensions: ${productData.dimensions}`
-          })
-          .select()
-          .single();
+          // Calculate preliminary score
+          const finalScore = Math.round(
+            criteria.reduce((total, criterion) => {
+              let normalizedValue = criterion.value;
+              if (['competition', 'barriers', 'seasonality'].includes(criterion.id)) {
+                normalizedValue = criterion.maxValue - criterion.value;
+              }
+              const score = (normalizedValue / criterion.maxValue) * 100;
+              return total + (score * criterion.weight) / 100;
+            }, 0)
+          );
 
-        if (opportunityResult.data) {
-          // Store raw import data with metadata
-          const mapping = helium10AutoMap([]);
-          await supabase
-            .from('raw_imports')
+          const opportunityResult = await supabase
+            .from('opportunities')
             .insert({
               user_id: user.id,
-              opportunity_id: opportunityResult.data.id,
-              source: 'helium_10_blackbox',
-              raw_data: rawData,
-              field_mappings: mapping,
-              import_metadata: metadata
-            });
+              product_name: productData.title,
+              source: 'helium_10',
+              criteria: criteria,
+              final_score: finalScore,
+              status: 'draft',
+              notes: `Auto-imported from Helium 10 Black Box - ASIN: ${productData.asin}, Dimensions: ${productData.dimensions}`
+            })
+            .select()
+            .single();
+
+          if (opportunityResult.data) {
+            // Store raw import data with metadata
+            const mapping = helium10AutoMap([]);
+            await supabase
+              .from('raw_imports')
+              .insert({
+                user_id: user.id,
+                opportunity_id: opportunityResult.data.id,
+                source: 'helium_10_blackbox',
+                raw_data: rawData,
+                field_mappings: mapping,
+                import_metadata: metadata
+              });
+          }
+
+          return opportunityResult;
+        });
+
+        const batchResults = await Promise.all(batchPromises);
+        totalImported += batchResults.length;
+        
+        // Show progress for large imports
+        if (processedProducts.length > 100) {
+          toast({
+            title: "Progress Update",
+            description: `Imported ${totalImported} of ${processedProducts.length} products`
+          });
         }
-
-        return opportunityResult;
-      });
-
-      await Promise.all(importPromises);
+      }
       
       toast({
         title: "Import to Database Complete",
-        description: `Successfully imported ${processedProducts.length} opportunities to your database`
+        description: `Successfully imported ${totalImported} opportunities to your database`
       });
       
       navigate('/opportunities');
