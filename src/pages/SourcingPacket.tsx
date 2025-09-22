@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { PrinterIcon, ArrowLeftIcon, EditIcon } from 'lucide-react';
+import { PrinterIcon, ArrowLeftIcon, EditIcon, DownloadIcon } from 'lucide-react';
 import { opportunityStorage, SavedOpportunity } from '@/utils/OpportunityStorage';
 import { useToast } from '@/hooks/use-toast';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface PacketHeaderProps {
   opportunity: SavedOpportunity;
@@ -207,6 +209,55 @@ const SourcingPacket: React.FC = () => {
     window.print();
   };
 
+  const handleExportPDF = async () => {
+    try {
+      const element = document.getElementById('sourcing-packet-content');
+      if (!element) return;
+
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we create your PDF...",
+      });
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        height: element.scrollHeight,
+        width: element.scrollWidth,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const imgX = (pdfWidth - imgWidth * ratio) / 2;
+      const imgY = 10;
+
+      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+      
+      const fileName = `sourcing-packet-${opportunity?.productName?.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'unnamed'}-${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+
+      toast({
+        title: "PDF exported",
+        description: "Your sourcing packet has been downloaded successfully",
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Export failed",
+        description: "Failed to generate PDF. Please try the print option instead.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const saveSummary = async () => {
     if (!opportunity) return;
     
@@ -294,6 +345,10 @@ const SourcingPacket: React.FC = () => {
               <PrinterIcon className="h-4 w-4 mr-2" />
               Print / Save PDF
             </Button>
+            <Button onClick={handleExportPDF} variant="outline" size="sm">
+              <DownloadIcon className="h-4 w-4 mr-2" />
+              Export as PDF
+            </Button>
           </div>
         </div>
       </div>
@@ -305,7 +360,7 @@ const SourcingPacket: React.FC = () => {
       </div>
 
       {/* Main content */}
-      <div className="container max-w-4xl mx-auto px-4 py-6 print:px-0 print:py-4">
+      <div id="sourcing-packet-content" className="container max-w-4xl mx-auto px-4 py-6 print:px-0 print:py-4">
         <PacketHeader opportunity={opportunity} />
         
         <div className="space-y-6 print:space-y-4">
