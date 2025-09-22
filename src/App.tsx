@@ -51,8 +51,6 @@ const AppContent = () => {
   return (
     <LockGuard>
       <div className="min-h-screen flex flex-col">
-        {/* Add noindex meta tag for main layout when appropriate */}
-        <meta name="robots" content="noindex, nofollow" />
         
         <a 
           href="#main-content" 

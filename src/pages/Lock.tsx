@@ -69,11 +69,7 @@ const LockScreen = () => {
   };
 
   return (
-    <>
-      {/* Add noindex meta tag */}
-      <meta name="robots" content="noindex" />
-      
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-md space-y-8">
           {/* Header */}
           <div className="text-center space-y-4">
@@ -147,7 +143,6 @@ const LockScreen = () => {
           </div>
         </div>
       </div>
-    </>
   );
 };
 
