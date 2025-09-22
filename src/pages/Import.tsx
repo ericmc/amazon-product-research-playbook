@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
@@ -12,12 +10,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   Upload, 
   FileText, 
-  ArrowRight, 
   CheckCircle,
   AlertCircle,
   Database,
   Info,
-  Plus
+  Plus,
+  TrendingUp
 } from "lucide-react";
 
 interface ParsedData {
@@ -89,11 +87,11 @@ const helium10AutoMap = (headers: string[]): Record<string, string> => {
 const HeliumImportWizard = () => {
   const [blackBoxFile, setBlackBoxFile] = useState<File | null>(null);
   const [magnetFile, setMagnetFile] = useState<File | null>(null);
-  const [blackBoxData, setBlackBoxData] = useState<ParsedData | null>(null);
-  const [magnetData, setMagnetData] = useState<ParsedData | null>(null);
   const [processedProducts, setProcessedProducts] = useState<AutoMappedProduct[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [uploadStep, setUploadStep] = useState<'blackbox' | 'magnet' | 'review'>('blackbox');
+  const [importComplete, setImportComplete] = useState(false);
+  const [importSummary, setImportSummary] = useState<{count: number, revenueSource: string} | null>(null);
+  const [showMagnetUpload, setShowMagnetUpload] = useState(false);
   
   const blackBoxInputRef = useRef<HTMLInputElement>(null);
   const magnetInputRef = useRef<HTMLInputElement>(null);
@@ -187,10 +185,15 @@ const HeliumImportWizard = () => {
     return { headers, rows, delimiter };
   };
 
-  const processBlackBoxData = (data: ParsedData): AutoMappedProduct[] => {
+  const processBlackBoxData = (data: ParsedData): {products: AutoMappedProduct[], revenueSource: string} => {
     const mapping = helium10AutoMap(data.headers);
     
-    return data.rows.map(row => {
+    // Determine revenue source used
+    let revenueSource = 'N/A';
+    if (mapping.revenue) revenueSource = 'ASIN Revenue';
+    else if (mapping.parentRevenue) revenueSource = 'Parent Level Revenue';
+    
+    const products = data.rows.map(row => {
       const rawData: Record<string, string> = {};
       data.headers.forEach((header, index) => {
         rawData[header] = row[index] || '';
@@ -226,27 +229,32 @@ const HeliumImportWizard = () => {
 
       return { productData, rawData, metadata };
     });
+
+    return { products, revenueSource };
   };
 
   const handleBlackBoxUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setBlackBoxFile(file);
+      setIsProcessing(true);
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         const text = e.target?.result as string;
         const delimiter = detectDelimiter(text);
         const parsed = parseCSV(text, delimiter);
-        setBlackBoxData(parsed);
         
         // Auto-process the Black Box data
-        const products = processBlackBoxData(parsed);
+        const { products, revenueSource } = processBlackBoxData(parsed);
         setProcessedProducts(products);
-        setUploadStep('magnet');
+        setImportSummary({ count: products.length, revenueSource });
+        setIsProcessing(false);
+        setImportComplete(true);
         
         toast({
-          title: "Black Box Data Processed",
-          description: `Imported ${products.length} products from Black Box export`
+          title: "Import Complete",
+          description: `Successfully processed ${products.length} products from Black Box export`
         });
       };
       reader.readAsText(file);
@@ -262,11 +270,9 @@ const HeliumImportWizard = () => {
         const text = e.target?.result as string;
         const delimiter = detectDelimiter(text);
         const parsed = parseCSV(text, delimiter);
-        setMagnetData(parsed);
         
         // Backfill search volume and competing products data
         backfillMagnetData(parsed);
-        setUploadStep('review');
         
         toast({
           title: "Magnet Data Processed",
@@ -422,7 +428,7 @@ const HeliumImportWizard = () => {
 
         if (opportunityResult.data) {
           // Store raw import data with metadata
-          const mapping = helium10AutoMap(blackBoxData?.headers || []);
+          const mapping = helium10AutoMap([]);
           await supabase
             .from('raw_imports')
             .insert({
@@ -441,8 +447,8 @@ const HeliumImportWizard = () => {
       await Promise.all(importPromises);
       
       toast({
-        title: "Import Complete",
-        description: `Successfully imported ${processedProducts.length} opportunities`
+        title: "Import to Database Complete",
+        description: `Successfully imported ${processedProducts.length} opportunities to your database`
       });
       
       navigate('/opportunities');
@@ -459,34 +465,26 @@ const HeliumImportWizard = () => {
     }
   };
 
-  const skipMagnetUpload = () => {
-    setUploadStep('review');
-    toast({
-      title: "Skipped Magnet Upload",
-      description: "You can proceed with Black Box data only"
-    });
-  };
-
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       {/* Header */}
       <div className="text-center space-y-4 mb-8">
         <h1 className="text-3xl font-bold text-foreground">Helium 10 CSV Import</h1>
         <p className="text-muted-foreground">
-          Import Black Box CSV data with optional Magnet/Cerebro backfill
+          Import your Black Box data - no setup required
         </p>
       </div>
 
-      {/* Step 1: Black Box Upload */}
-      {uploadStep === 'blackbox' && (
+      {!importComplete ? (
+        /* Step 1: Single Upload Dropzone */
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Upload className="w-5 h-5 text-primary" />
-              <span>Step 1: Upload Black Box CSV</span>
+              <span>Upload Helium 10 Black Box CSV (no setup required)</span>
             </CardTitle>
             <CardDescription>
-              Upload your Helium 10 Black Box export CSV file exactly as downloaded
+              Upload your Helium 10 Black Box export CSV file exactly as downloaded. Auto-mapping included!
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -498,182 +496,129 @@ const HeliumImportWizard = () => {
                 onChange={handleBlackBoxUpload}
                 className="hidden"
                 aria-label="Upload Black Box CSV file"
+                disabled={isProcessing}
               />
               <div className="space-y-4">
-                <Upload className="w-12 h-12 text-muted-foreground mx-auto" />
-                <div>
-                  <p className="text-sm font-medium">Drop your Black Box CSV file here or click to browse</p>
-                  <p className="text-xs text-muted-foreground">Auto-maps ASIN, Title, Revenue, Competition, etc.</p>
-                </div>
-                <Button onClick={() => blackBoxInputRef.current?.click()}>
-                  Choose Black Box CSV
-                </Button>
+                {isProcessing ? (
+                  <>
+                    <Database className="w-12 h-12 text-primary mx-auto animate-pulse" />
+                    <p className="text-sm font-medium">Processing your CSV file...</p>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-12 h-12 text-muted-foreground mx-auto" />
+                    <div>
+                      <p className="text-sm font-medium">Drop your Black Box CSV file here or click to browse</p>
+                      <p className="text-xs text-muted-foreground">Auto-maps ASIN, Title, Revenue, Price, Reviews, Dimensions, etc.</p>
+                    </div>
+                    <Button onClick={() => blackBoxInputRef.current?.click()}>
+                      Choose Black Box CSV
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
             
-            {blackBoxFile && (
+            {blackBoxFile && !isProcessing && (
               <div className="flex items-center space-x-2 p-3 bg-muted rounded-lg">
                 <FileText className="w-4 h-4 text-primary" />
                 <span className="text-sm font-medium">{blackBoxFile.name}</span>
                 <Badge variant="secondary">{(blackBoxFile.size / 1024).toFixed(1)} KB</Badge>
               </div>
             )}
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 mb-2">What gets auto-mapped:</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm text-blue-800">
-                <div>• ASIN → Product ID</div>
-                <div>• Product Title → Product Name</div>
-                <div>• Revenue → Monthly Revenue</div>
-                <div>• Competition → Competition Level</div>
-                <div>• Brand → Brand Name</div>
-                <div>• Dimensions → Size String</div>
-              </div>
-            </div>
           </CardContent>
         </Card>
-      )}
-
-      {/* Step 2: Magnet Upload (Optional) */}
-      {uploadStep === 'magnet' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Plus className="w-5 h-5 text-primary" />
-              <span>Step 2: Upload Magnet/Cerebro CSV (Optional)</span>
-            </CardTitle>
-            <CardDescription>
-              Backfill search volume and competing products data from Magnet or Cerebro exports
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
-              <Input
-                ref={magnetInputRef}
-                type="file"
-                accept=".csv"
-                onChange={handleMagnetUpload}
-                className="hidden"
-                aria-label="Upload Magnet CSV file"
-              />
-              <div className="space-y-4">
-                <Upload className="w-12 h-12 text-muted-foreground mx-auto" />
-                <div>
-                  <p className="text-sm font-medium">Upload Magnet or Cerebro CSV to enhance data</p>
-                  <p className="text-xs text-muted-foreground">Adds search volume and competitor count data</p>
+      ) : (
+        /* Step 2: Import Complete - Show Summary and Options */
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-green-600">
+                <CheckCircle className="w-5 h-5" />
+                <span>Import Complete</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-muted rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Database className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium">Products Processed</span>
+                  </div>
+                  <p className="text-2xl font-bold text-primary">{importSummary?.count || 0}</p>
                 </div>
-                <div className="flex space-x-2 justify-center">
-                  <Button onClick={() => magnetInputRef.current?.click()}>
-                    Choose Magnet CSV
-                  </Button>
-                  <Button variant="outline" onClick={skipMagnetUpload}>
-                    Skip - Use Black Box Only
-                  </Button>
+                <div className="p-4 bg-muted rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium">Revenue Source</span>
+                  </div>
+                  <p className="text-lg font-semibold">{importSummary?.revenueSource || 'N/A'}</p>
                 </div>
               </div>
-            </div>
-            
-            {magnetFile && (
-              <div className="flex items-center space-x-2 p-3 bg-muted rounded-lg">
-                <FileText className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">{magnetFile.name}</span>
-                <Badge variant="secondary">{(magnetFile.size / 1024).toFixed(1)} KB</Badge>
-              </div>
-            )}
-
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h4 className="font-medium text-green-900 mb-2">Magnet/Cerebro enhances:</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm text-green-800">
-                <div>• Search Volume → Demand Data</div>
-                <div>• Competing Products → Competition Count</div>
-                <div>• Keyword Match → Product Linking</div>
-                <div>• Market Size → Volume Metrics</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 3: Review and Import */}
-      {uploadStep === 'review' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <CheckCircle className="w-5 h-5 text-primary" />
-              <span>Step 3: Review and Import</span>
-            </CardTitle>
-            <CardDescription>
-              Review the processed products before importing to opportunities
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h4 className="font-medium">Products Ready for Import</h4>
-              <Badge variant="outline">{processedProducts.length} products</Badge>
-            </div>
-
-            {processedProducts.length > 0 && (
-              <div className="space-y-4">
-                <div className="border rounded-lg overflow-auto max-h-64">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted">
-                      <tr>
-                        <th className="text-left p-2 font-medium">Product</th>
-                        <th className="text-left p-2 font-medium">ASIN</th>
-                        <th className="text-left p-2 font-medium">Revenue</th>
-                        <th className="text-left p-2 font-medium">Search Vol</th>
-                        <th className="text-left p-2 font-medium">Competition</th>
-                        <th className="text-left p-2 font-medium">Dimensions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {processedProducts.slice(0, 10).map((product, index) => (
-                        <tr key={index} className="border-t">
-                          <td className="p-2 max-w-xs truncate">{product.productData.title}</td>
-                          <td className="p-2">{product.productData.asin}</td>
-                          <td className="p-2">${product.productData.revenue.toLocaleString()}</td>
-                          <td className="p-2">{product.productData.searchVolume.toLocaleString()}</td>
-                          <td className="p-2">{product.productData.competition}</td>
-                          <td className="p-2">{product.productData.dimensions || 'N/A'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {processedProducts.length > 10 && (
-                  <p className="text-sm text-muted-foreground text-center">
-                    Showing first 10 products. {processedProducts.length - 10} more will be imported.
-                  </p>
-                )}
-
-                <div className="flex space-x-2 justify-end">
-                  <Button variant="outline" onClick={() => setUploadStep('blackbox')}>
-                    Start Over
-                  </Button>
-                  <Button 
-                    onClick={handleImportProducts} 
-                    disabled={isProcessing}
-                    className="min-w-32"
-                  >
-                    {isProcessing ? "Importing..." : "Import All Products"}
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {processedProducts.length === 0 && (
-              <div className="text-center py-8">
-                <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No products found. Please upload a valid Black Box CSV.</p>
-                <Button variant="outline" onClick={() => setUploadStep('blackbox')} className="mt-4">
-                  Try Again
+              
+              <Separator />
+              
+              <div className="flex space-x-4">
+                <Button onClick={handleImportProducts} disabled={isProcessing} className="flex-1">
+                  {isProcessing ? "Importing..." : "Import to Database"}
                 </Button>
+                
+                {!showMagnetUpload && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowMagnetUpload(true)}
+                    className="flex items-center space-x-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Magnet/Cerebro Data</span>
+                  </Button>
+                )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Optional Magnet Upload */}
+          {showMagnetUpload && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Info className="w-5 h-5 text-blue-500" />
+                  <span>Optional: Upload Magnet/Cerebro Data</span>
+                </CardTitle>
+                <CardDescription>
+                  Backfill search volume and competing products data from Magnet or Cerebro export
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="border-2 border-dashed border-blue-200 rounded-lg p-6 text-center">
+                  <Input
+                    ref={magnetInputRef}
+                    type="file"
+                    accept=".csv"
+                    onChange={handleMagnetUpload}
+                    className="hidden"
+                    aria-label="Upload Magnet/Cerebro CSV file"
+                  />
+                  <div className="space-y-3">
+                    <Upload className="w-8 h-8 text-blue-500 mx-auto" />
+                    <p className="text-sm">Upload Magnet/Cerebro CSV to backfill search volume data</p>
+                    <Button variant="outline" onClick={() => magnetInputRef.current?.click()}>
+                      Choose Magnet/Cerebro CSV
+                    </Button>
+                  </div>
+                </div>
+                
+                {magnetFile && (
+                  <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg">
+                    <FileText className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm font-medium">{magnetFile.name}</span>
+                    <Badge variant="secondary">{(magnetFile.size / 1024).toFixed(1)} KB</Badge>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
     </div>
   );
