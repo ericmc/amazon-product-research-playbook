@@ -1012,14 +1012,14 @@ const DataImportWizard = () => {
                         </div>
                         <div className="w-48">
                           <Select 
-                            value={fieldMappings[field.key] || ''} 
-                            onValueChange={(value) => handleFieldMapping(field.key, value)}
+                            value={fieldMappings[field.key] || undefined} 
+                            onValueChange={(value) => handleFieldMapping(field.key, value === 'no-mapping' ? '' : value)}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select column" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">No mapping</SelectItem>
+                              <SelectItem value="no-mapping">No mapping</SelectItem>
                               {parsedData.headers.map((header) => (
                                 <SelectItem key={header} value={header}>
                                   {header}
