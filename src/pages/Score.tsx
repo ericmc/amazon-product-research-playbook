@@ -45,8 +45,8 @@ const Score = () => {
     <div className="container max-w-6xl mx-auto p-6">
       <div className="space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground">Product Score Analysis</h1>
-          <p className="text-muted-foreground mt-2">Comprehensive scoring based on market research data</p>
+          <h1 className="text-3xl font-bold text-foreground">Scoring Configuration</h1>
+          <p className="text-muted-foreground mt-2">Configure scoring criteria and weights to evaluate opportunities</p>
         </div>
 
         <Card className="bg-card">

@@ -20,7 +20,7 @@ Welcome to the comprehensive guide for using the Amazon Product Research Playboo
 - **Amazon POE (Product Opportunity Explorer)**: Amazon's own opportunity data
 - **Manual Entry**: Add your own product data
 
-## Import & Data Management
+## Import & Data Management {#import-mapping}
 
 ### CSV Import Process
 
@@ -49,7 +49,7 @@ The system automatically validates imported data and flags:
 - Duplicate entries
 - Data quality issues
 
-## Scoring System {#scoring-gates}
+## Scoring System {#scoring-gates} {#scoring-gates}
 
 ### How Scoring Works
 
@@ -93,6 +93,37 @@ Products are categorized into tiers based on their total score:
 - Search volume and trending keywords
 - Seasonal demand patterns
 - Customer interest signals
+
+### Profitability Calculations {#profitability}
+
+**Profit Margin Formula:**
+Profit Margin % = (Selling Price - All Costs) / Selling Price × 100
+
+**All Costs Include:**
+- Cost of Goods Sold (COGS)
+- Amazon FBA fees (typically $2-8 per unit)
+- Freight/shipping costs
+- Import duties and tariffs
+- Amazon referral fee (15% for most categories)
+- Storage fees (monthly and long-term)
+- Returns and refund costs
+- PPC advertising costs
+- Promotional costs
+
+**Target Margins:**
+- Minimum 30% for sustainable business
+- 40%+ for growth and risk buffer
+- Factor in 5-10% for unexpected costs
+
+**Example Calculation:**
+- Selling Price: $25
+- COGS: $8
+- FBA Fee: $4
+- Freight: $1.50
+- Referral Fee: $3.75 (15%)
+- Total Costs: $17.25
+- Profit: $7.75
+- Margin: 31%
 
 ## Opportunities Management
 

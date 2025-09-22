@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ExternalTools } from "@/components/ExternalTools";
+import { HelpTooltip } from "@/components/HelpTooltip";
 import { 
   Upload, 
   FileText, 
@@ -982,7 +983,15 @@ const DataImportWizard = () => {
 
                 {/* Field Mappings */}
                 <div className="space-y-4">
-                  <h4 className="font-medium">Field Mappings</h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium">Field Mappings</h4>
+                    <HelpTooltip
+                      title="Field Mapping Guide"
+                      content="Map your CSV columns to the expected data fields. Required fields must be mapped for successful import. Revenue, Competition, Demand, and Profitability are the core scoring metrics."
+                      helpLink="/help#import-mapping"
+                      helpLinkText="See full mapping guide"
+                    />
+                  </div>
                   <div className="grid gap-4">
                     {appFields.map((field) => (
                       <div 

@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Calculator, TrendingUp, AlertTriangle, CheckCircle, HelpCircle, ChevronDown, ChevronUp, AlertCircle, Save } from "lucide-react";
+import { HelpTooltip } from "@/components/HelpTooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ExternalTools } from "@/components/ExternalTools";
 import { opportunityStorage, SavedOpportunity } from "@/utils/OpportunityStorage";
@@ -514,6 +515,15 @@ const ScoringSystem = () => {
                     <CardTitle className="text-lg flex items-center gap-2">
                       {criterion.name}
                       <span className="text-sm text-muted-foreground font-normal">({criterion.unit})</span>
+                      {criterion.id === 'margin' && (
+                        <HelpTooltip
+                          title="Profit Margin Formula"
+                          content="Profit Margin % = (Selling Price - All Costs) / Selling Price × 100. Include: COGS, FBA fees, freight, duties, Amazon referral fee (15%), storage, returns, and PPC costs. Aim for 30%+ for sustainability."
+                          helpLink="/help#profitability"
+                          helpLinkText="See detailed calculation guide"
+                          size="sm"
+                        />
+                      )}
                     </CardTitle>
                     <div className="flex items-center space-x-2">
                       <Badge variant={meetsThreshold ? "default" : "destructive"}>
@@ -712,7 +722,15 @@ const ScoringSystem = () => {
 
               {/* Gate Results */}
               <div className="space-y-2">
-                <h5 className="font-medium">Criteria Gate Status</h5>
+                <div className="flex items-center gap-2">
+                  <h5 className="font-medium">Criteria Gate Status</h5>
+                  <HelpTooltip
+                    title="Scoring Gates"
+                    content="Gates are minimum thresholds each criterion must pass. Revenue ≥ $50k, Competition ≤ 70, Demand ≥ 60, Profitability ≥ 30%. Products must pass at least 3/4 gates to be considered viable."
+                    helpLink="/help#scoring-gates"
+                    helpLinkText="Learn about gate thresholds"
+                  />
+                </div>
                 <div className="grid gap-2">
                   {gateAnalysis.gateResults.map((gate) => (
                     <div key={gate.id} className="flex items-center justify-between p-3 border rounded-lg">

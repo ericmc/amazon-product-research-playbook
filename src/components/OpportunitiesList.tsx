@@ -31,6 +31,7 @@ import { useNavigate } from "react-router-dom";
 import OpportunityChecklistComponent, { OpportunityChecklist } from "./OpportunityChecklist";
 import DecisionTree from "./DecisionTree";
 import SourcingPacket from "./SourcingPacket";
+import { EmptyState } from "@/components/EmptyState";
 import RefreshCadence from "./RefreshCadence";
 import RefreshModal from "./RefreshModal";
 
