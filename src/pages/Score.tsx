@@ -360,15 +360,15 @@ const Score = () => {
               </Badge>
             </div>
 
-            {/* Container for sticky scrollbar and table */}
-            <div className="relative">
-              {/* Top horizontal scrollbar - sticky within container */}
+            {/* Scroll container with sticky top scrollbar */}
+            <div className="rounded-md border bg-background w-full max-h-[480px] overflow-y-auto relative">
               <div 
-                className="sticky top-0 z-30 rounded-t-md border border-b-0 bg-background w-full overflow-x-auto overflow-y-hidden h-4 shadow-sm"
+                id="top-scrollbar"
+                className="sticky top-0 z-30 bg-background border-b w-full overflow-x-auto overflow-y-hidden h-4 shadow-sm"
                 onScroll={(e) => {
-                  const mainTable = document.getElementById('product-table-scroll');
-                  if (mainTable) {
-                    mainTable.scrollLeft = e.currentTarget.scrollLeft;
+                  const main = document.getElementById('product-table-scroll');
+                  if (main) {
+                    (main as HTMLElement).scrollLeft = e.currentTarget.scrollLeft;
                   }
                 }}
               >
@@ -377,11 +377,11 @@ const Score = () => {
               
               <div
                 id="product-table-scroll"
-                className="rounded-b-md border border-t-0 bg-background w-full max-h-[480px] overflow-x-auto overflow-y-auto"
+                className="overflow-x-auto"
                 onScroll={(e) => {
-                  const topScrollbar = e.currentTarget.parentElement?.firstElementChild as HTMLElement;
-                  if (topScrollbar) {
-                    topScrollbar.scrollLeft = e.currentTarget.scrollLeft;
+                  const top = document.getElementById('top-scrollbar');
+                  if (top) {
+                    (top as HTMLElement).scrollLeft = (e.currentTarget as HTMLElement).scrollLeft;
                   }
                 }}
               >
