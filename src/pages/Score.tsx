@@ -452,7 +452,7 @@ const Score = () => {
                             </div>
                             {/* Hover overlay for larger image */}
                             {imageUrl && (
-                              <div className="absolute -top-20 -left-20 w-40 h-40 bg-white border-2 border-gray-300 rounded-lg shadow-xl z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-white border-2 border-gray-300 rounded-lg shadow-xl z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                                 <img 
                                   src={imageUrl} 
                                   alt="Product image enlarged"
