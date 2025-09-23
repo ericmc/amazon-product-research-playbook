@@ -349,7 +349,7 @@ const Score = () => {
                 }
               }}
             >
-              <div className="min-w-[900px] h-1"></div>
+              <div className="min-w-[700px] h-1"></div>
             </div>
             
             <div
@@ -362,65 +362,64 @@ const Score = () => {
                 }
               }}
             >
-              <Table className="min-w-[900px]">
+              <Table className="min-w-[700px] border-spacing-0">
                 <TableHeader className="sticky top-0 z-40 bg-background border-b shadow-sm">
-                  <TableRow>
-                    <TableHead className="sticky left-0 z-50 bg-background w-12 px-1 after:content-[''] after:absolute after:top-0 after:right-0 after:h-full after:w-px after:bg-border text-xs">Image</TableHead>
-                    <TableHead className="min-w-[140px] bg-background sticky left-12 z-50 border-r px-2">
+                  <TableRow className="border-none">
+                    <TableHead className="sticky left-0 z-50 bg-background w-8 p-0 border-r text-xs">Image</TableHead>
+                    <TableHead className="w-48 bg-background sticky left-8 z-50 p-1 border-r">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('title')}
-                        className="h-auto p-0 font-medium text-xs"
+                        className="h-auto p-0 font-medium text-xs hover:bg-transparent"
                       >
                         Product Title {getSortIcon('title')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background min-w-[120px]">
+                    <TableHead className="text-center bg-background w-16 p-1">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('score')}
-                        className="h-auto p-0 font-medium"
+                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent"
                       >
-                        Viability Score {getSortIcon('score')}
+                        Viability $ {getSortIcon('score')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background min-w-[100px]">
+                    <TableHead className="text-right bg-background w-24 p-1">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('revenue')}
-                        className="h-auto p-0 font-medium"
+                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent"
                       >
-                        Revenue {getSortIcon('revenue')}
+                        Revenue $ {getSortIcon('revenue')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background min-w-[80px]">
+                    <TableHead className="text-right bg-background w-16 p-1">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('price')}
-                        className="h-auto p-0 font-medium"
+                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent"
                       >
-                        Price {getSortIcon('price')}
+                        Price $ {getSortIcon('price')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background min-w-[80px]">
+                    <TableHead className="text-right bg-background w-16 p-1">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('reviewCount')}
-                        className="h-auto p-0 font-medium"
+                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent"
                       >
-                        Reviews {getSortIcon('reviewCount')}
+                        ws {getSortIcon('reviewCount')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background min-w-[70px]">
+                    <TableHead className="text-right bg-background w-14 p-1">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('rating')}
-                        className="h-auto p-0 font-medium"
+                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent"
                       >
-                        Rating {getSortIcon('rating')}
+                        j {getSortIcon('rating')}
                       </Button>
                     </TableHead>
-                    
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -435,8 +434,8 @@ const Score = () => {
                         className={`cursor-pointer hover:bg-muted/50 ${isSelected ? 'bg-muted' : ''}`}
                         onClick={() => handleProductSelect(product)}
                       >
-                        <TableCell className="sticky left-0 z-40 bg-background w-12 p-1 after:content-[''] after:absolute after:top-0 after:right-0 after:h-full after:w-px after:bg-border">
-                          <div className="w-8 h-8 rounded border bg-muted flex items-center justify-center overflow-hidden">
+                        <TableCell className="sticky left-0 z-40 bg-background w-8 p-0 border-r">
+                          <div className="w-7 h-7 m-0.5 rounded border bg-muted flex items-center justify-center overflow-hidden">
                             {imageUrl ? (
                               <img 
                                 src={imageUrl} 
@@ -447,31 +446,31 @@ const Score = () => {
                                 }}
                               />
                             ) : (
-                              <FileText className="h-3 w-3 text-muted-foreground" />
+                              <FileText className="h-2 w-2 text-muted-foreground" />
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium sticky left-12 z-40 bg-background min-w-[140px] px-2 py-1">
-                          <div className="max-w-[130px] truncate text-xs leading-tight" title={product.productData.title}>
+                        <TableCell className="sticky left-8 z-40 bg-background w-48 p-1 border-r">
+                          <div className="text-xs font-medium leading-tight overflow-hidden text-ellipsis whitespace-nowrap w-full" title={product.productData.title}>
                             {product.productData.title || 'Unknown Product'}
                           </div>
                         </TableCell>
-                        <TableCell className="text-center px-1 py-1">
-                          <Badge className={`${getScoreBadge(viabilityScore)} text-xs font-semibold px-1`}>
+                        <TableCell className="text-center w-16 p-1">
+                          <Badge className={`${getScoreBadge(viabilityScore)} text-[10px] px-1 py-0.5 rounded`}>
                             {viabilityScore}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right px-1 py-1 text-xs">
+                        <TableCell className="text-right w-24 p-1 text-xs">
                           ${(product.productData.revenue || 0).toLocaleString()}/mo
                         </TableCell>
-                        <TableCell className="text-right px-1 py-1 text-xs">
+                        <TableCell className="text-right w-16 p-1 text-xs">
                           ${(product.productData.price || 0).toFixed(2)}
                         </TableCell>
-                        <TableCell className="text-right px-1 py-1 text-xs">
+                        <TableCell className="text-right w-16 p-1 text-xs">
                           {(product.productData.reviewCount || 0).toLocaleString()}
                         </TableCell>
-                        <TableCell className="text-right px-1 py-1 text-xs">
-                          {product.productData.rating ? `${product.productData.rating}★` : '-'}
+                        <TableCell className="text-right w-14 p-1 text-xs">
+                          {product.productData.rating ? `${product.productData.rating.toFixed(1)}★` : '-'}
                         </TableCell>
                       </TableRow>
                     );
