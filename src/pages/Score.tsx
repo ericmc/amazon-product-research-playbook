@@ -71,6 +71,31 @@ const Score = () => {
     }
   }, [toast]);
 
+  // Set up ResizeObserver to sync proxy scrollbar width
+  useEffect(() => {
+    const tableElement = document.getElementById('product-table-scroll');
+    const proxyInner = document.getElementById('proxy-inner');
+    
+    if (!tableElement || !proxyInner) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      // Set proxy inner width to match table's scroll width
+      const scrollWidth = tableElement.scrollWidth;
+      proxyInner.style.width = `${scrollWidth}px`;
+    });
+
+    // Observe the table container
+    resizeObserver.observe(tableElement);
+    
+    // Also observe the table content for dynamic content changes
+    const table = tableElement.querySelector('table');
+    if (table) {
+      resizeObserver.observe(table);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, [importedProducts, searchQuery, revenueFilter, sortField, sortDirection]); // Re-run when data changes
+
   const prepareProductForScoring = (product: AutoMappedProduct | ProductWithKeywords): ScoringData => {
     // Convert product data to scoring format with better mapping
     const revenue = product.productData.revenue || 0;
@@ -300,31 +325,6 @@ const Score = () => {
       </div>
     );
   }
-
-  // Set up ResizeObserver to sync proxy scrollbar width
-  useEffect(() => {
-    const tableElement = document.getElementById('product-table-scroll');
-    const proxyInner = document.getElementById('proxy-inner');
-    
-    if (!tableElement || !proxyInner) return;
-
-    const resizeObserver = new ResizeObserver(() => {
-      // Set proxy inner width to match table's scroll width
-      const scrollWidth = tableElement.scrollWidth;
-      proxyInner.style.width = `${scrollWidth}px`;
-    });
-
-    // Observe the table container
-    resizeObserver.observe(tableElement);
-    
-    // Also observe the table content for dynamic content changes
-    const table = tableElement.querySelector('table');
-    if (table) {
-      resizeObserver.observe(table);
-    }
-
-    return () => resizeObserver.disconnect();
-  }, [filteredAndSortedProducts]); // Re-run when products change
 
   return (
     <div className="container max-w-6xl mx-auto p-6">
