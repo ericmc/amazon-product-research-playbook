@@ -37,7 +37,7 @@ const Score = () => {
   // Filtering and sorting state
   const [searchQuery, setSearchQuery] = useState("");
   const [revenueFilter, setRevenueFilter] = useState("all");
-  const [keywordFilter, setKeywordFilter] = useState("all");
+  
   const [sortField, setSortField] = useState<SortField>('score');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
@@ -183,12 +183,6 @@ const Score = () => {
         }
       }
 
-      // Keyword filter
-      if (keywordFilter !== "all") {
-        const hasKeyword = !!(product as ProductWithKeywords).primaryKeyword;
-        if (keywordFilter === "with-keywords" && !hasKeyword) return false;
-        if (keywordFilter === "without-keywords" && hasKeyword) return false;
-      }
 
       return true;
     });
@@ -240,7 +234,7 @@ const Score = () => {
     });
 
     return filtered;
-  }, [importedProducts, searchQuery, revenueFilter, keywordFilter, sortField, sortDirection]);
+  }, [importedProducts, searchQuery, revenueFilter, sortField, sortDirection]);
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
@@ -337,16 +331,6 @@ const Score = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={keywordFilter} onValueChange={setKeywordFilter}>
-                <SelectTrigger className="w-full sm:w-40">
-                  <SelectValue placeholder="Keywords" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Products</SelectItem>
-                  <SelectItem value="with-keywords">With Keywords</SelectItem>
-                  <SelectItem value="without-keywords">Without Keywords</SelectItem>
-                </SelectContent>
-              </Select>
 
               <Badge variant="outline" className="flex items-center gap-1 px-3 py-2">
                 <Filter className="h-3 w-3" />
@@ -399,15 +383,6 @@ const Score = () => {
                         Price {getSortIcon('price')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background min-w-[100px]">
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => handleSort('searchVolume')}
-                        className="h-auto p-0 font-medium"
-                      >
-                        Search Vol {getSortIcon('searchVolume')}
-                      </Button>
-                    </TableHead>
                     <TableHead className="text-right bg-background min-w-[80px]">
                       <Button 
                         variant="ghost" 
@@ -426,7 +401,7 @@ const Score = () => {
                         Rating {getSortIcon('rating')}
                       </Button>
                     </TableHead>
-                    <TableHead className="bg-background min-w-[120px]">Keywords</TableHead>
+                    
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -474,22 +449,10 @@ const Score = () => {
                           ${(product.productData.price || 0).toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
-                          {((product as ProductWithKeywords).searchVolume || product.productData.searchVolume || 0).toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-right">
                           {(product.productData.reviewCount || 0).toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right">
                           {product.productData.rating ? `${product.productData.rating}★` : '-'}
-                        </TableCell>
-                        <TableCell>
-                          {(product as ProductWithKeywords).primaryKeyword ? (
-                            <Badge variant="secondary" className="text-xs">
-                              {(product as ProductWithKeywords).primaryKeyword}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">No keyword</span>
-                          )}
                         </TableCell>
                       </TableRow>
                     );
