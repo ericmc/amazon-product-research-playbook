@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, FileText, TrendingUp, Search, Filter, ArrowUpDown, ChevronUp, ChevronDown, ExternalLink } from "lucide-react";
 import ScoringSystem from "@/components/ScoringSystem";
@@ -40,6 +41,7 @@ const Score = () => {
   
   const [sortField, setSortField] = useState<SortField>('score');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [hoverImageUrl, setHoverImageUrl] = useState<string | null>(null);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -435,7 +437,7 @@ const Score = () => {
                         onClick={() => handleProductSelect(product)}
                       >
                         <TableCell className="sticky left-0 z-40 bg-background w-10 p-0 border-r">
-                          <div className="relative group">
+                          <div className="relative group" onMouseEnter={() => setHoverImageUrl(imageUrl)} onMouseLeave={() => setHoverImageUrl(null)}>
                             <div className="w-9 h-9 m-0.5 rounded border bg-muted flex items-center justify-center overflow-hidden cursor-pointer">
                               {imageUrl ? (
                                 <img 
@@ -450,19 +452,7 @@ const Score = () => {
                                 <FileText className="h-2 w-2 text-muted-foreground" />
                               )}
                             </div>
-                            {/* Hover overlay for larger image */}
-                            {imageUrl && (
-                              <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white border-2 border-gray-300 rounded-lg shadow-2xl z-[9999] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                                <img 
-                                  src={imageUrl} 
-                                  alt="Product image enlarged"
-                                  className="w-full h-full object-cover rounded-lg"
-                                  onError={(e) => {
-                                    e.currentTarget.src = '/placeholder.svg';
-                                  }}
-                                />
-                              </div>
-                            )}
+                            {/* Preview rendered via portal */}
                           </div>
                         </TableCell>
                          <TableCell className="sticky left-10 z-40 bg-background w-32 p-1 border-r">
@@ -509,6 +499,20 @@ const Score = () => {
                 </TableBody>
                </Table>
             </div>
+
+            {hoverImageUrl && createPortal(
+              <div className="fixed inset-0 flex items-center justify-center z-[2147483647] pointer-events-none">
+                <div className="w-64 h-64 md:w-72 md:h-72 bg-background border border-border rounded-lg shadow-2xl">
+                  <img
+                    src={hoverImageUrl}
+                    alt="Product image enlarged"
+                    className="w-full h-full object-contain rounded-lg"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/placeholder.svg'; }}
+                  />
+                </div>
+              </div>,
+              document.body
+            )}
 
             {filteredAndSortedProducts.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
