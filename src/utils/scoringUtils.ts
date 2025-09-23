@@ -196,16 +196,89 @@ const calculateLifecycleGate = (product: any): boolean => {
   return reviewCount >= 100; // Indicates at least 12 months of sales
 };
 
-export const checkGates = (criteria: any[], margins?: { computedMargin?: number }): Record<string, boolean> => {
+export const checkGates = (criteria: any[], product: any): { gates: Record<string, boolean>, failures: string[] } => {
+  const failures: string[] = [];
   const gates: Record<string, boolean> = {};
   
-  criteria.forEach(criterion => {
-    if (criterion.gate !== undefined) {
-      gates[criterion.id] = criterion.gate;
+  // Revenue Gate: ≥ $5,000/mo
+  const revenue = product.revenue || 0;
+  gates.revenue = revenue >= 5000;
+  if (!gates.revenue) {
+    failures.push(`Failed Revenue Gate: $${revenue.toLocaleString()}/mo (need ≥$5,000)`);
+  }
+  
+  // Sales Momentum Gate: positive growth indicators
+  const reviewCount = product.reviewCount || 0;
+  const rating = product.rating || 0;
+  gates.momentum = reviewCount >= 50 && rating >= 3.5;
+  if (!gates.momentum) {
+    failures.push(`Failed Momentum Gate: ${reviewCount} reviews, ${rating} rating (need ≥50 reviews & ≥3.5 rating)`);
+  }
+  
+  // Competition Gate: Review Count < 500 and ≤ 5 active sellers
+  gates.competition = reviewCount < 500;
+  if (!gates.competition) {
+    failures.push(`Failed Competition Gate: ${reviewCount} reviews (need <500 reviews)`);
+  }
+  
+  // Additional gates for other criteria (optional)
+  const barriersScore = calculateBarriersScore(product);
+  gates.barriers = barriersScore >= 50;
+  if (!gates.barriers) {
+    failures.push(`Failed Barriers Gate: ${barriersScore.toFixed(0)} score (need ≥50, indicates high entry barriers)`);
+  }
+  
+  const logisticsScore = calculateLogisticsScore(product);
+  gates.logistics = logisticsScore >= 60;
+  if (!gates.logistics) {
+    const price = product.price || 0;
+    if (price > 100) {
+      failures.push(`Failed Logistics Gate: $${price} price suggests heavy/large item (storage fees likely high)`);
+    } else {
+      failures.push(`Failed Logistics Gate: ${logisticsScore.toFixed(0)} score (logistics complexity too high)`);
     }
-  });
+  }
+  
+  const lifecycleScore = calculateLifecycleScore(product);
+  gates.lifecycle = lifecycleScore >= 50;
+  if (!gates.lifecycle) {
+    failures.push(`Failed Lifecycle Gate: ${lifecycleScore.toFixed(0)} score (product lifecycle concerns)`);
+  }
 
-  return gates;
+  return { gates, failures };
+};
+
+export const getOpportunityRecommendation = (score: number, gateResults: { gates: Record<string, boolean>, failures: string[] }): { 
+  recommendation: string, 
+  color: string, 
+  description: string,
+  action: string
+} => {
+  const { gates, failures } = gateResults;
+  const criticalGatesPassed = gates.revenue && gates.momentum && gates.competition;
+  
+  if (score >= 75 && criticalGatesPassed) {
+    return {
+      recommendation: 'Proceed',
+      color: 'text-green-600',
+      description: 'Strong opportunity with high score and passing critical gates',
+      action: 'Move forward with detailed sourcing analysis'
+    };
+  } else if (score >= 60 && score < 75) {
+    return {
+      recommendation: 'Monitor / Gather Data',
+      color: 'text-yellow-600', 
+      description: 'Moderate opportunity requiring additional research',
+      action: 'Collect more data before making final decision'
+    };
+  } else {
+    return {
+      recommendation: 'Reject',
+      color: 'text-red-600',
+      description: 'Low opportunity score or failed critical gates',
+      action: 'Look for alternative opportunities'
+    };
+  }
 };
 
 export const mapCriteriaById = (criteria: any[], id: string) => {

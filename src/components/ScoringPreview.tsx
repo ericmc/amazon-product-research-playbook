@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
 import { RotateCcw, TrendingUp, Target, AlertCircle, CheckCircle, DollarSign, Users, Settings, Info, ChevronDown, ChevronUp } from "lucide-react";
-import { computeFinalScore, checkGates, getRecommendation, calculateH10Score } from "@/utils/scoringUtils";
+import { computeFinalScore, checkGates, getRecommendation, calculateH10Score, getOpportunityRecommendation } from "@/utils/scoringUtils";
 
 interface ScoringData {
   productName: string;
@@ -158,24 +158,16 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
   }));
 
   const overallScore = computeFinalScore(criteria);
-  const gates = checkGates(criteria);
+  const gateResults = checkGates(criteria, scoringData);
+  const { gates, failures } = gateResults;
+  const opportunityRecommendation = getOpportunityRecommendation(overallScore, gateResults);
   const gatesPassed = Object.values(gates).filter(Boolean).length;
-  const recommendation = getRecommendation(overallScore, gatesPassed);
-
-  const getRecommendationColor = (rec: string) => {
-    switch (rec) {
-      case 'proceed': return 'text-green-600';
-      case 'gather-data': return 'text-yellow-600';
-      case 'reject': return 'text-red-600';
-      default: return 'text-muted-foreground';
-    }
-  };
 
   const getRecommendationBadge = (rec: string) => {
     switch (rec) {
-      case 'proceed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'gather-data': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'reject': return 'bg-red-100 text-red-800 border-red-200';
+      case 'Proceed': return 'bg-green-100 text-green-800 border-green-200';
+      case 'Monitor / Gather Data': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Reject': return 'bg-red-100 text-red-800 border-red-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -299,29 +291,33 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
         </Collapsible>
       </Card>
 
-      {/* Overall Score */}
+      {/* Overall Score & Recommendation */}
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className={`text-4xl font-bold ${getRecommendationColor(recommendation)}`}>
+          <CardTitle className={`text-4xl font-bold ${opportunityRecommendation.color}`}>
             {overallScore}/100
           </CardTitle>
-          <CardDescription>Overall Product Viability Score</CardDescription>
+          <CardDescription>Composite Opportunity Score</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center space-y-4">
             <div className="w-full bg-gray-200 rounded-full h-3">
               <div 
                 className={`h-3 rounded-full transition-all duration-500 ${
-                  overallScore >= 80 ? 'bg-green-500' :
+                  overallScore >= 75 ? 'bg-green-500' :
                   overallScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
                 }`}
                 style={{ width: `${overallScore}%` }}
               />
             </div>
-            <Badge className={`${getRecommendationBadge(recommendation)} text-sm px-4 py-2`}>
-              {recommendation === 'proceed' ? '✅ Proceed' :
-               recommendation === 'gather-data' ? '⚠️ Gather More Data' : '❌ Pass'}
-            </Badge>
+            <div className="space-y-2">
+              <Badge className={`${getRecommendationBadge(opportunityRecommendation.recommendation)} text-sm px-4 py-2`}>
+                {opportunityRecommendation.recommendation === 'Proceed' ? '✅ Proceed' :
+                 opportunityRecommendation.recommendation === 'Monitor / Gather Data' ? '⚠️ Monitor / Gather Data' : '❌ Reject'}
+              </Badge>
+              <p className="text-sm text-muted-foreground">{opportunityRecommendation.description}</p>
+              <p className="text-xs font-medium">{opportunityRecommendation.action}</p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -390,30 +386,51 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
         </div>
       </TooltipProvider>
 
-      {/* Gates Status */}
+      {/* Gates Status with Failure Reasons */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Scoring Gates</CardTitle>
+          <CardTitle className="text-base">Critical Gates Analysis</CardTitle>
           <CardDescription>
-            Key thresholds for product viability ({Object.values(gates).filter(Boolean).length}/{Object.keys(gates).length} passed)
+            Key thresholds for opportunity viability ({gatesPassed}/{Object.keys(gates).length} passed)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-            {Object.entries(gates).map(([gateId, passed]) => {
-              const criterion = criteria.find(c => c.id === gateId);
-              if (!criterion) return null;
-              
-              return (
-                <div key={gateId} className={`flex items-center gap-2 ${passed ? 'text-green-600' : 'text-red-600'}`}>
-                  <div className={`w-2 h-2 rounded-full ${passed ? 'bg-green-500' : 'bg-red-500'}`} />
-                  <div className="flex-1">
-                    <div className="font-medium">{criterion.name}</div>
-                    <div className="text-xs text-muted-foreground">{criterion.gateDescription}</div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              {Object.entries(gates).map(([gateId, passed]) => {
+                const criterion = criteria.find(c => c.id === gateId);
+                if (!criterion) return null;
+                
+                return (
+                  <div key={gateId} className={`flex items-start gap-3 p-3 rounded-lg border ${passed ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                    <div className={`w-3 h-3 rounded-full mt-0.5 ${passed ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className={`font-medium ${passed ? 'text-green-800' : 'text-red-800'}`}>
+                        {criterion.name}
+                      </div>
+                      <div className={`text-xs mt-1 ${passed ? 'text-green-600' : 'text-red-600'}`}>
+                        {criterion.gateDescription}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+            
+            {/* Failure Reasons */}
+            {failures.length > 0 && (
+              <div className="mt-6 p-4 border border-red-200 bg-red-50 rounded-lg">
+                <h4 className="font-medium text-red-800 mb-3">Reasons for Concern:</h4>
+                <ul className="space-y-2">
+                  {failures.map((failure, index) => (
+                    <li key={index} className="text-sm text-red-700 flex items-start gap-2">
+                      <span className="text-red-500 mt-0.5">•</span>
+                      <span>{failure}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
