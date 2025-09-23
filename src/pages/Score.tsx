@@ -355,12 +355,15 @@ const Score = () => {
             </div>
 
             {/* Product Table */}
-            <div className="rounded-md border bg-background max-h-96 overflow-auto">
-              <Table className="min-w-[1280px]">
-                <TableHeader className="sticky top-0 bg-background z-30 border-b shadow-sm">
+            <div
+              id="product-table-scroll"
+              className="rounded-md border bg-background w-full max-h-[480px] overflow-x-auto overflow-y-auto"
+            >
+              <Table className="min-w-[1400px]">
+                <TableHeader className="sticky top-0 z-40 bg-background border-b shadow-sm">
                   <TableRow>
-                    <TableHead className="sticky left-0 z-30 bg-background w-16 px-0">Image</TableHead>
-                    <TableHead className="min-w-[260px] bg-background sticky left-16 z-30 border-r">
+                    <TableHead className="sticky left-0 z-50 bg-background w-16 px-0 after:content-[''] after:absolute after:top-0 after:right-0 after:h-full after:w-px after:bg-border">Image</TableHead>
+                    <TableHead className="min-w-[260px] bg-background sticky left-16 z-50 border-r">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('title')}
@@ -438,7 +441,7 @@ const Score = () => {
                         className={`cursor-pointer hover:bg-muted/50 ${isSelected ? 'bg-muted' : ''}`}
                         onClick={() => handleProductSelect(product)}
                       >
-                        <TableCell className="sticky left-0 z-20 bg-background w-16 p-0">
+                        <TableCell className="sticky left-0 z-40 bg-background w-16 p-0 after:content-[''] after:absolute after:top-0 after:right-0 after:h-full after:w-px after:bg-border">
                           <div className="mx-auto my-1 w-10 h-10 rounded border bg-muted flex items-center justify-center overflow-hidden">
                             {imageUrl ? (
                               <img 
@@ -454,7 +457,7 @@ const Score = () => {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium sticky left-16 z-10 bg-background min-w-[260px]">
+                        <TableCell className="font-medium sticky left-16 z-40 bg-background min-w-[260px]">
                           <div className="max-w-sm truncate" title={product.productData.title}>
                             {product.productData.title || 'Unknown Product'}
                           </div>
