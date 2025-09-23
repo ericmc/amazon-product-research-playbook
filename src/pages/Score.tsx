@@ -360,9 +360,9 @@ const Score = () => {
               </Badge>
             </div>
 
-            {/* Top horizontal scrollbar */}
+            {/* Top horizontal scrollbar - sticky */}
             <div 
-              className="rounded-t-md border border-b-0 bg-background w-full overflow-x-auto overflow-y-hidden h-4"
+              className="sticky top-0 z-30 rounded-t-md border border-b-0 bg-background w-full overflow-x-auto overflow-y-hidden h-4"
               onScroll={(e) => {
                 const mainTable = e.currentTarget.nextElementSibling as HTMLElement;
                 if (mainTable) {
