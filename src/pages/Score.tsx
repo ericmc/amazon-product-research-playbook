@@ -360,29 +360,31 @@ const Score = () => {
               </Badge>
             </div>
 
-            {/* Top horizontal scrollbar - sticky */}
-            <div 
-              className="sticky top-0 z-30 rounded-t-md border border-b-0 bg-background w-full overflow-x-auto overflow-y-hidden h-4"
-              onScroll={(e) => {
-                const mainTable = e.currentTarget.nextElementSibling as HTMLElement;
-                if (mainTable) {
-                  mainTable.scrollLeft = e.currentTarget.scrollLeft;
-                }
-              }}
-            >
-              <div className="min-w-[900px] h-1"></div>
-            </div>
-            
-            <div
-              id="product-table-scroll"
-              className="rounded-b-md border bg-background w-full max-h-[480px] overflow-x-auto overflow-y-auto"
-              onScroll={(e) => {
-                const topScrollbar = e.currentTarget.previousElementSibling as HTMLElement;
-                if (topScrollbar) {
-                  topScrollbar.scrollLeft = e.currentTarget.scrollLeft;
-                }
-              }}
-            >
+            {/* Container for sticky scrollbar and table */}
+            <div className="relative">
+              {/* Top horizontal scrollbar - sticky within container */}
+              <div 
+                className="sticky top-0 z-30 rounded-t-md border border-b-0 bg-background w-full overflow-x-auto overflow-y-hidden h-4 shadow-sm"
+                onScroll={(e) => {
+                  const mainTable = document.getElementById('product-table-scroll');
+                  if (mainTable) {
+                    mainTable.scrollLeft = e.currentTarget.scrollLeft;
+                  }
+                }}
+              >
+                <div className="min-w-[900px] h-1"></div>
+              </div>
+              
+              <div
+                id="product-table-scroll"
+                className="rounded-b-md border border-t-0 bg-background w-full max-h-[480px] overflow-x-auto overflow-y-auto"
+                onScroll={(e) => {
+                  const topScrollbar = e.currentTarget.parentElement?.firstElementChild as HTMLElement;
+                  if (topScrollbar) {
+                    topScrollbar.scrollLeft = e.currentTarget.scrollLeft;
+                  }
+                }}
+              >
               <Table className="min-w-[900px] border-spacing-0">
                 <TableHeader className="sticky top-0 z-40 bg-background border-b shadow-sm">
                   <TableRow className="border-none">
@@ -576,7 +578,8 @@ const Score = () => {
                     );
                   })}
                 </TableBody>
-               </Table>
+                </Table>
+              </div>
             </div>
 
             {hoverImageUrl && createPortal(
