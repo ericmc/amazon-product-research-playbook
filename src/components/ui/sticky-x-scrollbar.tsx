@@ -68,14 +68,14 @@ export default function StickyXScrollbar({
         {children}
       </div>
 
-      {/* Sticky proxy scrollbar above table's bottom edge */}
+      {/* Sticky proxy scrollbar outside and above table's bottom edge */}
       <div
         ref={proxyRef}
-        className="absolute bottom-0 left-0 right-0 z-20 overflow-x-auto overflow-y-hidden border-t bg-white/90 backdrop-blur-sm"
+        className="sticky bottom-0 z-20 overflow-x-auto overflow-y-hidden border-t bg-background/95 backdrop-blur-sm"
         style={{ height: barHeight }}
         aria-label="Horizontal scroll for table"
       >
-        <div ref={railRef} style={{ height: 1 }} />
+        <div ref={railRef} style={{ height: 1, backgroundColor: 'transparent' }} />
       </div>
     </div>
   );
