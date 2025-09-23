@@ -139,7 +139,7 @@ const SourcingPacket: React.FC<SourcingPacketProps> = ({
     pdf.setFont("helvetica", "normal");
     
     opportunity.criteria.forEach(criterion => {
-      const text = `${criterion.name}: ${criterion.value.toLocaleString()}`;
+      const text = `${criterion.name}: ${(criterion.value || 0).toLocaleString()}`;
       pdf.text(text, 25, yPosition);
       yPosition += 8;
     });
@@ -269,7 +269,7 @@ const SourcingPacket: React.FC<SourcingPacketProps> = ({
               {opportunity.criteria.map(criterion => (
                 <div key={criterion.id} className="flex justify-between p-3 bg-muted rounded-lg">
                   <span className="text-sm text-muted-foreground">{criterion.name}</span>
-                  <span className="text-sm font-medium">{criterion.value.toLocaleString()}</span>
+                  <span className="text-sm font-medium">{(criterion.value || 0).toLocaleString()}</span>
                 </div>
               ))}
             </div>
