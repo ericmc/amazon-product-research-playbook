@@ -538,16 +538,18 @@ const Score = () => {
 
         {/* Advanced Scoring System - Only show when product is selected */}
         {selectedProduct && (
-          <Card>
+          <Card className="opacity-60">
             <CardHeader>
-              <CardTitle>
+              <CardTitle className="text-muted-foreground">
                 Advanced Scoring Configuration
               </CardTitle>
               <CardDescription>
+                <span className="text-orange-600 font-medium">🚧 In Development - Do Not Use</span>
+                <br />
                 Fine-tune scoring criteria and weights for detailed analysis
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pointer-events-none">
               <ScoringSystem key={selectedProduct.productData.title} />
             </CardContent>
           </Card>
