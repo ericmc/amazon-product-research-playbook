@@ -360,7 +360,6 @@ const Score = () => {
               </Badge>
             </div>
 
-            {/* Product Table */}
             {/* Top horizontal scrollbar */}
             <div 
               className="rounded-t-md border border-b-0 bg-background w-full overflow-x-auto overflow-y-hidden h-4"
