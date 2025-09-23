@@ -349,7 +349,7 @@ const Score = () => {
                 }
               }}
             >
-              <div className="min-w-[1400px] h-1"></div>
+              <div className="min-w-[1200px] h-1"></div>
             </div>
             
             <div
@@ -362,11 +362,11 @@ const Score = () => {
                 }
               }}
             >
-              <Table className="min-w-[1400px]">
+              <Table className="min-w-[1200px]">
                 <TableHeader className="sticky top-0 z-40 bg-background border-b shadow-sm">
                   <TableRow>
                     <TableHead className="sticky left-0 z-50 bg-background w-16 px-0 after:content-[''] after:absolute after:top-0 after:right-0 after:h-full after:w-px after:bg-border">Image</TableHead>
-                    <TableHead className="min-w-[260px] bg-background sticky left-16 z-50 border-r">
+                    <TableHead className="min-w-[180px] bg-background sticky left-16 z-50 border-r">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('title')}
@@ -451,8 +451,8 @@ const Score = () => {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium sticky left-16 z-40 bg-background min-w-[260px]">
-                          <div className="max-w-sm truncate" title={product.productData.title}>
+                        <TableCell className="font-medium sticky left-16 z-40 bg-background min-w-[180px]">
+                          <div className="max-w-[160px] truncate text-sm leading-tight py-1" title={product.productData.title}>
                             {product.productData.title || 'Unknown Product'}
                           </div>
                         </TableCell>
