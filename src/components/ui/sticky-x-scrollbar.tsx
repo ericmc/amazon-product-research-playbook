@@ -58,16 +58,6 @@ export default function StickyXScrollbar({
 
   return (
     <div className={`relative ${className}`}>
-      {/* Sticky proxy scrollbar outside the table viewport */}
-      <div
-        ref={proxyRef}
-        className="sticky bottom-0 z-20 overflow-x-auto overflow-y-hidden border-t bg-white/90 backdrop-blur-sm"
-        style={{ height: barHeight }}
-        aria-label="Horizontal scroll for table"
-      >
-        <div ref={railRef} style={{ height: 1 }} />
-      </div>
-
       {/* Your original scrollable container */}
       <div
         ref={viewportRef}
@@ -76,6 +66,16 @@ export default function StickyXScrollbar({
         id="table-viewport"
       >
         {children}
+      </div>
+
+      {/* Sticky proxy scrollbar above table's bottom edge */}
+      <div
+        ref={proxyRef}
+        className="absolute bottom-0 left-0 right-0 z-20 overflow-x-auto overflow-y-hidden border-t bg-white/90 backdrop-blur-sm"
+        style={{ height: barHeight }}
+        aria-label="Horizontal scroll for table"
+      >
+        <div ref={railRef} style={{ height: 1 }} />
       </div>
     </div>
   );
