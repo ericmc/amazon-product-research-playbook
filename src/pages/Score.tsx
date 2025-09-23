@@ -355,12 +355,13 @@ const Score = () => {
             </div>
 
             {/* Product Table */}
-            <div className="rounded-md border max-h-96 overflow-auto bg-background">
+            <div className="w-full overflow-x-auto">
+              <div className="rounded-md border max-h-96 overflow-y-auto bg-background min-w-[1000px]">
               <Table>
                 <TableHeader className="sticky top-0 bg-background z-10 border-b shadow-sm">
                   <TableRow>
-                    <TableHead className="w-12 bg-background">Image</TableHead>
-                    <TableHead className="min-w-64 bg-background">
+                    <TableHead className="w-12 bg-background sticky left-0 z-20">Image</TableHead>
+                    <TableHead className="min-w-[200px] bg-background sticky left-12 z-20 border-r">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('title')}
@@ -369,7 +370,7 @@ const Score = () => {
                         Product Title {getSortIcon('title')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background">
+                    <TableHead className="text-right bg-background min-w-[120px]">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('score')}
@@ -378,7 +379,7 @@ const Score = () => {
                         Viability Score {getSortIcon('score')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background">
+                    <TableHead className="text-right bg-background min-w-[100px]">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('revenue')}
@@ -387,7 +388,7 @@ const Score = () => {
                         Revenue {getSortIcon('revenue')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background">
+                    <TableHead className="text-right bg-background min-w-[80px]">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('price')}
@@ -396,7 +397,7 @@ const Score = () => {
                         Price {getSortIcon('price')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background">
+                    <TableHead className="text-right bg-background min-w-[100px]">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('searchVolume')}
@@ -405,7 +406,7 @@ const Score = () => {
                         Search Vol {getSortIcon('searchVolume')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background">
+                    <TableHead className="text-right bg-background min-w-[80px]">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('reviewCount')}
@@ -414,7 +415,7 @@ const Score = () => {
                         Reviews {getSortIcon('reviewCount')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background">
+                    <TableHead className="text-right bg-background min-w-[70px]">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('rating')}
@@ -423,7 +424,7 @@ const Score = () => {
                         Rating {getSortIcon('rating')}
                       </Button>
                     </TableHead>
-                    <TableHead className="bg-background">Keywords</TableHead>
+                    <TableHead className="bg-background min-w-[120px]">Keywords</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -493,6 +494,7 @@ const Score = () => {
                   })}
                 </TableBody>
               </Table>
+            </div>
             </div>
 
             {filteredAndSortedProducts.length === 0 && (
