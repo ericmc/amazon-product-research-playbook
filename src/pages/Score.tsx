@@ -301,6 +301,31 @@ const Score = () => {
     );
   }
 
+  // Set up ResizeObserver to sync proxy scrollbar width
+  useEffect(() => {
+    const tableElement = document.getElementById('product-table-scroll');
+    const proxyInner = document.getElementById('proxy-inner');
+    
+    if (!tableElement || !proxyInner) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      // Set proxy inner width to match table's scroll width
+      const scrollWidth = tableElement.scrollWidth;
+      proxyInner.style.width = `${scrollWidth}px`;
+    });
+
+    // Observe the table container
+    resizeObserver.observe(tableElement);
+    
+    // Also observe the table content for dynamic content changes
+    const table = tableElement.querySelector('table');
+    if (table) {
+      resizeObserver.observe(table);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, [filteredAndSortedProducts]); // Re-run when products change
+
   return (
     <div className="container max-w-6xl mx-auto p-6">
       <div className="space-y-6">
@@ -362,28 +387,15 @@ const Score = () => {
 
             {/* Table wrapper with sticky bottom scrollbar */}
             <div className="relative rounded-md border bg-background">
-              {/* Sticky proxy scrollbar at bottom */}
-              <div 
-                id="bottom-scrollbar"
-                className="sticky bottom-0 z-30 h-4 overflow-x-auto overflow-y-hidden bg-background/90 backdrop-blur-sm border-t"
-                onScroll={(e) => {
-                  const main = document.getElementById('product-table-scroll');
-                  if (main) {
-                    (main as HTMLElement).scrollLeft = e.currentTarget.scrollLeft;
-                  }
-                }}
-              >
-                <div className="min-w-[900px] h-1"></div>
-              </div>
               
               {/* Table viewport with vertical scroll */}
               <div
                 id="product-table-scroll"
                 className="max-h-[480px] overflow-auto"
                 onScroll={(e) => {
-                  const bottom = document.getElementById('bottom-scrollbar');
-                  if (bottom) {
-                    (bottom as HTMLElement).scrollLeft = (e.currentTarget as HTMLElement).scrollLeft;
+                  const proxy = document.getElementById('proxy-scrollbar');
+                  if (proxy) {
+                    proxy.scrollLeft = (e.currentTarget as HTMLElement).scrollLeft;
                   }
                 }}
               >
@@ -581,6 +593,20 @@ const Score = () => {
                   })}
                 </TableBody>
                 </Table>
+              </div>
+              
+              {/* Sticky proxy scrollbar - always visible at bottom */}
+              <div 
+                id="proxy-scrollbar"
+                className="sticky bottom-0 z-30 h-3 overflow-x-auto overflow-y-hidden bg-background/95 backdrop-blur-sm border-t border-border/50"
+                onScroll={(e) => {
+                  const table = document.getElementById('product-table-scroll');
+                  if (table) {
+                    table.scrollLeft = e.currentTarget.scrollLeft;
+                  }
+                }}
+              >
+                <div id="proxy-inner" className="h-1"></div>
               </div>
             </div>
 
