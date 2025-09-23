@@ -452,7 +452,7 @@ const Score = () => {
                             </div>
                             {/* Hover overlay for larger image */}
                             {imageUrl && (
-                              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-white border-2 border-gray-300 rounded-lg shadow-xl z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                              <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white border-2 border-gray-300 rounded-lg shadow-2xl z-[9999] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
                                 <img 
                                   src={imageUrl} 
                                   alt="Product image enlarged"
@@ -467,11 +467,11 @@ const Score = () => {
                         </TableCell>
                          <TableCell className="sticky left-10 z-40 bg-background w-32 p-1 border-r">
                            <div className="flex items-center gap-1">
-                             <div className="text-[10px] font-medium leading-tight h-8 flex items-center flex-1" title={product.productData.title}>
-                               <span className="overflow-hidden text-ellipsis line-clamp-2">
-                                 {product.productData.title || 'Unknown Product'}
-                               </span>
-                             </div>
+                              <div className="text-[10px] font-medium leading-tight h-8 flex items-center flex-1" title={product.productData.title}>
+                                <span className="overflow-hidden text-ellipsis line-clamp-2 max-h-8">
+                                  {product.productData.title || 'Unknown Product'}
+                                </span>
+                              </div>
                              {product.productData.asin && (
                                <a
                                  href={`https://www.amazon.com/dp/${product.productData.asin}`}
