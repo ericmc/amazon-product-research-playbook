@@ -32,13 +32,14 @@ interface ScoringCriterion {
   description: string;
   suggestion: string;
   isInverted?: boolean;
+  gate?: boolean;
+  gateDescription?: string;
 }
 
 interface ScoringThresholds {
   revenue: number;
   momentum: number;
   competition: number;
-  priceSignals: number;
   barriers: number;
   logistics: number;
   lifecycle: number;
@@ -55,10 +56,9 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
   
   // Default thresholds (suggested values)
   const defaultThresholds: ScoringThresholds = {
-    revenue: 40,
-    momentum: 50,
+    revenue: 60,
+    momentum: 60,
     competition: 60,
-    priceSignals: 60,
     barriers: 50,
     logistics: 60,
     lifecycle: 50
@@ -126,26 +126,24 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
 
   const getDescriptionForCriteria = (id: string) => {
     switch (id) {
-      case 'revenue_potential': return 'ASIN Revenue indicates proven market demand and sales volume. Based on actual revenue data from Helium 10.';
-      case 'sales_momentum': return 'Sales momentum based on review velocity and quality trends. Growing review count with good ratings indicates strong sales.';
-      case 'competition': return 'Competition density based on established sellers with high review counts and ratings. Lower competition = easier entry.';
-      case 'price_signals': return 'Price positioning and trends. Optimal price ranges balance profit margins with market accessibility.';
-      case 'barriers': return 'Market entry barriers based on established competition and quality expectations. Lower barriers = easier entry.';
-      case 'logistics': return 'Logistics complexity including size, weight, storage fees, and fulfillment requirements.';
-      case 'lifecycle': return 'Product lifecycle stage and seasonality patterns. Mature products offer stability, emerging ones offer growth.';
+      case 'revenue_potential': return 'Revenue indicates market size and demand validation. Higher revenue shows proven customer willingness to pay and market viability for sustainable business growth.';
+      case 'sales_momentum': return 'Sales momentum shows market growth trajectory. Positive trends indicate expanding demand, while declining trends suggest market saturation or declining interest.';
+      case 'competition': return 'Competition level affects market entry difficulty. Lower review counts and fewer active sellers indicate less saturated markets with better opportunities.';
+      case 'barriers': return 'Entry barriers determine how difficult it is to compete. Fewer product variations and images suggest lower complexity and investment requirements for market entry.';
+      case 'logistics': return 'Logistics burden impacts operational costs and complexity. Lighter, smaller items with lower storage fees reduce overhead and improve profit margins.';
+      case 'lifecycle': return 'Product lifecycle and seasonality affect long-term stability. Mature products (12+ months) with consistent sales patterns offer more predictable business models.';
       default: return 'Product evaluation criterion for market viability assessment.';
     }
   };
 
   const getSuggestionForCriteria = (id: string) => {
     switch (id) {
-      case 'revenue_potential': return 'Target products with 40+ revenue score for sustainable business opportunities.';
-      case 'sales_momentum': return 'Look for products with growing review counts and consistently good ratings (4.0+).';
-      case 'competition': return 'Choose markets with 60+ competition score (lower competition) for easier entry.';
-      case 'price_signals': return 'Target $15-$75 price range for optimal profit margins and market accessibility.';
-      case 'barriers': return 'Select markets with 50+ barriers score - moderate barriers deter casual competitors.';
-      case 'logistics': return 'Prefer products with simple logistics to minimize operational complexity and costs.';
-      case 'lifecycle': return 'Balance between mature stability and emerging growth opportunities based on your strategy.';
+      case 'revenue_potential': return 'Target products with ≥$5,000/month revenue to ensure sufficient market size for profitable business operations.';
+      case 'sales_momentum': return 'Look for positive 90-day growth trends and increasing review velocity indicating expanding market demand.';
+      case 'competition': return 'Choose markets with <500 reviews and ≤5 active sellers to minimize competitive pressure and entry barriers.';
+      case 'barriers': return 'Prefer products with fewer variations and simpler listings to reduce complexity and initial investment requirements.';
+      case 'logistics': return 'Select lighter, smaller items with lower storage fees to optimize operational costs and improve profit margins.';
+      case 'lifecycle': return 'Target products with ≥12 months market presence and non-seasonal sales patterns for business stability.';
       default: return 'Optimize this criterion for better market positioning.';
     }
   };
@@ -156,7 +154,7 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
     icon: getIconForCriteria(criterion.id),
     description: getDescriptionForCriteria(criterion.id),
     suggestion: getSuggestionForCriteria(criterion.id),
-    isInverted: ['competition', 'barriers'].includes(criterion.id)
+    isInverted: false
   }));
 
   const overallScore = computeFinalScore(criteria);
@@ -260,18 +258,6 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="pricesignals-threshold">Price Signals</Label>
-                    <Input
-                      id="pricesignals-threshold"
-                      type="number"
-                      value={thresholds.priceSignals}
-                      onChange={(e) => saveThresholds({...thresholds, priceSignals: Number(e.target.value)})}
-                      className="h-8"
-                    />
-                    <p className="text-xs text-muted-foreground">Min score (0-100)</p>
-                  </div>
-                  
-                  <div className="space-y-2">
                     <Label htmlFor="barriers-threshold">Barriers to Entry</Label>
                     <Input
                       id="barriers-threshold"
@@ -346,9 +332,7 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
           {criteria.map((criterion) => {
             const IconComponent = criterion.icon;
             const normalizedScore = Math.min(100, (criterion.value / criterion.maxValue) * 100);
-            const passed = criterion.isInverted ? 
-              criterion.value >= criterion.threshold :
-              criterion.value >= criterion.threshold;
+            const passed = criterion.gate || (criterion.value >= criterion.threshold);
 
             return (
               <Tooltip key={criterion.id}>
@@ -360,20 +344,21 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
                           <IconComponent className="h-4 w-4 text-muted-foreground" />
                           <Info className="h-3 w-3 text-muted-foreground" />
                         </div>
-                        <Badge variant={passed ? "default" : "outline"} className="text-xs">
-                          {passed ? "✓" : "✗"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={passed ? "default" : "outline"} className="text-xs">
+                            {passed ? "✓" : "✗"}
+                          </Badge>
+                          <span className="text-xs font-medium">({criterion.weight}%)</span>
+                        </div>
                       </div>
                       <h4 className="font-medium text-sm mb-1">{criterion.name}</h4>
-                      <div className="text-xs text-muted-foreground mb-2">
-                        {criterion.id === 'revenue_potential' ? `${criterion.value.toFixed(0)} revenue score` :
-                         criterion.id === 'sales_momentum' ? `${criterion.value.toFixed(0)} momentum score` :
-                         criterion.id === 'competition' ? `${criterion.value.toFixed(0)} competition score` :
-                         criterion.id === 'price_signals' ? `${criterion.value.toFixed(0)} price score` :
-                         criterion.id === 'barriers' ? `${criterion.value.toFixed(0)} barriers score` :
-                         criterion.id === 'logistics' ? `${criterion.value.toFixed(0)} logistics score` :
-                         criterion.id === 'lifecycle' ? `${criterion.value.toFixed(0)} lifecycle score` : 
-                         criterion.value.toLocaleString()}
+                      <div className="text-xs text-muted-foreground mb-2 flex items-center gap-2">
+                        <span>{criterion.value.toFixed(0)} score</span>
+                        {criterion.gateDescription && (
+                          <span className={`px-1.5 py-0.5 rounded text-xs ${passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            Gate: {criterion.gateDescription}
+                          </span>
+                        )}
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-1.5">
                         <div 
@@ -389,17 +374,13 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
                     <p className="font-medium">{criterion.name}</p>
                     <p className="text-sm">{criterion.description}</p>
                     <p className="text-xs text-muted-foreground italic">{criterion.suggestion}</p>
+                    {criterion.gateDescription && (
+                      <p className="text-xs border-t pt-2">
+                        <strong>Gate:</strong> {criterion.gateDescription}
+                      </p>
+                    )}
                     <p className="text-xs border-t pt-2">
-                      Threshold: {
-                        criterion.id === 'revenue_potential' ? `${criterion.threshold} revenue` :
-                        criterion.id === 'sales_momentum' ? `${criterion.threshold} momentum` :
-                        criterion.id === 'competition' ? `${criterion.threshold} competition` :
-                        criterion.id === 'price_signals' ? `${criterion.threshold} price` :
-                        criterion.id === 'barriers' ? `${criterion.threshold} barriers` :
-                        criterion.id === 'logistics' ? `${criterion.threshold} logistics` :
-                        criterion.id === 'lifecycle' ? `${criterion.threshold} lifecycle` : 
-                        criterion.threshold.toString()
-                      }
+                      Score Threshold: {criterion.threshold}
                     </p>
                   </div>
                 </TooltipContent>
@@ -414,27 +395,25 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
         <CardHeader>
           <CardTitle className="text-base">Scoring Gates</CardTitle>
           <CardDescription>
-            Key thresholds for product viability ({gatesPassed}/4 passed)
+            Key thresholds for product viability ({Object.values(gates).filter(Boolean).length}/{Object.keys(gates).length} passed)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div className={`flex items-center gap-2 ${gates.revenue ? 'text-green-600' : 'text-red-600'}`}>
-              <div className={`w-2 h-2 rounded-full ${gates.revenue ? 'bg-green-500' : 'bg-red-500'}`} />
-              Revenue Gate
-            </div>
-            <div className={`flex items-center gap-2 ${gates.momentum ? 'text-green-600' : 'text-red-600'}`}>
-              <div className={`w-2 h-2 rounded-full ${gates.momentum ? 'bg-green-500' : 'bg-red-500'}`} />
-              Momentum Gate
-            </div>
-            <div className={`flex items-center gap-2 ${gates.competition ? 'text-green-600' : 'text-red-600'}`}>
-              <div className={`w-2 h-2 rounded-full ${gates.competition ? 'bg-green-500' : 'bg-red-500'}`} />
-              Competition Gate
-            </div>
-            <div className={`flex items-center gap-2 ${gates.barriers ? 'text-green-600' : 'text-red-600'}`}>
-              <div className={`w-2 h-2 rounded-full ${gates.barriers ? 'bg-green-500' : 'bg-red-500'}`} />
-              Barriers Gate
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+            {Object.entries(gates).map(([gateId, passed]) => {
+              const criterion = criteria.find(c => c.id === gateId);
+              if (!criterion) return null;
+              
+              return (
+                <div key={gateId} className={`flex items-center gap-2 ${passed ? 'text-green-600' : 'text-red-600'}`}>
+                  <div className={`w-2 h-2 rounded-full ${passed ? 'bg-green-500' : 'bg-red-500'}`} />
+                  <div className="flex-1">
+                    <div className="font-medium">{criterion.name}</div>
+                    <div className="text-xs text-muted-foreground">{criterion.gateDescription}</div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>

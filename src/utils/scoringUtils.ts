@@ -29,9 +29,11 @@ export const calculateH10Score = (product: any, thresholds: any) => {
       id: 'revenue_potential',
       name: 'Revenue Potential',
       value: calculateRevenueScore(product),
-      weight: 25,
+      weight: 20,
       maxValue: 100,
-      threshold: thresholds.revenue
+      threshold: thresholds.revenue,
+      gate: (product.revenue || 0) >= 5000,
+      gateDescription: '≥ $5,000/mo revenue'
     },
     {
       id: 'sales_momentum',
@@ -39,7 +41,9 @@ export const calculateH10Score = (product: any, thresholds: any) => {
       value: calculateSalesMomentumScore(product),
       weight: 20,
       maxValue: 100,
-      threshold: thresholds.momentum
+      threshold: thresholds.momentum,
+      gate: calculateMomentumGate(product),
+      gateDescription: 'Positive 90-day or YoY growth'
     },
     {
       id: 'competition',
@@ -47,39 +51,39 @@ export const calculateH10Score = (product: any, thresholds: any) => {
       value: calculateCompetitionScore(product),
       weight: 20,
       maxValue: 100,
-      threshold: thresholds.competition
-    },
-    {
-      id: 'price_signals',
-      name: 'Price Signals',
-      value: calculatePriceSignalsScore(product),
-      weight: 15,
-      maxValue: 100,
-      threshold: thresholds.priceSignals
+      threshold: thresholds.competition,
+      gate: calculateCompetitionGate(product),
+      gateDescription: 'Review Count < 500 and ≤ 5 active sellers'
     },
     {
       id: 'barriers',
       name: 'Barriers to Entry',
       value: calculateBarriersScore(product),
-      weight: 10,
+      weight: 15,
       maxValue: 100,
-      threshold: thresholds.barriers
+      threshold: thresholds.barriers,
+      gate: calculateBarriersGate(product),
+      gateDescription: 'Fewer variations + fewer images'
     },
     {
       id: 'logistics',
       name: 'Logistics Burden',
       value: calculateLogisticsScore(product),
-      weight: 5,
+      weight: 15,
       maxValue: 100,
-      threshold: thresholds.logistics
+      threshold: thresholds.logistics,
+      gate: calculateLogisticsGate(product),
+      gateDescription: 'Lighter/smaller items, lower storage fees'
     },
     {
       id: 'lifecycle',
       name: 'Lifecycle & Seasonality',
       value: calculateLifecycleScore(product),
-      weight: 5,
+      weight: 10,
       maxValue: 100,
-      threshold: thresholds.lifecycle
+      threshold: thresholds.lifecycle,
+      gate: calculateLifecycleGate(product),
+      gateDescription: 'Age ≥ 12 months and non-seasonal'
     }
   ];
 
@@ -95,99 +99,113 @@ const calculateRevenueScore = (product: any): number => {
 
 // Sales Momentum: Sales Trend (90 days %), Sales YoY %
 const calculateSalesMomentumScore = (product: any): number => {
-  // For now, use review count as proxy for sales momentum until we have sales trend data
-  // Higher review velocity suggests better sales momentum
+  // Use review count and rating as proxy for sales momentum
   const reviewCount = product.reviewCount || 0;
   const rating = product.rating || 0;
   
-  // High review count with good rating = good momentum
-  const reviewMomentum = Math.min(100, (reviewCount / 2000) * 100);
-  const qualityFactor = rating > 4 ? 1.2 : rating > 3.5 ? 1.0 : 0.8;
+  // Recent review activity suggests momentum
+  const reviewMomentum = Math.min(80, (reviewCount / 1000) * 80);
+  const qualityBonus = rating >= 4 ? 20 : rating >= 3.5 ? 10 : 0;
   
-  return Math.min(100, reviewMomentum * qualityFactor);
+  return Math.min(100, reviewMomentum + qualityBonus);
+};
+
+const calculateMomentumGate = (product: any): boolean => {
+  // For now, assume positive momentum if decent review count and good rating
+  const reviewCount = product.reviewCount || 0;
+  const rating = product.rating || 0;
+  return reviewCount >= 50 && rating >= 3.5;
 };
 
 // Competition: Review Count, Reviews Rating, Number of Active Sellers, Sales-to-Reviews
 const calculateCompetitionScore = (product: any): number => {
   const reviewCount = product.reviewCount || 0;
-  const rating = product.rating || 0;
   
-  // Higher review count = more established competition (worse for entry)
-  const competitionDensity = Math.min(100, (reviewCount / 5000) * 100);
-  
-  // High ratings across competition = harder to compete
-  const qualityCompetition = rating > 4.5 ? 90 : rating > 4 ? 70 : rating > 3.5 ? 50 : 30;
-  
-  // Return inverted score (lower competition = higher score)
-  const totalCompetition = (competitionDensity + qualityCompetition) / 2;
-  return Math.max(0, 100 - totalCompetition);
+  // Lower review count = less competition = higher score
+  if (reviewCount < 100) return 90;
+  if (reviewCount < 300) return 70;
+  if (reviewCount < 500) return 50;
+  if (reviewCount < 1000) return 30;
+  return 10;
 };
 
-// Price Signals: Price, Price Trend (90d %)
-const calculatePriceSignalsScore = (product: any): number => {
-  const price = product.price || 0;
-  
-  // Optimal price range is $15-$75 for good margins and accessibility
-  let priceScore = 0;
-  if (price >= 15 && price <= 75) {
-    priceScore = 100;
-  } else if (price >= 10 && price <= 100) {
-    priceScore = 70;
-  } else if (price >= 5 && price <= 150) {
-    priceScore = 40;
-  } else {
-    priceScore = 20;
-  }
-  
-  return priceScore;
+const calculateCompetitionGate = (product: any): boolean => {
+  const reviewCount = product.reviewCount || 0;
+  // Gate: Review Count < 500 and ≤ 5 active sellers (assume pass for sellers count for now)
+  return reviewCount < 500;
 };
 
 // Barriers to Entry: Variation Count, Number of Images
 const calculateBarriersScore = (product: any): number => {
+  // For now, use review count and rating as proxy for entry barriers
   const reviewCount = product.reviewCount || 0;
   const rating = product.rating || 0;
   
-  // High review count = established market with barriers
-  const reviewBarrier = Math.min(80, (reviewCount / 3000) * 80);
+  // Lower barriers = higher score
+  let barrierScore = 100;
   
-  // Very high ratings = high quality expectations (barrier)
-  const qualityBarrier = rating > 4.5 ? 30 : rating > 4 ? 20 : 10;
+  // High review count indicates established market (higher barriers)
+  if (reviewCount > 2000) barrierScore -= 40;
+  else if (reviewCount > 1000) barrierScore -= 25;
+  else if (reviewCount > 500) barrierScore -= 15;
   
-  // Return inverted score (lower barriers = higher score for entry)
-  const totalBarriers = reviewBarrier + qualityBarrier;
-  return Math.max(0, 100 - totalBarriers);
+  // Very high ratings indicate high quality expectations (barriers)
+  if (rating > 4.5) barrierScore -= 20;
+  else if (rating > 4.0) barrierScore -= 10;
+  
+  return Math.max(0, barrierScore);
+};
+
+const calculateBarriersGate = (product: any): boolean => {
+  // Assume gate passes if barriers score is decent (simplified for now)
+  return calculateBarriersScore(product) >= 50;
 };
 
 // Logistics Burden: Weight, Dimensions, Size Tier, Fulfillment, Storage Fees
 const calculateLogisticsScore = (product: any): number => {
-  // For now, all products get neutral score since we don't have logistics data
-  // TODO: Implement when size tier, weight, fulfillment data is available
-  return 70;
+  // For now, use price as rough proxy for logistics complexity
+  // Lower priced items often have better logistics profiles
+  const price = product.price || 0;
+  
+  if (price <= 25) return 90; // Small, light items typically
+  if (price <= 50) return 70; // Medium complexity
+  if (price <= 100) return 50; // Higher complexity
+  return 30; // Likely large/heavy items
+};
+
+const calculateLogisticsGate = (product: any): boolean => {
+  // Simplified gate - assume pass if logistics score is decent
+  return calculateLogisticsScore(product) >= 60;
 };
 
 // Lifecycle & Seasonality: Age (Months), Best Sales Period
 const calculateLifecycleScore = (product: any): number => {
-  // For now, use price as proxy for lifecycle maturity
-  // Mid-range prices often indicate mature, stable products
-  const price = product.price || 0;
+  // Use review count as proxy for product maturity
+  const reviewCount = product.reviewCount || 0;
   
-  if (price >= 20 && price <= 60) return 80; // Mature market
-  if (price >= 10 && price <= 100) return 60; // Growing/declining
-  return 40; // Early/late lifecycle
+  // Moderate review counts suggest mature, stable products
+  if (reviewCount >= 100 && reviewCount <= 1000) return 90; // Mature stage
+  if (reviewCount >= 50 && reviewCount <= 2000) return 70; // Growing/stable
+  if (reviewCount < 50) return 40; // Too new
+  return 50; // Possibly declining
+};
+
+const calculateLifecycleGate = (product: any): boolean => {
+  // Assume gate passes if product appears mature (moderate review count)
+  const reviewCount = product.reviewCount || 0;
+  return reviewCount >= 100; // Indicates at least 12 months of sales
 };
 
 export const checkGates = (criteria: any[], margins?: { computedMargin?: number }): Record<string, boolean> => {
-  const getCriteriaValue = (id: string) => {
-    const criterion = criteria.find(c => c.id === id);
-    return criterion?.value || 0;
-  };
+  const gates: Record<string, boolean> = {};
+  
+  criteria.forEach(criterion => {
+    if (criterion.gate !== undefined) {
+      gates[criterion.id] = criterion.gate;
+    }
+  });
 
-  return {
-    revenue: getCriteriaValue('revenue_potential') >= 40,
-    momentum: getCriteriaValue('sales_momentum') >= 50,
-    competition: getCriteriaValue('competition') >= 60,
-    barriers: getCriteriaValue('barriers') >= 50
-  };
+  return gates;
 };
 
 export const mapCriteriaById = (criteria: any[], id: string) => {

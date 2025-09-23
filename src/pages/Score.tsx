@@ -116,10 +116,9 @@ const Score = () => {
     // Load current thresholds from localStorage or use defaults
     const savedThresholds = localStorage.getItem('scoringThresholds');
     const thresholds = savedThresholds ? JSON.parse(savedThresholds) : {
-      revenue: 40,
-      momentum: 50,
+      revenue: 60,
+      momentum: 60,
       competition: 60,
-      priceSignals: 60,
       barriers: 50,
       logistics: 60,
       lifecycle: 50
