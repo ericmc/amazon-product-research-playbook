@@ -349,7 +349,7 @@ const Score = () => {
                 }
               }}
             >
-              <div className="min-w-[1200px] h-1"></div>
+              <div className="min-w-[900px] h-1"></div>
             </div>
             
             <div
@@ -362,15 +362,15 @@ const Score = () => {
                 }
               }}
             >
-              <Table className="min-w-[1200px]">
+              <Table className="min-w-[900px]">
                 <TableHeader className="sticky top-0 z-40 bg-background border-b shadow-sm">
                   <TableRow>
-                    <TableHead className="sticky left-0 z-50 bg-background w-16 px-0 after:content-[''] after:absolute after:top-0 after:right-0 after:h-full after:w-px after:bg-border">Image</TableHead>
-                    <TableHead className="min-w-[180px] bg-background sticky left-16 z-50 border-r">
+                    <TableHead className="sticky left-0 z-50 bg-background w-12 px-1 after:content-[''] after:absolute after:top-0 after:right-0 after:h-full after:w-px after:bg-border text-xs">Image</TableHead>
+                    <TableHead className="min-w-[140px] bg-background sticky left-12 z-50 border-r px-2">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('title')}
-                        className="h-auto p-0 font-medium"
+                        className="h-auto p-0 font-medium text-xs"
                       >
                         Product Title {getSortIcon('title')}
                       </Button>
@@ -435,8 +435,8 @@ const Score = () => {
                         className={`cursor-pointer hover:bg-muted/50 ${isSelected ? 'bg-muted' : ''}`}
                         onClick={() => handleProductSelect(product)}
                       >
-                        <TableCell className="sticky left-0 z-40 bg-background w-16 p-0 after:content-[''] after:absolute after:top-0 after:right-0 after:h-full after:w-px after:bg-border">
-                          <div className="mx-auto my-1 w-10 h-10 rounded border bg-muted flex items-center justify-center overflow-hidden">
+                        <TableCell className="sticky left-0 z-40 bg-background w-12 p-1 after:content-[''] after:absolute after:top-0 after:right-0 after:h-full after:w-px after:bg-border">
+                          <div className="w-8 h-8 rounded border bg-muted flex items-center justify-center overflow-hidden">
                             {imageUrl ? (
                               <img 
                                 src={imageUrl} 
@@ -447,30 +447,30 @@ const Score = () => {
                                 }}
                               />
                             ) : (
-                              <FileText className="h-4 w-4 text-muted-foreground" />
+                              <FileText className="h-3 w-3 text-muted-foreground" />
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium sticky left-16 z-40 bg-background min-w-[180px]">
-                          <div className="max-w-[160px] truncate text-sm leading-tight py-1" title={product.productData.title}>
+                        <TableCell className="font-medium sticky left-12 z-40 bg-background min-w-[140px] px-2 py-1">
+                          <div className="max-w-[130px] truncate text-xs leading-tight" title={product.productData.title}>
                             {product.productData.title || 'Unknown Product'}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <Badge className={`${getScoreBadge(viabilityScore)} text-xs font-semibold`}>
-                            {viabilityScore}/100
+                        <TableCell className="text-center px-1 py-1">
+                          <Badge className={`${getScoreBadge(viabilityScore)} text-xs font-semibold px-1`}>
+                            {viabilityScore}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right px-1 py-1 text-xs">
                           ${(product.productData.revenue || 0).toLocaleString()}/mo
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right px-1 py-1 text-xs">
                           ${(product.productData.price || 0).toFixed(2)}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right px-1 py-1 text-xs">
                           {(product.productData.reviewCount || 0).toLocaleString()}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right px-1 py-1 text-xs">
                           {product.productData.rating ? `${product.productData.rating}★` : '-'}
                         </TableCell>
                       </TableRow>
