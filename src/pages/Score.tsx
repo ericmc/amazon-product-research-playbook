@@ -14,6 +14,7 @@ import { ScoringPreview } from "@/components/ScoringPreview";
 import { AutoMappedProduct } from "@/lib/normalizeBlackBox";
 import { ProductWithKeywords } from "@/lib/matchKeyword";
 import { computeFinalScore, calculateH10Score } from "@/utils/scoringUtils";
+import StickyXScrollbar from "@/components/ui/sticky-x-scrollbar";
 
 type SortField = 'title' | 'revenue' | 'price' | 'searchVolume' | 'reviewCount' | 'rating' | 'score' | 'brand' | 'bsr' | 'category' | 'salesTrend' | 'seller';
 type SortDirection = 'asc' | 'desc';
@@ -71,30 +72,6 @@ const Score = () => {
     }
   }, [toast]);
 
-  // Set up ResizeObserver to sync proxy scrollbar width
-  useEffect(() => {
-    const tableElement = document.getElementById('product-table-scroll');
-    const proxyInner = document.getElementById('proxy-inner');
-    
-    if (!tableElement || !proxyInner) return;
-
-    const resizeObserver = new ResizeObserver(() => {
-      // Set proxy inner width to match table's scroll width
-      const scrollWidth = tableElement.scrollWidth;
-      proxyInner.style.width = `${scrollWidth}px`;
-    });
-
-    // Observe the table container
-    resizeObserver.observe(tableElement);
-    
-    // Also observe the table content for dynamic content changes
-    const table = tableElement.querySelector('table');
-    if (table) {
-      resizeObserver.observe(table);
-    }
-
-    return () => resizeObserver.disconnect();
-  }, [importedProducts, searchQuery, revenueFilter, sortField, sortDirection]); // Re-run when data changes
 
   const prepareProductForScoring = (product: AutoMappedProduct | ProductWithKeywords): ScoringData => {
     // Convert product data to scoring format with better mapping
@@ -387,19 +364,8 @@ const Score = () => {
 
             {/* Table wrapper with sticky bottom scrollbar */}
             <div className="relative rounded-md border bg-background">
-              
-              {/* Table viewport with vertical scroll */}
-              <div
-                id="product-table-scroll"
-                className="max-h-[480px] overflow-auto"
-                onScroll={(e) => {
-                  const proxy = document.getElementById('proxy-scrollbar');
-                  if (proxy) {
-                    proxy.scrollLeft = (e.currentTarget as HTMLElement).scrollLeft;
-                  }
-                }}
-              >
-              <Table className="min-w-[900px] border-spacing-0">
+              <StickyXScrollbar maxHeight="480px" barHeight={14}>
+                <Table className="min-w-[900px] border-spacing-0">
                 <TableHeader className="sticky top-0 z-40 bg-background border-b shadow-sm">
                   <TableRow className="border-none">
                     <TableHead className="sticky left-0 z-50 bg-background w-10 p-0 border-r text-xs h-12 flex items-center justify-center">Image</TableHead>
@@ -591,24 +557,10 @@ const Score = () => {
                        </TableRow>
                     );
                   })}
-                </TableBody>
-                </Table>
-              </div>
-              
-              {/* Sticky proxy scrollbar - always visible at bottom */}
-              <div 
-                id="proxy-scrollbar"
-                className="sticky bottom-0 z-30 h-3 overflow-x-auto overflow-y-hidden bg-background/95 backdrop-blur-sm border-t border-border/50"
-                onScroll={(e) => {
-                  const table = document.getElementById('product-table-scroll');
-                  if (table) {
-                    table.scrollLeft = e.currentTarget.scrollLeft;
-                  }
-                }}
-              >
-                <div id="proxy-inner" className="h-1"></div>
-              </div>
-            </div>
+                 </TableBody>
+                 </Table>
+               </StickyXScrollbar>
+             </div>
 
             {hoverImageUrl && createPortal(
               <div className="fixed inset-0 flex items-center justify-center z-[2147483647] pointer-events-none">
