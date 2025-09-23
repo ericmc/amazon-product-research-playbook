@@ -365,59 +365,59 @@ const Score = () => {
               <Table className="min-w-[600px] border-spacing-0">
                 <TableHeader className="sticky top-0 z-40 bg-background border-b shadow-sm">
                   <TableRow className="border-none">
-                    <TableHead className="sticky left-0 z-50 bg-background w-10 p-0 border-r text-xs">Image</TableHead>
-                     <TableHead className="w-32 bg-background sticky left-10 z-50 p-1 border-r">
+                    <TableHead className="sticky left-0 z-50 bg-background w-10 p-0 border-r text-xs h-12 flex items-center justify-center">Image</TableHead>
+                     <TableHead className="w-32 bg-background sticky left-10 z-50 p-1 border-r h-12">
                        <Button 
                          variant="ghost" 
                          onClick={() => handleSort('title')}
-                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent"
+                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                        >
-                         Product Title {getSortIcon('title')}
+                         <span className="line-clamp-2 text-center">Product Title</span> {getSortIcon('title')}
                        </Button>
                      </TableHead>
-                    <TableHead className="text-center bg-background w-8 p-1">
+                    <TableHead className="text-center bg-background w-8 p-1 h-12">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('score')}
-                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent"
+                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                       >
-                        Viability $ {getSortIcon('score')}
+                        <span className="line-clamp-2 text-center">Viability Score</span> {getSortIcon('score')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background w-24 p-1">
+                    <TableHead className="text-right bg-background w-24 p-1 h-12">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('revenue')}
-                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent"
+                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                       >
-                        Revenue $ {getSortIcon('revenue')}
+                        <span className="line-clamp-2 text-center">Revenue /mo</span> {getSortIcon('revenue')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background w-16 p-1">
+                    <TableHead className="text-right bg-background w-16 p-1 h-12">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('price')}
-                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent"
+                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                       >
-                        Price $ {getSortIcon('price')}
+                        <span className="line-clamp-2 text-center">Price</span> {getSortIcon('price')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background w-16 p-1">
+                    <TableHead className="text-right bg-background w-16 p-1 h-12">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('reviewCount')}
-                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent"
+                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                       >
-                        ws {getSortIcon('reviewCount')}
+                        <span className="line-clamp-2 text-center">Review Count</span> {getSortIcon('reviewCount')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background w-14 p-1">
+                    <TableHead className="text-right bg-background w-14 p-1 h-12">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('rating')}
-                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent"
+                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                       >
-                        j {getSortIcon('rating')}
+                        <span className="line-clamp-2 text-center">Rating</span> {getSortIcon('rating')}
                       </Button>
                     </TableHead>
                   </TableRow>
