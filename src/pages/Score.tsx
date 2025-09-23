@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, FileText, TrendingUp, Search, Filter, ArrowUpDown, ChevronUp, ChevronDown } from "lucide-react";
+import { ArrowLeft, Plus, FileText, TrendingUp, Search, Filter, ArrowUpDown, ChevronUp, ChevronDown, ExternalLink } from "lucide-react";
 import ScoringSystem from "@/components/ScoringSystem";
 import { ScoringPreview } from "@/components/ScoringPreview";
 import { AutoMappedProduct } from "@/lib/normalizeBlackBox";
@@ -435,26 +435,55 @@ const Score = () => {
                         onClick={() => handleProductSelect(product)}
                       >
                         <TableCell className="sticky left-0 z-40 bg-background w-10 p-0 border-r">
-                          <div className="w-9 h-9 m-0.5 rounded border bg-muted flex items-center justify-center overflow-hidden">
-                            {imageUrl ? (
-                              <img 
-                                src={imageUrl} 
-                                alt="Product image"
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.src = '/placeholder.svg';
-                                }}
-                              />
-                            ) : (
-                              <FileText className="h-2 w-2 text-muted-foreground" />
+                          <div className="relative group">
+                            <div className="w-9 h-9 m-0.5 rounded border bg-muted flex items-center justify-center overflow-hidden cursor-pointer">
+                              {imageUrl ? (
+                                <img 
+                                  src={imageUrl} 
+                                  alt="Product image"
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.src = '/placeholder.svg';
+                                  }}
+                                />
+                              ) : (
+                                <FileText className="h-2 w-2 text-muted-foreground" />
+                              )}
+                            </div>
+                            {/* Hover overlay for larger image */}
+                            {imageUrl && (
+                              <div className="absolute -top-20 -left-20 w-40 h-40 bg-white border-2 border-gray-300 rounded-lg shadow-xl z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                                <img 
+                                  src={imageUrl} 
+                                  alt="Product image enlarged"
+                                  className="w-full h-full object-cover rounded-lg"
+                                  onError={(e) => {
+                                    e.currentTarget.src = '/placeholder.svg';
+                                  }}
+                                />
+                              </div>
                             )}
                           </div>
                         </TableCell>
                          <TableCell className="sticky left-10 z-40 bg-background w-32 p-1 border-r">
-                           <div className="text-[10px] font-medium leading-tight h-8 flex items-center w-full" title={product.productData.title}>
-                             <span className="overflow-hidden text-ellipsis line-clamp-2">
-                               {product.productData.title || 'Unknown Product'}
-                             </span>
+                           <div className="flex items-center gap-1">
+                             <div className="text-[10px] font-medium leading-tight h-8 flex items-center flex-1" title={product.productData.title}>
+                               <span className="overflow-hidden text-ellipsis line-clamp-2">
+                                 {product.productData.title || 'Unknown Product'}
+                               </span>
+                             </div>
+                             {product.productData.asin && (
+                               <a
+                                 href={`https://www.amazon.com/dp/${product.productData.asin}`}
+                                 target="_blank"
+                                 rel="noopener noreferrer"
+                                 className="text-blue-600 hover:text-blue-800 flex-shrink-0"
+                                 title="View on Amazon"
+                                 onClick={(e) => e.stopPropagation()}
+                               >
+                                 <ExternalLink className="h-3 w-3" />
+                               </a>
+                             )}
                            </div>
                          </TableCell>
                         <TableCell className="text-center w-8 p-1">
