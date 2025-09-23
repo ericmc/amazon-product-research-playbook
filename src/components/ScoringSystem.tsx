@@ -17,6 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { FusedCriterion, migrateLegacyCriterion, fuseValues, updateCriterionWithSourceData } from "@/utils/dataFusion";
 import ProvenancePopover from "@/components/ProvenancePopover";
 import VerifyBadge from "@/components/VerifyBadge";
+import { DataSourceStatus } from "@/components/DataSourceStatus";
+import { DataSourceInput } from "@/components/DataSourceInput";
 
 interface ScoringCriteria {
   id: string;
@@ -238,6 +240,7 @@ const ScoringSystem = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [hasAdjusted, setHasAdjusted] = useState(false);
   const [initialOpportunityScore, setInitialOpportunityScore] = useState<number | null>(null);
+  const [showDataInput, setShowDataInput] = useState(false);
   const { toast } = useToast();
 
   // Initialize with migrated legacy criteria
@@ -433,6 +436,55 @@ const ScoringSystem = () => {
     );
   };
 
+  const handleCriteriaUpdate = (updatedCriteria: FusedCriterion[]) => {
+    setCriteria(updatedCriteria);
+    setHasAdjusted(true);
+    toast({
+      title: "Data Updated",
+      description: "Scoring criteria updated with new source data",
+    });
+  };
+
+  // Analyze data source status
+  const getDataSourceStatus = () => {
+    const sources = [
+      { name: 'Jungle Scout', hasData: false, quality: 'missing' as 'high' | 'medium' | 'low' | 'missing' },
+      { name: 'Helium 10', hasData: false, quality: 'missing' as 'high' | 'medium' | 'low' | 'missing' },
+      { name: 'Amazon POE', hasData: false, quality: 'missing' as 'high' | 'medium' | 'low' | 'missing' },
+      { name: 'Manual Entry', hasData: false, quality: 'missing' as 'high' | 'medium' | 'low' | 'missing' }
+    ];
+
+    // Check if any criteria have real source data
+    criteria.forEach(criterion => {
+      Object.keys(criterion.bySource).forEach(sourceKey => {
+        const source = criterion.bySource[sourceKey];
+        if (source && source.confidence > 0.5) {
+          switch (sourceKey) {
+            case 'jungle_scout':
+              sources[0].hasData = true;
+              sources[0].quality = source.confidence > 0.8 ? 'high' : 'medium';
+              break;
+            case 'helium_10':
+              sources[1].hasData = true;
+              sources[1].quality = source.confidence > 0.8 ? 'high' : 'medium';
+              break;
+            case 'amazon_poe':
+              sources[2].hasData = true;
+              sources[2].quality = source.confidence > 0.8 ? 'high' : 'medium';
+              break;
+            case 'manual':
+            case 'validation':
+              sources[3].hasData = true;
+              sources[3].quality = source.confidence > 0.8 ? 'high' : 'medium';
+              break;
+          }
+        }
+      });
+    });
+
+    return sources;
+  };
+
   const saveOpportunity = async () => {
     setIsSaving(true);
     try {
@@ -516,13 +568,36 @@ const ScoringSystem = () => {
                     Multi-source data fusion with provenance tracking
                   </CardDescription>
                 </div>
-                <Badge variant="outline" className="text-xs">
-                  V2 Fusion
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    V2 Fusion
+                  </Badge>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowDataInput(!showDataInput)}
+                  >
+                    {showDataInput ? 'Hide' : 'Add'} Data Sources
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             
             <CardContent className="space-y-6">
+              {/* Data Source Status */}
+              <DataSourceStatus sources={getDataSourceStatus()} className="mb-4" />
+
+              {/* Data Source Input (Collapsible) */}
+              {showDataInput && (
+                <div className="mb-6">
+                  <DataSourceInput 
+                    criteria={criteria}
+                    onUpdateCriteria={handleCriteriaUpdate}
+                    productName={productName}
+                  />
+                </div>
+              )}
+
               {/* Product Name */}
               <div className="space-y-2">
                 <label htmlFor="product-name" className="text-sm font-medium">
