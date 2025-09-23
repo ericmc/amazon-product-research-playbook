@@ -15,7 +15,7 @@ import { AutoMappedProduct } from "@/lib/normalizeBlackBox";
 import { ProductWithKeywords } from "@/lib/matchKeyword";
 import { computeFinalScore, calculateH10Score } from "@/utils/scoringUtils";
 
-type SortField = 'title' | 'revenue' | 'price' | 'searchVolume' | 'reviewCount' | 'rating' | 'score';
+type SortField = 'title' | 'revenue' | 'price' | 'searchVolume' | 'reviewCount' | 'rating' | 'score' | 'brand' | 'bsr' | 'category' | 'salesTrend' | 'seller';
 type SortDirection = 'asc' | 'desc';
 
 interface ScoringData {
@@ -222,6 +222,26 @@ const Score = () => {
           aValue = calculateProductScore(a);
           bValue = calculateProductScore(b);
           break;
+        case 'brand':
+          aValue = a.rawData?.['Brand'] || a.productData.brand || '';
+          bValue = b.rawData?.['Brand'] || b.productData.brand || '';
+          break;
+        case 'bsr':
+          aValue = parseFloat(a.rawData?.['BSR'] || '0') || 0;
+          bValue = parseFloat(b.rawData?.['BSR'] || '0') || 0;
+          break;
+        case 'category':
+          aValue = a.rawData?.['Category'] || '';
+          bValue = b.rawData?.['Category'] || '';
+          break;
+        case 'salesTrend':
+          aValue = parseFloat(a.rawData?.['Sales Trend (90 days) (%)'] || '0') || 0;
+          bValue = parseFloat(b.rawData?.['Sales Trend (90 days) (%)'] || '0') || 0;
+          break;
+        case 'seller':
+          aValue = a.rawData?.['Seller'] || '';
+          bValue = b.rawData?.['Seller'] || '';
+          break;
         default:
           return 0;
       }
@@ -351,7 +371,7 @@ const Score = () => {
                 }
               }}
             >
-              <div className="min-w-[600px] h-1"></div>
+              <div className="min-w-[900px] h-1"></div>
             </div>
             
             <div
@@ -364,7 +384,7 @@ const Score = () => {
                 }
               }}
             >
-              <Table className="min-w-[600px] border-spacing-0">
+              <Table className="min-w-[900px] border-spacing-0">
                 <TableHeader className="sticky top-0 z-40 bg-background border-b shadow-sm">
                   <TableRow className="border-none">
                     <TableHead className="sticky left-0 z-50 bg-background w-10 p-0 border-r text-xs h-12 flex items-center justify-center">Image</TableHead>
@@ -413,16 +433,61 @@ const Score = () => {
                         <span className="line-clamp-2 text-center">Review Count</span> {getSortIcon('reviewCount')}
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right bg-background w-14 p-1 h-12">
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => handleSort('rating')}
-                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                      >
-                        <span className="line-clamp-2 text-center">Rating</span> {getSortIcon('rating')}
-                      </Button>
-                    </TableHead>
-                  </TableRow>
+                     <TableHead className="text-right bg-background w-14 p-1 h-12">
+                       <Button 
+                         variant="ghost" 
+                         onClick={() => handleSort('rating')}
+                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                       >
+                         <span className="line-clamp-2 text-center">Rating</span> {getSortIcon('rating')}
+                       </Button>
+                     </TableHead>
+                     <TableHead className="text-left bg-background w-20 p-1 h-12">
+                       <Button 
+                         variant="ghost" 
+                         onClick={() => handleSort('brand')}
+                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                       >
+                         <span className="line-clamp-2 text-center">Brand</span> {getSortIcon('brand')}
+                       </Button>
+                     </TableHead>
+                     <TableHead className="text-right bg-background w-16 p-1 h-12">
+                       <Button 
+                         variant="ghost" 
+                         onClick={() => handleSort('bsr')}
+                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                       >
+                         <span className="line-clamp-2 text-center">BSR</span> {getSortIcon('bsr')}
+                       </Button>
+                     </TableHead>
+                     <TableHead className="text-left bg-background w-24 p-1 h-12">
+                       <Button 
+                         variant="ghost" 
+                         onClick={() => handleSort('category')}
+                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                       >
+                         <span className="line-clamp-2 text-center">Category</span> {getSortIcon('category')}
+                       </Button>
+                     </TableHead>
+                     <TableHead className="text-right bg-background w-16 p-1 h-12">
+                       <Button 
+                         variant="ghost" 
+                         onClick={() => handleSort('salesTrend')}
+                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                       >
+                         <span className="line-clamp-2 text-center">Sales Trend %</span> {getSortIcon('salesTrend')}
+                       </Button>
+                     </TableHead>
+                     <TableHead className="text-left bg-background w-20 p-1 h-12">
+                       <Button 
+                         variant="ghost" 
+                         onClick={() => handleSort('seller')}
+                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                       >
+                         <span className="line-clamp-2 text-center">Seller</span> {getSortIcon('seller')}
+                       </Button>
+                     </TableHead>
+                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredAndSortedProducts.map((product, index) => {
@@ -490,10 +555,25 @@ const Score = () => {
                         <TableCell className="text-right w-16 p-1 text-xs">
                           {(product.productData.reviewCount || 0).toLocaleString()}
                         </TableCell>
-                        <TableCell className="text-right w-14 p-1 text-xs">
-                          {product.productData.rating ? `${product.productData.rating.toFixed(1)}★` : '-'}
-                        </TableCell>
-                      </TableRow>
+                         <TableCell className="text-right w-14 p-1 text-xs">
+                           {product.productData.rating ? `${product.productData.rating.toFixed(1)}★` : '-'}
+                         </TableCell>
+                         <TableCell className="text-left w-20 p-1 text-xs">
+                           {product.rawData?.['Brand'] || product.productData.brand || '-'}
+                         </TableCell>
+                         <TableCell className="text-right w-16 p-1 text-xs">
+                           {product.rawData?.['BSR'] ? parseInt(product.rawData['BSR']).toLocaleString() : '-'}
+                         </TableCell>
+                         <TableCell className="text-left w-24 p-1 text-xs">
+                           {product.rawData?.['Category'] || '-'}
+                         </TableCell>
+                         <TableCell className="text-right w-16 p-1 text-xs">
+                           {product.rawData?.['Sales Trend (90 days) (%)'] ? `${parseFloat(product.rawData['Sales Trend (90 days) (%)']).toFixed(1)}%` : '-'}
+                         </TableCell>
+                         <TableCell className="text-left w-20 p-1 text-xs">
+                           {product.rawData?.['Seller'] || '-'}
+                         </TableCell>
+                       </TableRow>
                     );
                   })}
                 </TableBody>
