@@ -36,11 +36,12 @@ interface ScoringCriterion {
 
 interface ScoringThresholds {
   revenue: number;
-  demand: number;
+  momentum: number;
   competition: number;
-  priceValue: number;
+  priceSignals: number;
   barriers: number;
   logistics: number;
+  lifecycle: number;
 }
 
 interface ScoringPreviewProps {
@@ -54,12 +55,13 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
   
   // Default thresholds (suggested values)
   const defaultThresholds: ScoringThresholds = {
-    revenue: 5000,
-    demand: 30,
-    competition: 70,
-    priceValue: 60,
-    barriers: 40,
-    logistics: 50
+    revenue: 40,
+    momentum: 50,
+    competition: 60,
+    priceSignals: 60,
+    barriers: 50,
+    logistics: 60,
+    lifecycle: 50
   };
 
   const [thresholds, setThresholds] = useState<ScoringThresholds>(defaultThresholds);
@@ -111,36 +113,39 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
   // Helper functions for criteria mapping
   const getIconForCriteria = (id: string) => {
     switch (id) {
-      case 'revenue': return DollarSign;
-      case 'demand': return TrendingUp;
+      case 'revenue_potential': return DollarSign;
+      case 'sales_momentum': return TrendingUp;
       case 'competition': return Target;
-      case 'price_value': return DollarSign;
+      case 'price_signals': return DollarSign;
       case 'barriers': return AlertCircle;
       case 'logistics': return Users;
+      case 'lifecycle': return RotateCcw;
       default: return CheckCircle;
     }
   };
 
   const getDescriptionForCriteria = (id: string) => {
     switch (id) {
-      case 'revenue': return 'ASIN Revenue indicates proven market demand and sales volume. Higher revenue suggests viable business opportunity.';
-      case 'demand': return 'Demand growth based on review velocity and market indicators. Shows market momentum and customer interest.';
-      case 'competition': return 'Competition level based on review count and quality ratings. Higher competition makes market entry harder.';
-      case 'price_value': return 'Price-to-value ratio considering price point and customer satisfaction ratings. Sweet spot balances margins with competitiveness.';
-      case 'barriers': return 'Entry barriers based on established competition and quality expectations. Lower barriers = easier market entry.';
-      case 'logistics': return 'Logistics complexity based on size, weight, and storage requirements. Simpler logistics = lower operational costs.';
+      case 'revenue_potential': return 'ASIN Revenue indicates proven market demand and sales volume. Based on actual revenue data from Helium 10.';
+      case 'sales_momentum': return 'Sales momentum based on review velocity and quality trends. Growing review count with good ratings indicates strong sales.';
+      case 'competition': return 'Competition density based on established sellers with high review counts and ratings. Lower competition = easier entry.';
+      case 'price_signals': return 'Price positioning and trends. Optimal price ranges balance profit margins with market accessibility.';
+      case 'barriers': return 'Market entry barriers based on established competition and quality expectations. Lower barriers = easier entry.';
+      case 'logistics': return 'Logistics complexity including size, weight, storage fees, and fulfillment requirements.';
+      case 'lifecycle': return 'Product lifecycle stage and seasonality patterns. Mature products offer stability, emerging ones offer growth.';
       default: return 'Product evaluation criterion for market viability assessment.';
     }
   };
 
   const getSuggestionForCriteria = (id: string) => {
     switch (id) {
-      case 'revenue': return 'Target products with $5,000+ monthly revenue for sustainable business opportunities.';
-      case 'demand': return 'Look for products with growing review count and strong market indicators.';
-      case 'competition': return 'Avoid highly competitive markets (70%+) unless you have strong differentiation.';
-      case 'price_value': return 'Target $15-$50 price range with good ratings for optimal profit margins.';
-      case 'barriers': return 'Choose markets with moderate barriers - high enough to deter casual entrants, low enough to enter.';
+      case 'revenue_potential': return 'Target products with 40+ revenue score for sustainable business opportunities.';
+      case 'sales_momentum': return 'Look for products with growing review counts and consistently good ratings (4.0+).';
+      case 'competition': return 'Choose markets with 60+ competition score (lower competition) for easier entry.';
+      case 'price_signals': return 'Target $15-$75 price range for optimal profit margins and market accessibility.';
+      case 'barriers': return 'Select markets with 50+ barriers score - moderate barriers deter casual competitors.';
       case 'logistics': return 'Prefer products with simple logistics to minimize operational complexity and costs.';
+      case 'lifecycle': return 'Balance between mature stability and emerging growth opportunities based on your strategy.';
       default: return 'Optimize this criterion for better market positioning.';
     }
   };
@@ -218,7 +223,7 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
                 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="revenue-threshold">Revenue Threshold</Label>
+                    <Label htmlFor="revenue-threshold">Revenue Potential</Label>
                     <Input
                       id="revenue-threshold"
                       type="number"
@@ -226,23 +231,23 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
                       onChange={(e) => saveThresholds({...thresholds, revenue: Number(e.target.value)})}
                       className="h-8"
                     />
-                    <p className="text-xs text-muted-foreground">Monthly revenue ($)</p>
+                    <p className="text-xs text-muted-foreground">Min score (0-100)</p>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="demand-threshold">Demand Threshold</Label>
+                    <Label htmlFor="momentum-threshold">Sales Momentum</Label>
                     <Input
-                      id="demand-threshold"
+                      id="momentum-threshold"
                       type="number"
-                      value={thresholds.demand}
-                      onChange={(e) => saveThresholds({...thresholds, demand: Number(e.target.value)})}
+                      value={thresholds.momentum}
+                      onChange={(e) => saveThresholds({...thresholds, momentum: Number(e.target.value)})}
                       className="h-8"
                     />
-                    <p className="text-xs text-muted-foreground">Demand score (0-100)</p>
+                    <p className="text-xs text-muted-foreground">Min score (0-100)</p>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="competition-threshold">Competition Limit</Label>
+                    <Label htmlFor="competition-threshold">Competition</Label>
                     <Input
                       id="competition-threshold"
                       type="number"
@@ -251,23 +256,23 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
                       className="h-8"
                       max="100"
                     />
-                    <p className="text-xs text-muted-foreground">Max competition (%)</p>
+                    <p className="text-xs text-muted-foreground">Min score (0-100)</p>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="pricevalue-threshold">Price/Value Threshold</Label>
+                    <Label htmlFor="pricesignals-threshold">Price Signals</Label>
                     <Input
-                      id="pricevalue-threshold"
+                      id="pricesignals-threshold"
                       type="number"
-                      value={thresholds.priceValue}
-                      onChange={(e) => saveThresholds({...thresholds, priceValue: Number(e.target.value)})}
+                      value={thresholds.priceSignals}
+                      onChange={(e) => saveThresholds({...thresholds, priceSignals: Number(e.target.value)})}
                       className="h-8"
                     />
-                    <p className="text-xs text-muted-foreground">Min price/value score</p>
+                    <p className="text-xs text-muted-foreground">Min score (0-100)</p>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="barriers-threshold">Barriers Threshold</Label>
+                    <Label htmlFor="barriers-threshold">Barriers to Entry</Label>
                     <Input
                       id="barriers-threshold"
                       type="number"
@@ -275,11 +280,11 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
                       onChange={(e) => saveThresholds({...thresholds, barriers: Number(e.target.value)})}
                       className="h-8"
                     />
-                    <p className="text-xs text-muted-foreground">Min barriers score</p>
+                    <p className="text-xs text-muted-foreground">Min score (0-100)</p>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="logistics-threshold">Logistics Threshold</Label>
+                    <Label htmlFor="logistics-threshold">Logistics Burden</Label>
                     <Input
                       id="logistics-threshold"
                       type="number"
@@ -287,7 +292,19 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
                       onChange={(e) => saveThresholds({...thresholds, logistics: Number(e.target.value)})}
                       className="h-8"
                     />
-                    <p className="text-xs text-muted-foreground">Min logistics score</p>
+                    <p className="text-xs text-muted-foreground">Min score (0-100)</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="lifecycle-threshold">Lifecycle & Seasonality</Label>
+                    <Input
+                      id="lifecycle-threshold"
+                      type="number"
+                      value={thresholds.lifecycle}
+                      onChange={(e) => saveThresholds({...thresholds, lifecycle: Number(e.target.value)})}
+                      className="h-8"
+                    />
+                    <p className="text-xs text-muted-foreground">Min score (0-100)</p>
                   </div>
                 </div>
               </div>
@@ -349,12 +366,13 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
                       </div>
                       <h4 className="font-medium text-sm mb-1">{criterion.name}</h4>
                       <div className="text-xs text-muted-foreground mb-2">
-                        {criterion.id === 'revenue' ? `$${criterion.value.toLocaleString()}/mo` :
-                         criterion.id === 'demand' ? `${criterion.value.toFixed(0)} score` :
-                         criterion.id === 'competition' ? `${criterion.value.toFixed(0)} competition` :
-                         criterion.id === 'price_value' ? `${criterion.value.toFixed(0)} value score` :
-                         criterion.id === 'barriers' ? `${criterion.value.toFixed(0)} barriers` :
-                         criterion.id === 'logistics' ? `${criterion.value.toFixed(0)} logistics` : 
+                        {criterion.id === 'revenue_potential' ? `${criterion.value.toFixed(0)} revenue score` :
+                         criterion.id === 'sales_momentum' ? `${criterion.value.toFixed(0)} momentum score` :
+                         criterion.id === 'competition' ? `${criterion.value.toFixed(0)} competition score` :
+                         criterion.id === 'price_signals' ? `${criterion.value.toFixed(0)} price score` :
+                         criterion.id === 'barriers' ? `${criterion.value.toFixed(0)} barriers score` :
+                         criterion.id === 'logistics' ? `${criterion.value.toFixed(0)} logistics score` :
+                         criterion.id === 'lifecycle' ? `${criterion.value.toFixed(0)} lifecycle score` : 
                          criterion.value.toLocaleString()}
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-1.5">
@@ -373,12 +391,13 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
                     <p className="text-xs text-muted-foreground italic">{criterion.suggestion}</p>
                     <p className="text-xs border-t pt-2">
                       Threshold: {
-                        criterion.id === 'revenue' ? `$${criterion.threshold.toLocaleString()}` :
-                        criterion.id === 'demand' ? `${criterion.threshold} score` :
-                        criterion.id === 'competition' ? `${criterion.threshold}% max` :
-                        criterion.id === 'price_value' ? `${criterion.threshold} value` :
+                        criterion.id === 'revenue_potential' ? `${criterion.threshold} revenue` :
+                        criterion.id === 'sales_momentum' ? `${criterion.threshold} momentum` :
+                        criterion.id === 'competition' ? `${criterion.threshold} competition` :
+                        criterion.id === 'price_signals' ? `${criterion.threshold} price` :
                         criterion.id === 'barriers' ? `${criterion.threshold} barriers` :
-                        criterion.id === 'logistics' ? `${criterion.threshold} logistics` : 
+                        criterion.id === 'logistics' ? `${criterion.threshold} logistics` :
+                        criterion.id === 'lifecycle' ? `${criterion.threshold} lifecycle` : 
                         criterion.threshold.toString()
                       }
                     </p>
@@ -404,9 +423,9 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
               <div className={`w-2 h-2 rounded-full ${gates.revenue ? 'bg-green-500' : 'bg-red-500'}`} />
               Revenue Gate
             </div>
-            <div className={`flex items-center gap-2 ${gates.demand ? 'text-green-600' : 'text-red-600'}`}>
-              <div className={`w-2 h-2 rounded-full ${gates.demand ? 'bg-green-500' : 'bg-red-500'}`} />
-              Demand Gate
+            <div className={`flex items-center gap-2 ${gates.momentum ? 'text-green-600' : 'text-red-600'}`}>
+              <div className={`w-2 h-2 rounded-full ${gates.momentum ? 'bg-green-500' : 'bg-red-500'}`} />
+              Momentum Gate
             </div>
             <div className={`flex items-center gap-2 ${gates.competition ? 'text-green-600' : 'text-red-600'}`}>
               <div className={`w-2 h-2 rounded-full ${gates.competition ? 'bg-green-500' : 'bg-red-500'}`} />

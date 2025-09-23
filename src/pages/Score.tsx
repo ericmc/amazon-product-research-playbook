@@ -116,12 +116,13 @@ const Score = () => {
     // Load current thresholds from localStorage or use defaults
     const savedThresholds = localStorage.getItem('scoringThresholds');
     const thresholds = savedThresholds ? JSON.parse(savedThresholds) : {
-      revenue: 5000,
-      demand: 30,
-      competition: 70,
-      priceValue: 60,
-      barriers: 40,
-      logistics: 50
+      revenue: 40,
+      momentum: 50,
+      competition: 60,
+      priceSignals: 60,
+      barriers: 50,
+      logistics: 60,
+      lifecycle: 50
     };
     
     const criteria = calculateH10Score(product.productData, thresholds);

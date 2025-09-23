@@ -22,24 +22,24 @@ export const normalizeValue = (id: string, value: number, maxValue: number): num
   return (normalizedValue / maxValue) * 100;
 };
 
-// Calculate Helium 10 specific scoring based on available fields
+// Calculate Helium 10 specific scoring based on available CSV fields
 export const calculateH10Score = (product: any, thresholds: any) => {
   const criteria = [
     {
-      id: 'revenue',
+      id: 'revenue_potential',
       name: 'Revenue Potential',
-      value: product.revenue || 0,
+      value: calculateRevenueScore(product),
       weight: 25,
-      maxValue: 50000,
+      maxValue: 100,
       threshold: thresholds.revenue
     },
     {
-      id: 'demand',
-      name: 'Demand Growth', 
-      value: calculateDemandScore(product),
+      id: 'sales_momentum',
+      name: 'Sales Momentum', 
+      value: calculateSalesMomentumScore(product),
       weight: 20,
       maxValue: 100,
-      threshold: thresholds.demand
+      threshold: thresholds.momentum
     },
     {
       id: 'competition',
@@ -50,16 +50,16 @@ export const calculateH10Score = (product: any, thresholds: any) => {
       threshold: thresholds.competition
     },
     {
-      id: 'price_value',
-      name: 'Price/Value',
-      value: calculatePriceValueScore(product),
+      id: 'price_signals',
+      name: 'Price Signals',
+      value: calculatePriceSignalsScore(product),
       weight: 15,
       maxValue: 100,
-      threshold: thresholds.priceValue
+      threshold: thresholds.priceSignals
     },
     {
       id: 'barriers',
-      name: 'Barriers',
+      name: 'Barriers to Entry',
       value: calculateBarriersScore(product),
       weight: 10,
       maxValue: 100,
@@ -67,71 +67,113 @@ export const calculateH10Score = (product: any, thresholds: any) => {
     },
     {
       id: 'logistics',
-      name: 'Logistics',
+      name: 'Logistics Burden',
       value: calculateLogisticsScore(product),
-      weight: 10,
+      weight: 5,
       maxValue: 100,
       threshold: thresholds.logistics
+    },
+    {
+      id: 'lifecycle',
+      name: 'Lifecycle & Seasonality',
+      value: calculateLifecycleScore(product),
+      weight: 5,
+      maxValue: 100,
+      threshold: thresholds.lifecycle
     }
   ];
 
   return criteria;
 };
 
-// Helper functions for each scoring criteria
-const calculateDemandScore = (product: any): number => {
-  // For now, use review count as proxy for demand until we have sales trend data
-  const reviewCount = product.reviewCount || 0;
-  return Math.min(100, (reviewCount / 1000) * 100);
+// Revenue Potential: ASIN Revenue (fallback Parent Level Revenue)
+const calculateRevenueScore = (product: any): number => {
+  const revenue = product.revenue || 0;
+  // Scale revenue to 0-100 with $50K as max score
+  return Math.min(100, (revenue / 50000) * 100);
 };
 
+// Sales Momentum: Sales Trend (90 days %), Sales YoY %
+const calculateSalesMomentumScore = (product: any): number => {
+  // For now, use review count as proxy for sales momentum until we have sales trend data
+  // Higher review velocity suggests better sales momentum
+  const reviewCount = product.reviewCount || 0;
+  const rating = product.rating || 0;
+  
+  // High review count with good rating = good momentum
+  const reviewMomentum = Math.min(100, (reviewCount / 2000) * 100);
+  const qualityFactor = rating > 4 ? 1.2 : rating > 3.5 ? 1.0 : 0.8;
+  
+  return Math.min(100, reviewMomentum * qualityFactor);
+};
+
+// Competition: Review Count, Reviews Rating, Number of Active Sellers, Sales-to-Reviews
 const calculateCompetitionScore = (product: any): number => {
-  // Higher review count = more competition (inverted)
-  // Lower rating = less quality competition
   const reviewCount = product.reviewCount || 0;
   const rating = product.rating || 0;
   
-  const competitionFromReviews = Math.min(100, (reviewCount / 5000) * 100);
-  const qualityCompetition = rating * 20; // Scale 0-5 to 0-100
+  // Higher review count = more established competition (worse for entry)
+  const competitionDensity = Math.min(100, (reviewCount / 5000) * 100);
   
-  return Math.min(100, (competitionFromReviews + qualityCompetition) / 2);
+  // High ratings across competition = harder to compete
+  const qualityCompetition = rating > 4.5 ? 90 : rating > 4 ? 70 : rating > 3.5 ? 50 : 30;
+  
+  // Return inverted score (lower competition = higher score)
+  const totalCompetition = (competitionDensity + qualityCompetition) / 2;
+  return Math.max(0, 100 - totalCompetition);
 };
 
-const calculatePriceValueScore = (product: any): number => {
-  // Price between $15-$50 gets highest score
-  // Rating contributes to value perception
+// Price Signals: Price, Price Trend (90d %)
+const calculatePriceSignalsScore = (product: any): number => {
   const price = product.price || 0;
-  const rating = product.rating || 0;
   
+  // Optimal price range is $15-$75 for good margins and accessibility
   let priceScore = 0;
-  if (price >= 15 && price <= 50) priceScore = 100;
-  else if (price >= 10 && price <= 75) priceScore = 70;
-  else if (price >= 5) priceScore = 40;
+  if (price >= 15 && price <= 75) {
+    priceScore = 100;
+  } else if (price >= 10 && price <= 100) {
+    priceScore = 70;
+  } else if (price >= 5 && price <= 150) {
+    priceScore = 40;
+  } else {
+    priceScore = 20;
+  }
   
-  const ratingScore = rating * 20; // Scale 0-5 to 0-100
-  
-  return Math.min(100, (priceScore * 0.7) + (ratingScore * 0.3));
+  return priceScore;
 };
 
+// Barriers to Entry: Variation Count, Number of Images
 const calculateBarriersScore = (product: any): number => {
-  // Lower barriers = higher score (easier to enter market)
-  // High review count = high barriers (inverted)
   const reviewCount = product.reviewCount || 0;
   const rating = product.rating || 0;
   
-  // Very high review count indicates established market (higher barriers)
-  const reviewBarrier = Math.min(100, (reviewCount / 2000) * 100);
-  // High rating indicates quality expectations (higher barriers)  
-  const qualityBarrier = rating * 15;
+  // High review count = established market with barriers
+  const reviewBarrier = Math.min(80, (reviewCount / 3000) * 80);
   
-  const totalBarriers = Math.min(100, reviewBarrier + qualityBarrier);
-  return Math.max(0, 100 - totalBarriers); // Invert - lower barriers = higher score
+  // Very high ratings = high quality expectations (barrier)
+  const qualityBarrier = rating > 4.5 ? 30 : rating > 4 ? 20 : 10;
+  
+  // Return inverted score (lower barriers = higher score for entry)
+  const totalBarriers = reviewBarrier + qualityBarrier;
+  return Math.max(0, 100 - totalBarriers);
 };
 
+// Logistics Burden: Weight, Dimensions, Size Tier, Fulfillment, Storage Fees
 const calculateLogisticsScore = (product: any): number => {
-  // For now, give all products a neutral logistics score
-  // TODO: Implement when size tier, weight, storage fees data is available
+  // For now, all products get neutral score since we don't have logistics data
+  // TODO: Implement when size tier, weight, fulfillment data is available
   return 70;
+};
+
+// Lifecycle & Seasonality: Age (Months), Best Sales Period
+const calculateLifecycleScore = (product: any): number => {
+  // For now, use price as proxy for lifecycle maturity
+  // Mid-range prices often indicate mature, stable products
+  const price = product.price || 0;
+  
+  if (price >= 20 && price <= 60) return 80; // Mature market
+  if (price >= 10 && price <= 100) return 60; // Growing/declining
+  return 40; // Early/late lifecycle
 };
 
 export const checkGates = (criteria: any[], margins?: { computedMargin?: number }): Record<string, boolean> => {
@@ -141,10 +183,10 @@ export const checkGates = (criteria: any[], margins?: { computedMargin?: number 
   };
 
   return {
-    revenue: getCriteriaValue('revenue') >= 5000,
-    demand: getCriteriaValue('demand') >= 30,
-    competition: getCriteriaValue('competition') <= 70,
-    barriers: getCriteriaValue('barriers') >= 40
+    revenue: getCriteriaValue('revenue_potential') >= 40,
+    momentum: getCriteriaValue('sales_momentum') >= 50,
+    competition: getCriteriaValue('competition') >= 60,
+    barriers: getCriteriaValue('barriers') >= 50
   };
 };
 
