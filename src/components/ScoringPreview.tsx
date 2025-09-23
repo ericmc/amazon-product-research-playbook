@@ -261,7 +261,7 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg">{scoringData.productName}</CardTitle>
-              <CardDescription>Quick scoring analysis based on imported data</CardDescription>
+              <CardDescription>Advanced scoring configuration • Product: {scoringData.productName}</CardDescription>
             </div>
             <div className="flex gap-2">
               <Button 
@@ -372,13 +372,13 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
         </Collapsible>
       </Card>
 
-      {/* Overall Score & Recommendation */}
+      {/* Opportunity Score & Recommendation */}
       <Card>
         <CardHeader className="text-center">
           <CardTitle className={`text-4xl font-bold ${opportunityRecommendation.color}`}>
             {overallScore}/100
           </CardTitle>
-          <CardDescription>Composite Opportunity Score</CardDescription>
+          <CardDescription>Opportunity Score</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center space-y-4">
@@ -398,14 +398,23 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
               </Badge>
               <p className="text-sm text-muted-foreground">{opportunityRecommendation.description}</p>
               <p className="text-xs font-medium">{opportunityRecommendation.action}</p>
+              <div className="text-xs text-muted-foreground pt-2 border-t">
+                <strong>Weighted Score:</strong> Revenue (20%) + Sales Momentum (20%) + Competition (20%) + Barriers (15%) + Logistics (15%) + Lifecycle (10%)
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Quick Metrics with Tooltips */}
+      {/* Individual Scoring Criteria */}
       <TooltipProvider>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="col-span-full mb-2">
+            <h3 className="text-lg font-semibold">Scoring Breakdown</h3>
+            <p className="text-sm text-muted-foreground">
+              Individual criteria scores for {scoringData.productName} • Click cards for detailed explanations
+            </p>
+          </div>
           {criteria.map((criterion) => {
             const IconComponent = criterion.icon;
             const normalizedScore = Math.min(100, (criterion.value / criterion.maxValue) * 100);
