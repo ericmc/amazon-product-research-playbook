@@ -458,14 +458,16 @@ const ScoringSystem = () => {
   };
 
   const calculateScore = () => {
-    return Math.round(
-      criteria.reduce((sum, criterion) => {
-        const isInverted = criterion.isInverted || false;
-        const normalizedValue = isInverted ? criterion.maxValue - criterion.fusedValue : criterion.fusedValue;
-        const normalizedScore = (normalizedValue / criterion.maxValue) * 100;
-        return sum + (normalizedScore * criterion.weight) / 100;
-      }, 0)
-    );
+    // Use same calculation as ScoringPreview (computeFinalScore in scoringUtils.ts)
+    const totalWeight = criteria.reduce((sum, c) => sum + c.weight, 0);
+    const weightedSum = criteria.reduce((sum, criterion) => {
+      const isInverted = criterion.isInverted || false;
+      const normalizedValue = isInverted ? criterion.maxValue - criterion.fusedValue : criterion.fusedValue;
+      const normalizedScore = (normalizedValue / criterion.maxValue) * 100;
+      return sum + (normalizedScore * criterion.weight);
+    }, 0);
+    
+    return totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
   };
 
   const getRecommendation = (score: number) => {
