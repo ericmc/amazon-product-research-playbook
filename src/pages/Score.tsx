@@ -349,7 +349,7 @@ const Score = () => {
                 }
               }}
             >
-              <div className="min-w-[700px] h-1"></div>
+              <div className="min-w-[600px] h-1"></div>
             </div>
             
             <div
@@ -362,19 +362,19 @@ const Score = () => {
                 }
               }}
             >
-              <Table className="min-w-[700px] border-spacing-0">
+              <Table className="min-w-[600px] border-spacing-0">
                 <TableHeader className="sticky top-0 z-40 bg-background border-b shadow-sm">
                   <TableRow className="border-none">
                     <TableHead className="sticky left-0 z-50 bg-background w-8 p-0 border-r text-xs">Image</TableHead>
-                    <TableHead className="w-48 bg-background sticky left-8 z-50 p-1 border-r">
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => handleSort('title')}
-                        className="h-auto p-0 font-medium text-xs hover:bg-transparent"
-                      >
-                        Product Title {getSortIcon('title')}
-                      </Button>
-                    </TableHead>
+                     <TableHead className="w-32 bg-background sticky left-8 z-50 p-1 border-r">
+                       <Button 
+                         variant="ghost" 
+                         onClick={() => handleSort('title')}
+                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent"
+                       >
+                         Product Title {getSortIcon('title')}
+                       </Button>
+                     </TableHead>
                     <TableHead className="text-center bg-background w-16 p-1">
                       <Button 
                         variant="ghost" 
@@ -450,11 +450,13 @@ const Score = () => {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="sticky left-8 z-40 bg-background w-48 p-1 border-r">
-                          <div className="text-xs font-medium leading-tight overflow-hidden text-ellipsis whitespace-nowrap w-full" title={product.productData.title}>
-                            {product.productData.title || 'Unknown Product'}
-                          </div>
-                        </TableCell>
+                         <TableCell className="sticky left-8 z-40 bg-background w-32 p-1 border-r">
+                           <div className="text-[10px] font-medium leading-tight h-8 flex items-center w-full" title={product.productData.title}>
+                             <span className="overflow-hidden text-ellipsis line-clamp-2">
+                               {product.productData.title || 'Unknown Product'}
+                             </span>
+                           </div>
+                         </TableCell>
                         <TableCell className="text-center w-16 p-1">
                           <Badge className={`${getScoreBadge(viabilityScore)} text-[10px] px-1 py-0.5 rounded`}>
                             {viabilityScore}
