@@ -1,20 +1,27 @@
 export const computeFinalScore = (criteria: any[]): number => {
   const totalWeight = criteria.reduce((sum, c) => sum + c.weight, 0);
   const weightedSum = criteria.reduce((sum, criterion) => {
-    const normalized = normalizeValue(criterion.id, criterion.value, criterion.maxValue);
-    return sum + (normalized * criterion.weight);
+    // The criterion.value is already the normalized score from calculateH10Score
+    // No need to normalize again
+    const score = criterion.value;
+    const weightedScore = score * criterion.weight;
+    console.log(`${criterion.name}: ${score} × ${criterion.weight}% = ${weightedScore}`);
+    return sum + weightedScore;
   }, 0);
   
-  return totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
+  const finalScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
+  console.log(`Final calculation: ${weightedSum} ÷ ${totalWeight} = ${finalScore}`);
+  return finalScore;
 };
 
 export const normalizeValue = (id: string, value: number, maxValue: number): number => {
-  const invertedCriteria = ['competition', 'barriers', 'seasonality'];
+  // These criteria are inverted - higher raw values = lower scores
+  const invertedCriteria = ['competition', 'logistics', 'lifecycle'];
   const normalizedValue = invertedCriteria.includes(id) 
     ? maxValue - value 
     : value;
   
-  return (normalizedValue / maxValue) * 100;
+  return Math.max(0, Math.min(100, (normalizedValue / maxValue) * 100));
 };
 
 // Calculate Helium 10 specific scoring based on available CSV fields
