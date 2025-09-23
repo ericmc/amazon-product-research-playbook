@@ -147,6 +147,87 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
       default: return 'Optimize this criterion for better market positioning.';
     }
   };
+
+  // Generate top signals based on product data
+  const generateTopSignals = (data: ScoringData, criteria: ScoringCriterion[]) => {
+    const signals = [];
+    
+    // Revenue signal
+    if (data.revenue >= 10000) {
+      signals.push(`Strong revenue at $${data.revenue.toLocaleString()}/month indicates proven market demand`);
+    } else if (data.revenue >= 5000) {
+      signals.push(`Solid revenue of $${data.revenue.toLocaleString()}/month meets minimum threshold`);
+    }
+    
+    // Competition signal  
+    if (data.reviewCount < 300) {
+      signals.push(`Low competition with ${data.reviewCount} reviews creates easier market entry`);
+    } else if (data.reviewCount < 500) {
+      signals.push(`Moderate competition at ${data.reviewCount} reviews still allows market entry`);
+    }
+    
+    // Rating/Quality signal
+    if (data.rating >= 4.5) {
+      signals.push(`High customer satisfaction (${data.rating} stars) shows strong product-market fit`);
+    } else if (data.rating >= 4.0) {
+      signals.push(`Good ratings (${data.rating} stars) indicate customer acceptance`);
+    }
+    
+    // Price signal
+    if (data.price >= 25 && data.price <= 75) {
+      signals.push(`Optimal price point ($${data.price}) balances margins with accessibility`);
+    }
+    
+    // Momentum signal
+    if (data.reviewCount >= 100 && data.rating >= 4.0) {
+      signals.push(`Growing market momentum with ${data.reviewCount} reviews and ${data.rating} rating`);
+    }
+    
+    return signals.slice(0, 3);
+  };
+
+  // Generate top risks based on product data
+  const generateTopRisks = (data: ScoringData, criteria: ScoringCriterion[]) => {
+    const risks = [];
+    
+    // Revenue risk
+    if (data.revenue < 5000) {
+      risks.push(`Revenue below threshold at $${data.revenue.toLocaleString()}/month may indicate limited market size`);
+    }
+    
+    // Competition risk
+    if (data.reviewCount >= 1000) {
+      risks.push(`High competition with ${data.reviewCount} reviews makes market entry difficult`);
+    } else if (data.reviewCount >= 500) {
+      risks.push(`Moderate-high competition (${data.reviewCount} reviews) requires strong differentiation`);
+    }
+    
+    // Quality risk
+    if (data.rating < 3.5) {
+      risks.push(`Low ratings (${data.rating} stars) suggest product quality or market fit issues`);
+    } else if (data.rating < 4.0) {
+      risks.push(`Below-average ratings (${data.rating} stars) indicate customer satisfaction concerns`);
+    }
+    
+    // Price risk
+    if (data.price < 15) {
+      risks.push(`Low price point ($${data.price}) may limit profit margins after fees and costs`);
+    } else if (data.price > 100) {
+      risks.push(`High price ($${data.price}) suggests oversized item with storage fee concerns`);
+    }
+    
+    // Market maturity risk
+    if (data.reviewCount < 50) {
+      risks.push(`Limited market validation with only ${data.reviewCount} reviews may indicate new/risky market`);
+    }
+    
+    // Seasonal/lifecycle risk
+    if (data.reviewCount > 2000) {
+      risks.push(`Mature market with ${data.reviewCount} reviews may have limited growth potential`);
+    }
+    
+    return risks.slice(0, 3);
+  };
   
   // Calculate scoring criteria with H10 field mappings
   const criteria: ScoringCriterion[] = calculateH10Score(scoringData, thresholds).map(criterion => ({
@@ -431,6 +512,79 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
                 </ul>
               </div>
             )}
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* IPS Opportunity Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            IPS Opportunity Summary
+          </CardTitle>
+          <CardDescription>
+            Intelligent Product Selection analysis for {scoringData.productName}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Top Signals */}
+            <div className="space-y-3">
+              <h4 className="font-medium text-green-700 flex items-center gap-2">
+                <CheckCircle className="h-4 w-4" />
+                Top Signals
+              </h4>
+              <div className="space-y-2">
+                {generateTopSignals(scoringData, criteria).map((signal, index) => (
+                  <div key={index} className="flex items-start gap-2 text-sm">
+                    <span className="text-green-500 mt-0.5">•</span>
+                    <span>{signal}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Top Risks */}
+            <div className="space-y-3">
+              <h4 className="font-medium text-red-700 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Top Risks
+              </h4>
+              <div className="space-y-2">
+                {generateTopRisks(scoringData, criteria).map((risk, index) => (
+                  <div key={index} className="flex items-start gap-2 text-sm">
+                    <span className="text-red-500 mt-0.5">•</span>
+                    <span>{risk}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* IPS Context */}
+          <div className="mt-6 pt-6 border-t">
+            <h4 className="font-medium text-muted-foreground mb-3">IPS Selection Context</h4>
+            <div className="grid md:grid-cols-3 gap-4 text-sm">
+              <div className="space-y-2">
+                <div className="font-medium text-blue-700">Market Entry</div>
+                <p className="text-muted-foreground">
+                  Low barriers (reviews, variations, sellers) = easier entry with less competition and complexity
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="font-medium text-purple-700">Operational Efficiency</div>
+                <p className="text-muted-foreground">
+                  Favorable logistics (weight, size tier, storage fees) = better landed cost and profit margins
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="font-medium text-emerald-700">Revenue Stability</div>
+                <p className="text-muted-foreground">
+                  Consistent revenue growth = stronger opportunity with predictable demand patterns
+                </p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
