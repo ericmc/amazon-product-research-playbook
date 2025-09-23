@@ -12,6 +12,7 @@ import ScoringSystem from "@/components/ScoringSystem";
 import { ScoringPreview } from "@/components/ScoringPreview";
 import { AutoMappedProduct } from "@/lib/normalizeBlackBox";
 import { ProductWithKeywords } from "@/lib/matchKeyword";
+import { computeFinalScore, calculateH10Score } from "@/utils/scoringUtils";
 
 type SortField = 'title' | 'revenue' | 'price' | 'searchVolume' | 'reviewCount' | 'rating' | 'score';
 type SortDirection = 'asc' | 'desc';
@@ -112,37 +113,19 @@ const Score = () => {
   };
 
   const calculateProductScore = (product: AutoMappedProduct | ProductWithKeywords): number => {
-    const scoringData = prepareProductForScoring(product);
-    
     // Load current thresholds from localStorage or use defaults
     const savedThresholds = localStorage.getItem('scoringThresholds');
     const thresholds = savedThresholds ? JSON.parse(savedThresholds) : {
       revenue: 5000,
-      demand: 1000,
+      demand: 30,
       competition: 70,
-      reviews: 100,
-      rating: 4.0,
-      price: 15
+      priceValue: 60,
+      barriers: 40,
+      logistics: 50
     };
     
-    // Same criteria as ScoringPreview but simplified for table display
-    const criteria = [
-      { value: scoringData.revenue, maxValue: 50000, weight: 25 },
-      { value: scoringData.demand, maxValue: 50000, weight: 20 },
-      { value: 100 - scoringData.competition, maxValue: 100, weight: 20 }, // Inverted
-      { value: Math.min(scoringData.reviewCount, 5000), maxValue: 5000, weight: 15 },
-      { value: scoringData.rating * 20, maxValue: 100, weight: 10 },
-      { value: Math.min(scoringData.price, 100), maxValue: 100, weight: 10 }
-    ];
-
-    let totalScore = 0;
-    criteria.forEach(criterion => {
-      const normalized = (criterion.value / criterion.maxValue) * 100;
-      const weightedScore = (normalized * criterion.weight) / 100;
-      totalScore += weightedScore;
-    });
-
-    return Math.round(totalScore);
+    const criteria = calculateH10Score(product.productData, thresholds);
+    return computeFinalScore(criteria);
   };
 
   const getScoreColor = (score: number): string => {
