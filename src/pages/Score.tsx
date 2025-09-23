@@ -355,13 +355,12 @@ const Score = () => {
             </div>
 
             {/* Product Table */}
-            <div className="w-full overflow-x-auto">
-              <div className="rounded-md border max-h-96 overflow-y-auto bg-background min-w-[1000px]">
-              <Table>
-                <TableHeader className="sticky top-0 bg-background z-10 border-b shadow-sm">
+            <div className="rounded-md border bg-background max-h-96 overflow-auto">
+              <Table className="min-w-[1280px]">
+                <TableHeader className="sticky top-0 bg-background z-30 border-b shadow-sm">
                   <TableRow>
-                    <TableHead className="w-12 bg-background sticky left-0 z-20">Image</TableHead>
-                    <TableHead className="min-w-[200px] bg-background sticky left-12 z-20 border-r">
+                    <TableHead className="sticky left-0 z-30 bg-background w-16 px-0">Image</TableHead>
+                    <TableHead className="min-w-[260px] bg-background sticky left-16 z-30 border-r">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('title')}
@@ -439,12 +438,12 @@ const Score = () => {
                         className={`cursor-pointer hover:bg-muted/50 ${isSelected ? 'bg-muted' : ''}`}
                         onClick={() => handleProductSelect(product)}
                       >
-                        <TableCell>
-                          <div className="w-10 h-10 rounded border bg-muted flex items-center justify-center overflow-hidden">
+                        <TableCell className="sticky left-0 z-20 bg-background w-16 p-0">
+                          <div className="mx-auto my-1 w-10 h-10 rounded border bg-muted flex items-center justify-center overflow-hidden">
                             {imageUrl ? (
                               <img 
                                 src={imageUrl} 
-                                alt="Product"
+                                alt="Product image"
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
                                   e.currentTarget.src = '/placeholder.svg';
@@ -455,7 +454,7 @@ const Score = () => {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="font-medium">
+                        <TableCell className="font-medium sticky left-16 z-10 bg-background min-w-[260px]">
                           <div className="max-w-sm truncate" title={product.productData.title}>
                             {product.productData.title || 'Unknown Product'}
                           </div>
@@ -493,8 +492,7 @@ const Score = () => {
                     );
                   })}
                 </TableBody>
-              </Table>
-            </div>
+               </Table>
             </div>
 
             {filteredAndSortedProducts.length === 0 && (
