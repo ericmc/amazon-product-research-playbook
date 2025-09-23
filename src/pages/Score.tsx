@@ -365,8 +365,8 @@ const Score = () => {
               <Table className="min-w-[600px] border-spacing-0">
                 <TableHeader className="sticky top-0 z-40 bg-background border-b shadow-sm">
                   <TableRow className="border-none">
-                    <TableHead className="sticky left-0 z-50 bg-background w-8 p-0 border-r text-xs">Image</TableHead>
-                     <TableHead className="w-32 bg-background sticky left-8 z-50 p-1 border-r">
+                    <TableHead className="sticky left-0 z-50 bg-background w-10 p-0 border-r text-xs">Image</TableHead>
+                     <TableHead className="w-32 bg-background sticky left-10 z-50 p-1 border-r">
                        <Button 
                          variant="ghost" 
                          onClick={() => handleSort('title')}
@@ -375,7 +375,7 @@ const Score = () => {
                          Product Title {getSortIcon('title')}
                        </Button>
                      </TableHead>
-                    <TableHead className="text-center bg-background w-16 p-1">
+                    <TableHead className="text-center bg-background w-8 p-1">
                       <Button 
                         variant="ghost" 
                         onClick={() => handleSort('score')}
@@ -434,8 +434,8 @@ const Score = () => {
                         className={`cursor-pointer hover:bg-muted/50 ${isSelected ? 'bg-muted' : ''}`}
                         onClick={() => handleProductSelect(product)}
                       >
-                        <TableCell className="sticky left-0 z-40 bg-background w-8 p-0 border-r">
-                          <div className="w-7 h-7 m-0.5 rounded border bg-muted flex items-center justify-center overflow-hidden">
+                        <TableCell className="sticky left-0 z-40 bg-background w-10 p-0 border-r">
+                          <div className="w-9 h-9 m-0.5 rounded border bg-muted flex items-center justify-center overflow-hidden">
                             {imageUrl ? (
                               <img 
                                 src={imageUrl} 
@@ -450,14 +450,14 @@ const Score = () => {
                             )}
                           </div>
                         </TableCell>
-                         <TableCell className="sticky left-8 z-40 bg-background w-32 p-1 border-r">
+                         <TableCell className="sticky left-10 z-40 bg-background w-32 p-1 border-r">
                            <div className="text-[10px] font-medium leading-tight h-8 flex items-center w-full" title={product.productData.title}>
                              <span className="overflow-hidden text-ellipsis line-clamp-2">
                                {product.productData.title || 'Unknown Product'}
                              </span>
                            </div>
                          </TableCell>
-                        <TableCell className="text-center w-16 p-1">
+                        <TableCell className="text-center w-8 p-1">
                           <Badge className={`${getScoreBadge(viabilityScore)} text-[10px] px-1 py-0.5 rounded`}>
                             {viabilityScore}
                           </Badge>
