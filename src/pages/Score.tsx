@@ -360,11 +360,12 @@ const Score = () => {
               </Badge>
             </div>
 
-            {/* Scroll container with sticky top scrollbar */}
-            <div className="rounded-md border bg-background w-full max-h-[480px] overflow-y-auto relative">
+            {/* Table wrapper with sticky bottom scrollbar */}
+            <div className="relative rounded-md border bg-background">
+              {/* Sticky proxy scrollbar at bottom */}
               <div 
-                id="top-scrollbar"
-                className="sticky top-0 z-30 bg-background border-b w-full overflow-x-auto overflow-y-hidden h-4 shadow-sm"
+                id="bottom-scrollbar"
+                className="sticky bottom-0 z-30 h-4 overflow-x-auto overflow-y-hidden bg-background/90 backdrop-blur-sm border-t"
                 onScroll={(e) => {
                   const main = document.getElementById('product-table-scroll');
                   if (main) {
@@ -375,13 +376,14 @@ const Score = () => {
                 <div className="min-w-[900px] h-1"></div>
               </div>
               
+              {/* Table viewport with vertical scroll */}
               <div
                 id="product-table-scroll"
-                className="overflow-x-auto"
+                className="max-h-[480px] overflow-auto"
                 onScroll={(e) => {
-                  const top = document.getElementById('top-scrollbar');
-                  if (top) {
-                    (top as HTMLElement).scrollLeft = (e.currentTarget as HTMLElement).scrollLeft;
+                  const bottom = document.getElementById('bottom-scrollbar');
+                  if (bottom) {
+                    (bottom as HTMLElement).scrollLeft = (e.currentTarget as HTMLElement).scrollLeft;
                   }
                 }}
               >
