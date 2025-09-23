@@ -1,18 +1,11 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
-
-interface StickyXScrollbarProps {
-  children: React.ReactNode;
-  maxHeight?: string;
-  barHeight?: number;
-  className?: string;
-}
+import { useLayoutEffect, useRef } from "react";
 
 export default function StickyXScrollbar({
   children,
   maxHeight = "70vh",
   barHeight = 14,
   className = "",
-}: StickyXScrollbarProps) {
+}) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const proxyRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
