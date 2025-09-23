@@ -1,16 +1,11 @@
 export const computeFinalScore = (criteria: any[]): number => {
-  let totalScore = 0;
-  let totalWeight = 0;
-
-  criteria.forEach(criterion => {
+  const totalWeight = criteria.reduce((sum, c) => sum + c.weight, 0);
+  const weightedSum = criteria.reduce((sum, criterion) => {
     const normalized = normalizeValue(criterion.id, criterion.value, criterion.maxValue);
-    const weightedScore = (normalized * criterion.weight) / 100;
-    
-    totalScore += weightedScore;
-    totalWeight += criterion.weight;
-  });
-
-  return Math.round(totalScore);
+    return sum + (normalized * criterion.weight);
+  }, 0);
+  
+  return totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
 };
 
 export const normalizeValue = (id: string, value: number, maxValue: number): number => {
