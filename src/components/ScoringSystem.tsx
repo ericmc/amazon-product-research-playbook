@@ -236,12 +236,21 @@ const ScoringSystem = () => {
   const [productName, setProductName] = useState("Bamboo Kitchen Utensil Set");
   const [expandedGuidance, setExpandedGuidance] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [hasAdjusted, setHasAdjusted] = useState(false);
+  const [initialOpportunityScore, setInitialOpportunityScore] = useState<number | null>(null);
   const { toast } = useToast();
 
   // Initialize with migrated legacy criteria
   React.useEffect(() => {
     const migrated = defaultCriteria.map(criterion => migrateLegacyCriterion(criterion));
     setCriteria(migrated);
+
+    // Load initial opportunity score (from H10 preview) if available
+    const raw = sessionStorage.getItem('initialOpportunityScore');
+    if (raw) {
+      const n = parseInt(raw, 10);
+      if (!Number.isNaN(n)) setInitialOpportunityScore(n);
+    }
   }, []);
 
   // Check for prefilled data from Data Intake
@@ -414,6 +423,7 @@ const ScoringSystem = () => {
   };
 
   const updateCriteriaValue = (id: string, value: number) => {
+    setHasAdjusted(true);
     setCriteria(prev => 
       prev.map(criterion => 
         criterion.id === id 
@@ -484,7 +494,8 @@ const ScoringSystem = () => {
     }
   };
 
-  const finalScore = calculateScore();
+  const calculated = calculateScore();
+  const finalScore = hasAdjusted || initialOpportunityScore === null ? calculated : initialOpportunityScore;
   const recommendation = getRecommendation(finalScore);
   const gateAnalysis = evaluateGates();
 

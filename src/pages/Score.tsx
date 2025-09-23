@@ -105,6 +105,20 @@ const Score = () => {
     
     // Also store in sessionStorage for the ScoringSystem component
     sessionStorage.setItem('prefilledScoringData', JSON.stringify(newScoringData));
+
+    // Seed Advanced Scoring with the same Opportunity Score used above
+    const savedThresholds = localStorage.getItem('scoringThresholds');
+    const thresholds = savedThresholds ? JSON.parse(savedThresholds) : {
+      revenue: 60,
+      momentum: 60,
+      competition: 60,
+      barriers: 50,
+      logistics: 60,
+      lifecycle: 50
+    };
+    const h10Criteria = calculateH10Score((product as any).productData || product, thresholds);
+    const initialScore = computeFinalScore(h10Criteria);
+    sessionStorage.setItem('initialOpportunityScore', String(initialScore));
     
     toast({
       title: "Product Selected",
