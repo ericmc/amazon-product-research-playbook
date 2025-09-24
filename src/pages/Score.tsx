@@ -268,9 +268,10 @@ const Score = () => {
     if (!tableViewport || !externalScrollbar) return;
 
     const syncScrollbars = () => {
-      // Update external scrollbar width to match table content width
+      // Set the content width to match the table's scrollable content
       const tableScrollbarChild = document.getElementById('external-scrollbar-content');
       if (tableScrollbarChild) {
+        // Make the content div exactly the same width as the table's scroll width
         tableScrollbarChild.style.width = tableViewport.scrollWidth + 'px';
       }
     };
@@ -281,21 +282,23 @@ const Score = () => {
     const onTableScroll = () => {
       if (isScrolling) return;
       isScrolling = true;
+      // Sync the external scrollbar position with the table scroll position
       externalScrollbar.scrollLeft = tableViewport.scrollLeft;
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
         isScrolling = false;
-      }, 16); // ~60fps
+      }, 16);
     };
 
     const onExternalScroll = () => {
       if (isScrolling) return;
       isScrolling = true;
+      // Sync the table scroll position with the external scrollbar position
       tableViewport.scrollLeft = externalScrollbar.scrollLeft;
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
         isScrolling = false;
-      }, 16); // ~60fps
+      }, 16);
     };
 
     // Set up event listeners
