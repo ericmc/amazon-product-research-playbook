@@ -10,7 +10,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LockGuard } from "./components/LockGuard";
 import { ProductTour, useTour } from "./components/ProductTour";
 import { FirstRunPrompt } from "./components/FirstRunPrompt";
-import Score from "./pages/Score";
+import Home from "./pages/Home";
 import Opportunities from "./pages/Opportunities";
 import OpportunityDetail from "./pages/OpportunityDetail";
 import Decision from "./pages/Decision";
@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 import Lock from "./pages/Lock";
 
 // Lazy load heavy routes
+const Score = lazy(() => import("./pages/Score"));
 const DataIntakeV2 = lazy(() => import("./pages/DataIntakeV2"));
 const SourcingPacket = lazy(() => import("./pages/SourcingPacket"));
 const Help = lazy(() => import("./pages/Help"));
@@ -67,7 +68,17 @@ const AppContent = () => {
             <Route path="/lock" element={<Lock />} />
             
             {/* Protected routes */}
-            <Route path="/" element={<Score />} />
+            <Route path="/" element={<Home />} />
+            <Route 
+              path="/score" 
+              element={
+                <ErrorBoundary fallbackTitle="Scoring Error">
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]">Loading...</div>}>
+                    <Score />
+                  </Suspense>
+                </ErrorBoundary>
+              } 
+            />
             <Route path="/opportunities" element={<Opportunities />} />
             <Route path="/opportunities/:id" element={<OpportunityDetail />} />
             <Route path="/opportunities/:id/decision" element={<Decision />} />
