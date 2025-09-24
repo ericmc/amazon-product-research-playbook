@@ -423,13 +423,13 @@ const Score = () => {
                            <span className="line-clamp-2 text-center">Product Title</span> {getSortIcon('title')}
                          </Button>
                        </TableHead>
-                      <TableHead className="text-center bg-background w-[100px] min-w-[100px] max-w-[100px] p-1 h-12">
+                      <TableHead className="text-center bg-background sticky left-[260px] z-50 w-[120px] min-w-[120px] max-w-[120px] p-1 border-r h-12">
                         <Button 
                           variant="ghost" 
                           onClick={() => handleSort('score')}
                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                         >
-                          <span className="line-clamp-2 text-center">Viability Score</span> {getSortIcon('score')}
+                          <span className="line-clamp-2 text-center font-semibold text-primary">Opportunity Score</span> {getSortIcon('score')}
                         </Button>
                       </TableHead>
                       <TableHead className="text-right bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
@@ -616,8 +616,8 @@ const Score = () => {
                                )}
                              </div>
                            </TableCell>
-                           <TableCell className="text-center w-[100px] min-w-[100px] max-w-[100px] p-1">
-                             <Badge className={`${getScoreBadge(viabilityScore)} text-[10px] px-1 py-0.5 rounded`}>
+                           <TableCell className="text-center sticky left-[260px] z-40 bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 border-r">
+                             <Badge className={`${getScoreBadge(viabilityScore)} text-xs px-2 py-1 rounded font-semibold`}>
                                {viabilityScore}
                              </Badge>
                            </TableCell>
