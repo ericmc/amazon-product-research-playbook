@@ -462,7 +462,7 @@ const Score = () => {
                             onClick={() => handleSort('revenue')}
                             className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                           >
-                            <div className="flex items-center gap-1 w-full justify-center">
+                            <div className="flex items-center gap-1 w-full justify-end">
                               <span className="line-clamp-2 text-center">Revenue /mo</span>
                               {getSortIcon('revenue')}
                             </div>
@@ -474,7 +474,7 @@ const Score = () => {
                             onClick={() => handleSort('price')}
                             className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                           >
-                            <div className="flex items-center gap-1 w-full justify-center">
+                            <div className="flex items-center gap-1 w-full justify-end">
                               <span className="line-clamp-2 text-center">Price</span>
                               {getSortIcon('price')}
                             </div>
@@ -486,7 +486,7 @@ const Score = () => {
                             onClick={() => handleSort('reviewCount')}
                             className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                           >
-                            <div className="flex items-center gap-1 w-full justify-center">
+                            <div className="flex items-center gap-1 w-full justify-end">
                               <span className="line-clamp-2 text-center">Review Count</span>
                               {getSortIcon('reviewCount')}
                             </div>
@@ -498,7 +498,7 @@ const Score = () => {
                              onClick={() => handleSort('rating')}
                              className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                            >
-                             <div className="flex items-center gap-1 w-full justify-center">
+                              <div className="flex items-center gap-1 w-full justify-end">
                                <span className="line-clamp-2 text-center">Rating</span>
                                {getSortIcon('rating')}
                              </div>
@@ -510,7 +510,7 @@ const Score = () => {
                              onClick={() => handleSort('brand')}
                              className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                            >
-                             <div className="flex items-center gap-1 w-full justify-center">
+                              <div className="flex items-center gap-1 w-full justify-start">
                                <span className="line-clamp-2 text-center">Brand</span>
                                {getSortIcon('brand')}
                              </div>
@@ -522,7 +522,7 @@ const Score = () => {
                              onClick={() => handleSort('bsr')}
                              className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                            >
-                             <div className="flex items-center gap-1 w-full justify-center">
+                              <div className="flex items-center gap-1 w-full justify-end">
                                <span className="line-clamp-2 text-center">BSR</span>
                                {getSortIcon('bsr')}
                              </div>
@@ -534,7 +534,7 @@ const Score = () => {
                              onClick={() => handleSort('category')}
                              className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                            >
-                             <div className="flex items-center gap-1 w-full justify-center">
+                              <div className="flex items-center gap-1 w-full justify-start">
                                <span className="line-clamp-2 text-center">Category</span>
                                {getSortIcon('category')}
                              </div>
@@ -546,7 +546,7 @@ const Score = () => {
                              onClick={() => handleSort('salesTrend')}
                              className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                            >
-                             <div className="flex items-center gap-1 w-full justify-center">
+                              <div className="flex items-center gap-1 w-full justify-end">
                                <span className="line-clamp-2 text-center">Sales Trend %</span>
                                {getSortIcon('salesTrend')}
                              </div>
@@ -558,7 +558,7 @@ const Score = () => {
                              onClick={() => handleSort('seller')}
                              className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                            >
-                             <div className="flex items-center gap-1 w-full justify-center">
+                              <div className="flex items-center gap-1 w-full justify-start">
                                <span className="line-clamp-2 text-center">Seller</span>
                                {getSortIcon('seller')}
                              </div>
@@ -570,7 +570,7 @@ const Score = () => {
                              onClick={() => handleSort('subcategory')}
                              className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                            >
-                             <div className="flex items-center gap-1 w-full justify-center">
+                              <div className="flex items-center gap-1 w-full justify-start">
                                <span className="line-clamp-2 text-center">Subcategory</span>
                                {getSortIcon('subcategory')}
                              </div>
@@ -582,7 +582,7 @@ const Score = () => {
                              onClick={() => handleSort('priceTrend')}
                              className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                            >
-                             <div className="flex items-center gap-1 w-full justify-center">
+                              <div className="flex items-center gap-1 w-full justify-end">
                                <span className="line-clamp-2 text-center">Price Trend (90 days)</span>
                                {getSortIcon('priceTrend')}
                              </div>
@@ -652,7 +652,7 @@ const Score = () => {
                                {/* Preview rendered via portal */}
                              </div>
                            </TableCell>
-                           <TableCell className="sticky left-[60px] z-40 bg-background w-[200px] min-w-[200px] max-w-[200px] p-1 border-r">
+                           <TableCell className="sticky left-[60px] z-40 bg-background w-[280px] min-w-[280px] max-w-[280px] p-1 border-r">
                              <div className="flex items-center gap-1">
                                 <div className="text-[10px] font-medium leading-tight h-8 flex items-center flex-1" title={product.productData.title}>
                                   <span className="overflow-hidden text-ellipsis line-clamp-2 max-h-8">
@@ -673,51 +673,51 @@ const Score = () => {
                                )}
                              </div>
                            </TableCell>
-                           <TableCell className="text-center sticky left-[260px] z-40 bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 border-r">
+                           <TableCell className="text-center sticky left-[340px] z-40 bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 border-r">
                              <Badge className={`${getScoreBadge(viabilityScore)} text-xs px-2 py-1 rounded font-semibold`}>
                                {viabilityScore}
                              </Badge>
                            </TableCell>
-                           <TableCell className="text-right w-[120px] min-w-[120px] max-w-[120px] p-1 text-xs">
+                            <TableCell className="text-right w-[100px] min-w-[100px] max-w-[100px] p-1 text-xs">
                              ${(product.productData.revenue || 0).toLocaleString()}/mo
                            </TableCell>
                            <TableCell className="text-right w-[80px] min-w-[80px] max-w-[80px] p-1 text-xs">
                              ${(product.productData.price || 0).toFixed(2)}
                            </TableCell>
-                           <TableCell className="text-right w-[100px] min-w-[100px] max-w-[100px] p-1 text-xs">
+                            <TableCell className="text-right w-[110px] min-w-[110px] max-w-[110px] p-1 text-xs">
                              {(product.productData.reviewCount || 0).toLocaleString()}
                            </TableCell>
                            <TableCell className="text-right w-[80px] min-w-[80px] max-w-[80px] p-1 text-xs">
                              {product.productData.rating ? `${product.productData.rating.toFixed(1)}★` : '-'}
                            </TableCell>
-                           <TableCell className="text-left w-[120px] min-w-[120px] max-w-[120px] p-1 text-xs truncate">
+                            <TableCell className="text-left w-[140px] min-w-[140px] max-w-[140px] p-1 text-xs truncate">
                              {product.rawData?.['Brand'] || product.productData.brand || '-'}
                            </TableCell>
                            <TableCell className="text-right w-[100px] min-w-[100px] max-w-[100px] p-1 text-xs">
                              {product.rawData?.['BSR'] ? parseInt(product.rawData['BSR']).toLocaleString() : '-'}
                            </TableCell>
-                           <TableCell className="text-left w-[140px] min-w-[140px] max-w-[140px] p-1 text-xs truncate">
+                            <TableCell className="text-left w-[160px] min-w-[160px] max-w-[160px] p-1 text-xs truncate">
                              {product.rawData?.['Category'] || '-'}
                            </TableCell>
-                           <TableCell className="text-right w-[100px] min-w-[100px] max-w-[100px] p-1 text-xs">
+                            <TableCell className="text-right w-[120px] min-w-[120px] max-w-[120px] p-1 text-xs">
                              {product.rawData?.['Sales Trend (90 days) (%)'] ? `${parseFloat(product.rawData['Sales Trend (90 days) (%)']).toFixed(1)}%` : '-'}
                            </TableCell>
-                           <TableCell className="text-left w-[120px] min-w-[120px] max-w-[120px] p-1 text-xs truncate">
+                           <TableCell className="text-left w-[140px] min-w-[140px] max-w-[140px] p-1 text-xs truncate">
                              {product.rawData?.['Seller'] || '-'}
                            </TableCell>
-                           <TableCell className="text-left w-[140px] min-w-[140px] max-w-[140px] p-1 text-xs truncate">
+                            <TableCell className="text-left w-[160px] min-w-[160px] max-w-[160px] p-1 text-xs truncate">
                              {product.rawData?.['Subcategory'] || '-'}
                            </TableCell>
-                           <TableCell className="text-right w-[120px] min-w-[120px] max-w-[120px] p-1 text-xs">
+                            <TableCell className="text-right w-[150px] min-w-[150px] max-w-[150px] p-1 text-xs">
                              {product.rawData?.['Price Trend (90 days)'] ? `${parseFloat(product.rawData['Price Trend (90 days)']).toFixed(1)}%` : '-'}
                            </TableCell>
-                           <TableCell className="text-left w-20 p-1 text-xs">
+                           <TableCell className="text-left w-[120px] min-w-[120px] max-w-[120px] p-1 text-xs">
                              {product.rawData?.['Seller Country'] || '-'}
                            </TableCell>
-                           <TableCell className="text-right w-16 p-1 text-xs">
-                             {product.rawData?.['# of Active Sellers'] || product.rawData?.['Active Sellers'] || '-'}
-                           </TableCell>
-                           <TableCell className="text-right w-20 p-1 text-xs">
+                            <TableCell className="text-right w-[140px] min-w-[140px] max-w-[140px] p-1 text-xs">
+                              {product.rawData?.['# of Active Sellers'] || product.rawData?.['Active Sellers'] || '-'}
+                            </TableCell>
+                            <TableCell className="text-right w-[130px] min-w-[130px] max-w-[130px] p-1 text-xs">
                              {product.rawData?.['Last Year Sales'] ? parseInt(product.rawData['Last Year Sales']).toLocaleString() : '-'}
                            </TableCell>
                          </TableRow>
