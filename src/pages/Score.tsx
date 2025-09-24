@@ -680,12 +680,21 @@ const Score = () => {
               </div>
               
               {/* External sticky horizontal scrollbar */}
-              <div className="sticky bottom-2 z-50 mx-2">
-                <div className="bg-background/95 backdrop-blur-sm border rounded p-1 shadow-sm">
-                  <div className="overflow-x-auto overflow-y-hidden h-2 bg-muted/30 rounded" id="external-scrollbar">
-                    <div id="external-scrollbar-content" style={{ height: '100%', backgroundColor: 'transparent', minWidth: '100%' }} />
+              <div className="sticky bottom-4 z-50 mx-4 mb-4">
+                <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+                  <div className="text-xs font-medium text-foreground mb-2 text-center">
+                    Scroll horizontally to view all columns
                   </div>
-                  <div className="text-xs text-muted-foreground text-center mt-1">Scroll horizontally to view all columns</div>
+                  <div 
+                    className="overflow-x-auto overflow-y-hidden h-6 bg-muted rounded-md border border-border cursor-pointer hover:bg-muted/80 transition-colors" 
+                    id="external-scrollbar"
+                  >
+                    <div 
+                      id="external-scrollbar-content" 
+                      className="h-full bg-primary/20 hover:bg-primary/30 transition-colors rounded-sm border border-primary/40" 
+                      style={{ minWidth: '100%' }} 
+                    />
+                  </div>
                 </div>
               </div>
             </div>
