@@ -268,13 +268,21 @@ const Score = () => {
     if (!tableViewport || !externalScrollbar) return;
 
     const syncScrollbars = () => {
-      // Set the content width to match the table's scrollable content
+      // Ensure the external scrollbar content width creates a proper thumb size
       const tableScrollbarChild = document.getElementById('external-scrollbar-content');
-      if (tableScrollbarChild && tableViewport.scrollWidth > tableViewport.clientWidth) {
-        // Make the content div wider than its container to trigger native scrollbar
-        const containerWidth = externalScrollbar.clientWidth;
-        const scrollRatio = tableViewport.scrollWidth / tableViewport.clientWidth;
-        tableScrollbarChild.style.width = (containerWidth * scrollRatio) + 'px';
+      if (tableScrollbarChild) {
+        const trackWidth = externalScrollbar.clientWidth || 0;
+        const visible = Math.max(1, tableViewport.clientWidth);
+        const total = Math.max(visible + 1, tableViewport.scrollWidth);
+        const scrollRatio = total / visible; // > 1 when horizontal scroll exists
+        const contentWidth = Math.max(trackWidth * scrollRatio, trackWidth + 2); // ensure draggable
+        tableScrollbarChild.style.width = contentWidth + 'px';
+
+        // Also sync position after recalculating sizes
+        const maxTableScroll = total - visible;
+        const maxExternalScroll = (contentWidth - trackWidth);
+        const progress = maxTableScroll > 0 ? (tableViewport.scrollLeft / maxTableScroll) : 0;
+        externalScrollbar.scrollLeft = progress * maxExternalScroll;
       }
     };
 
@@ -308,8 +316,10 @@ const Score = () => {
     externalScrollbar.addEventListener('scroll', onExternalScroll, { passive: true });
 
     // Sync on load and resize
-    const resizeObserver = new ResizeObserver(syncScrollbars);
-    resizeObserver.observe(tableViewport);
+    const resizeObserverViewport = new ResizeObserver(syncScrollbars);
+    const resizeObserverExternal = new ResizeObserver(syncScrollbars);
+    resizeObserverViewport.observe(tableViewport);
+    resizeObserverExternal.observe(externalScrollbar);
     
     // Initial sync
     syncScrollbars();
@@ -317,7 +327,8 @@ const Score = () => {
     return () => {
       tableViewport.removeEventListener('scroll', onTableScroll);
       externalScrollbar.removeEventListener('scroll', onExternalScroll);
-      resizeObserver.disconnect();
+      resizeObserverViewport.disconnect();
+      resizeObserverExternal.disconnect();
     };
   }, [filteredAndSortedProducts]); // Re-sync when products change
 
