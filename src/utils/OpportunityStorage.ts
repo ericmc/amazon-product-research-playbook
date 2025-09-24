@@ -117,7 +117,13 @@ class OpportunityStorage {
   async saveOpportunity(opportunity: SavedOpportunity): Promise<void> {
     opportunity.updatedAt = new Date().toISOString();
     if (this.settings.useSupabase) {
-      await this.saveToSupabase(opportunity);
+      try {
+        await this.saveToSupabase(opportunity);
+      } catch (error) {
+        // Fallback to localStorage if Supabase fails (e.g., no auth)
+        console.warn('Supabase save failed, falling back to localStorage:', error);
+        this.saveToLocalStorage(opportunity);
+      }
     } else {
       this.saveToLocalStorage(opportunity);
     }
@@ -130,7 +136,13 @@ class OpportunityStorage {
 
   async getOpportunities(): Promise<SavedOpportunity[]> {
     if (this.settings.useSupabase) {
-      return await this.getFromSupabase();
+      try {
+        return await this.getFromSupabase();
+      } catch (error) {
+        // Fallback to localStorage if Supabase fails (e.g., no auth)
+        console.warn('Supabase read failed, falling back to localStorage:', error);
+        return this.getFromLocalStorage();
+      }
     } else {
       return this.getFromLocalStorage();
     }
@@ -138,7 +150,13 @@ class OpportunityStorage {
 
   async deleteOpportunity(id: string): Promise<void> {
     if (this.settings.useSupabase) {
-      await this.deleteFromSupabase(id);
+      try {
+        await this.deleteFromSupabase(id);
+      } catch (error) {
+        // Fallback to localStorage if Supabase fails (e.g., no auth)
+        console.warn('Supabase delete failed, falling back to localStorage:', error);
+        this.deleteFromLocalStorage(id);
+      }
     } else {
       this.deleteFromLocalStorage(id);
     }
