@@ -23,6 +23,7 @@ import { ScoringPreview } from "@/components/ScoringPreview";
 import { AutoMappedProduct } from "@/lib/normalizeBlackBox";
 import { ProductWithKeywords } from "@/lib/matchKeyword";
 import { computeFinalScore, calculateH10Score } from "@/utils/scoringUtils";
+import { HelpTooltip } from "@/components/HelpTooltip";
 
 type SortField = 'title' | 'revenue' | 'price' | 'searchVolume' | 'reviewCount' | 'rating' | 'score' | 'brand' | 'bsr' | 'category' | 'salesTrend' | 'seller' | 'subcategory' | 'priceTrend' | 'sellerCountry' | 'activeSellers' | 'lastYearSales';
 type SortDirection = 'asc' | 'desc';
@@ -429,124 +430,237 @@ const Score = () => {
                    <Table className="min-w-[1400px] border-spacing-0 table-fixed">
                   <TableHeader className="sticky top-0 z-50 bg-background border-b shadow-sm">
                     <TableRow className="border-none">
-                       <TableHead className="sticky left-0 z-50 bg-background w-[60px] min-w-[60px] max-w-[60px] p-0 border-r text-xs h-12 flex items-center justify-center">Image</TableHead>
-                       <TableHead className="bg-background sticky left-[60px] z-50 w-[200px] min-w-[200px] max-w-[200px] p-1 border-r h-12">
+                        <TableHead className="sticky left-0 z-50 bg-background w-[60px] min-w-[60px] max-w-[60px] p-0 border-r text-xs h-12 flex items-center justify-center">
+                          <div className="flex items-center gap-1">
+                            <span>Image</span>
+                            <HelpTooltip 
+                              title="Product Image"
+                              content="Visual preview of the product to help with identification and quick assessment."
+                              size="sm"
+                            />
+                          </div>
+                        </TableHead>
+                        <TableHead className="bg-background sticky left-[60px] z-50 w-[200px] min-w-[200px] max-w-[200px] p-1 border-r h-12">
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => handleSort('title')}
+                            className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                          >
+                            <div className="flex items-center gap-1 w-full justify-center">
+                              <span className="line-clamp-2 text-center">Product Title</span>
+                              <HelpTooltip 
+                                title="Product Title"
+                                content="The main title or name of the product as listed on the marketplace. Click to sort products alphabetically."
+                                size="sm"
+                              />
+                              {getSortIcon('title')}
+                            </div>
+                          </Button>
+                        </TableHead>
+                       <TableHead className="text-center bg-background sticky left-[260px] z-50 w-[120px] min-w-[120px] max-w-[120px] p-1 border-r h-12">
                          <Button 
                            variant="ghost" 
-                           onClick={() => handleSort('title')}
+                           onClick={() => handleSort('score')}
                            className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                          >
-                           <span className="line-clamp-2 text-center">Product Title</span> {getSortIcon('title')}
-                         </Button>
-                       </TableHead>
-                      <TableHead className="text-center bg-background sticky left-[260px] z-50 w-[120px] min-w-[120px] max-w-[120px] p-1 border-r h-12">
-                        <Button 
-                          variant="ghost" 
-                          onClick={() => handleSort('score')}
-                          className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                        >
-                          <span className="line-clamp-2 text-center font-semibold text-primary">Opportunity Score</span> {getSortIcon('score')}
-                        </Button>
-                      </TableHead>
-                      <TableHead className="text-right bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
-                        <Button 
-                          variant="ghost" 
-                          onClick={() => handleSort('revenue')}
-                          className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                        >
-                          <span className="line-clamp-2 text-center">Revenue /mo</span> {getSortIcon('revenue')}
-                        </Button>
-                      </TableHead>
-                      <TableHead className="text-right bg-background w-[80px] min-w-[80px] max-w-[80px] p-1 h-12">
-                        <Button 
-                          variant="ghost" 
-                          onClick={() => handleSort('price')}
-                          className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                        >
-                          <span className="line-clamp-2 text-center">Price</span> {getSortIcon('price')}
-                        </Button>
-                      </TableHead>
-                      <TableHead className="text-right bg-background w-[100px] min-w-[100px] max-w-[100px] p-1 h-12">
-                        <Button 
-                          variant="ghost" 
-                          onClick={() => handleSort('reviewCount')}
-                          className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                        >
-                          <span className="line-clamp-2 text-center">Review Count</span> {getSortIcon('reviewCount')}
-                        </Button>
-                      </TableHead>
-                       <TableHead className="text-right bg-background w-[80px] min-w-[80px] max-w-[80px] p-1 h-12">
-                         <Button 
-                           variant="ghost" 
-                           onClick={() => handleSort('rating')}
-                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                         >
-                           <span className="line-clamp-2 text-center">Rating</span> {getSortIcon('rating')}
-                         </Button>
-                       </TableHead>
-                       <TableHead className="text-left bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
-                         <Button 
-                           variant="ghost" 
-                           onClick={() => handleSort('brand')}
-                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                         >
-                           <span className="line-clamp-2 text-center">Brand</span> {getSortIcon('brand')}
-                         </Button>
-                       </TableHead>
-                       <TableHead className="text-right bg-background w-[100px] min-w-[100px] max-w-[100px] p-1 h-12">
-                         <Button 
-                           variant="ghost" 
-                           onClick={() => handleSort('bsr')}
-                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                         >
-                           <span className="line-clamp-2 text-center">BSR</span> {getSortIcon('bsr')}
-                         </Button>
-                       </TableHead>
-                       <TableHead className="text-left bg-background w-[140px] min-w-[140px] max-w-[140px] p-1 h-12">
-                         <Button 
-                           variant="ghost" 
-                           onClick={() => handleSort('category')}
-                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                         >
-                           <span className="line-clamp-2 text-center">Category</span> {getSortIcon('category')}
-                         </Button>
-                       </TableHead>
-                       <TableHead className="text-right bg-background w-[100px] min-w-[100px] max-w-[100px] p-1 h-12">
-                         <Button 
-                           variant="ghost" 
-                           onClick={() => handleSort('salesTrend')}
-                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                         >
-                           <span className="line-clamp-2 text-center">Sales Trend %</span> {getSortIcon('salesTrend')}
-                         </Button>
-                       </TableHead>
-                       <TableHead className="text-left bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
-                         <Button 
-                           variant="ghost" 
-                           onClick={() => handleSort('seller')}
-                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                         >
-                           <span className="line-clamp-2 text-center">Seller</span> {getSortIcon('seller')}
-                         </Button>
-                       </TableHead>
-                       <TableHead className="text-left bg-background w-[140px] min-w-[140px] max-w-[140px] p-1 h-12">
-                         <Button 
-                           variant="ghost" 
-                           onClick={() => handleSort('subcategory')}
-                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                         >
-                           <span className="line-clamp-2 text-center">Subcategory</span> {getSortIcon('subcategory')}
+                           <div className="flex items-center gap-1 w-full justify-center">
+                             <span className="line-clamp-2 text-center font-semibold text-primary">Opportunity Score</span>
+                             <HelpTooltip 
+                               title="Opportunity Score"
+                               content="AI-calculated score (0-100) based on revenue potential, competition, demand, and market factors. Higher scores indicate better opportunities."
+                               size="sm"
+                             />
+                             {getSortIcon('score')}
+                           </div>
                          </Button>
                        </TableHead>
                        <TableHead className="text-right bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
                          <Button 
                            variant="ghost" 
-                           onClick={() => handleSort('priceTrend')}
+                           onClick={() => handleSort('revenue')}
                            className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
                          >
-                           <span className="line-clamp-2 text-center">Price Trend (90 days)</span> {getSortIcon('priceTrend')}
+                           <div className="flex items-center gap-1 w-full justify-center">
+                             <span className="line-clamp-2 text-center">Revenue /mo</span>
+                             <HelpTooltip 
+                               title="Monthly Revenue"
+                               content="Estimated monthly revenue in USD based on sales velocity and pricing data. Higher revenue indicates stronger market demand."
+                               size="sm"
+                             />
+                             {getSortIcon('revenue')}
+                           </div>
                          </Button>
                        </TableHead>
+                       <TableHead className="text-right bg-background w-[80px] min-w-[80px] max-w-[80px] p-1 h-12">
+                         <Button 
+                           variant="ghost" 
+                           onClick={() => handleSort('price')}
+                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                         >
+                           <div className="flex items-center gap-1 w-full justify-center">
+                             <span className="line-clamp-2 text-center">Price</span>
+                             <HelpTooltip 
+                               title="Product Price"
+                               content="Current selling price of the product. Important for calculating profit margins and market positioning."
+                               size="sm"
+                             />
+                             {getSortIcon('price')}
+                           </div>
+                         </Button>
+                       </TableHead>
+                       <TableHead className="text-right bg-background w-[100px] min-w-[100px] max-w-[100px] p-1 h-12">
+                         <Button 
+                           variant="ghost" 
+                           onClick={() => handleSort('reviewCount')}
+                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                         >
+                           <div className="flex items-center gap-1 w-full justify-center">
+                             <span className="line-clamp-2 text-center">Review Count</span>
+                             <HelpTooltip 
+                               title="Review Count"
+                               content="Total number of customer reviews. Indicates product popularity and customer engagement level."
+                               size="sm"
+                             />
+                             {getSortIcon('reviewCount')}
+                           </div>
+                         </Button>
+                       </TableHead>
+                        <TableHead className="text-right bg-background w-[80px] min-w-[80px] max-w-[80px] p-1 h-12">
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => handleSort('rating')}
+                            className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                          >
+                            <div className="flex items-center gap-1 w-full justify-center">
+                              <span className="line-clamp-2 text-center">Rating</span>
+                              <HelpTooltip 
+                                title="Product Rating"
+                                content="Average customer rating (1-5 stars). Higher ratings indicate better customer satisfaction and product quality."
+                                size="sm"
+                              />
+                              {getSortIcon('rating')}
+                            </div>
+                          </Button>
+                        </TableHead>
+                        <TableHead className="text-left bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => handleSort('brand')}
+                            className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                          >
+                            <div className="flex items-center gap-1 w-full justify-center">
+                              <span className="line-clamp-2 text-center">Brand</span>
+                              <HelpTooltip 
+                                title="Brand Name"
+                                content="The brand or manufacturer of the product. Helps identify market players and competition."
+                                size="sm"
+                              />
+                              {getSortIcon('brand')}
+                            </div>
+                          </Button>
+                        </TableHead>
+                        <TableHead className="text-right bg-background w-[100px] min-w-[100px] max-w-[100px] p-1 h-12">
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => handleSort('bsr')}
+                            className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                          >
+                            <div className="flex items-center gap-1 w-full justify-center">
+                              <span className="line-clamp-2 text-center">BSR</span>
+                              <HelpTooltip 
+                                title="Best Seller Rank"
+                                content="Amazon's Best Seller Rank within the product category. Lower numbers indicate better sales performance."
+                                size="sm"
+                              />
+                              {getSortIcon('bsr')}
+                            </div>
+                          </Button>
+                        </TableHead>
+                        <TableHead className="text-left bg-background w-[140px] min-w-[140px] max-w-[140px] p-1 h-12">
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => handleSort('category')}
+                            className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                          >
+                            <div className="flex items-center gap-1 w-full justify-center">
+                              <span className="line-clamp-2 text-center">Category</span>
+                              <HelpTooltip 
+                                title="Product Category"
+                                content="The main marketplace category where this product is listed. Helps understand market dynamics and competition."
+                                size="sm"
+                              />
+                              {getSortIcon('category')}
+                            </div>
+                          </Button>
+                        </TableHead>
+                        <TableHead className="text-right bg-background w-[100px] min-w-[100px] max-w-[100px] p-1 h-12">
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => handleSort('salesTrend')}
+                            className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                          >
+                            <div className="flex items-center gap-1 w-full justify-center">
+                              <span className="line-clamp-2 text-center">Sales Trend %</span>
+                              <HelpTooltip 
+                                title="Sales Trend"
+                                content="90-day sales trend percentage. Positive values indicate growing sales, negative values show declining sales."
+                                size="sm"
+                              />
+                              {getSortIcon('salesTrend')}
+                            </div>
+                          </Button>
+                        </TableHead>
+                        <TableHead className="text-left bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => handleSort('seller')}
+                            className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                          >
+                            <div className="flex items-center gap-1 w-full justify-center">
+                              <span className="line-clamp-2 text-center">Seller</span>
+                              <HelpTooltip 
+                                title="Seller Name"
+                                content="The merchant or seller offering this product. Helps identify competitors and market players."
+                                size="sm"
+                              />
+                              {getSortIcon('seller')}
+                            </div>
+                          </Button>
+                        </TableHead>
+                        <TableHead className="text-left bg-background w-[140px] min-w-[140px] max-w-[140px] p-1 h-12">
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => handleSort('subcategory')}
+                            className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                          >
+                            <div className="flex items-center gap-1 w-full justify-center">
+                              <span className="line-clamp-2 text-center">Subcategory</span>
+                              <HelpTooltip 
+                                title="Product Subcategory"
+                                content="More specific product classification within the main category. Provides deeper market segmentation insights."
+                                size="sm"
+                              />
+                              {getSortIcon('subcategory')}
+                            </div>
+                          </Button>
+                        </TableHead>
+                        <TableHead className="text-right bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
+                          <Button 
+                            variant="ghost" 
+                            onClick={() => handleSort('priceTrend')}
+                            className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                          >
+                            <div className="flex items-center gap-1 w-full justify-center">
+                              <span className="line-clamp-2 text-center">Price Trend (90 days)</span>
+                              <HelpTooltip 
+                                title="Price Trend"
+                                content="90-day price change percentage. Shows if the product price is increasing or decreasing over time."
+                                size="sm"
+                              />
+                              {getSortIcon('priceTrend')}
+                            </div>
+                          </Button>
+                        </TableHead>
                        <TableHead className="text-left bg-background w-20 p-1 h-12">
                          <Button 
                            variant="ghost" 
