@@ -70,6 +70,7 @@ const AppContent = () => {
             {/* Protected routes */}
             <Route path="/" element={<Home />} />
             <Route 
+              caseSensitive
               path="/score" 
               element={
                 <ErrorBoundary fallbackTitle="Scoring Error">
