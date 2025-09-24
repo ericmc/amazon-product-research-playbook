@@ -270,9 +270,11 @@ const Score = () => {
     const syncScrollbars = () => {
       // Set the content width to match the table's scrollable content
       const tableScrollbarChild = document.getElementById('external-scrollbar-content');
-      if (tableScrollbarChild) {
-        // Make the content div exactly the same width as the table's scroll width
-        tableScrollbarChild.style.width = tableViewport.scrollWidth + 'px';
+      if (tableScrollbarChild && tableViewport.scrollWidth > tableViewport.clientWidth) {
+        // Make the content div wider than its container to trigger native scrollbar
+        const containerWidth = externalScrollbar.clientWidth;
+        const scrollRatio = tableViewport.scrollWidth / tableViewport.clientWidth;
+        tableScrollbarChild.style.width = (containerWidth * scrollRatio) + 'px';
       }
     };
 
@@ -691,10 +693,11 @@ const Score = () => {
                   <div 
                     className="overflow-x-auto overflow-y-hidden h-4 bg-muted/40 rounded-md border border-border" 
                     id="external-scrollbar"
+                    style={{ width: '100%' }}
                   >
                     <div 
                       id="external-scrollbar-content" 
-                      style={{ height: '100%', backgroundColor: 'transparent', minWidth: '100%' }} 
+                      style={{ height: '100%', minHeight: '1px', backgroundColor: 'rgba(0,0,0,0.1)' }} 
                     />
                   </div>
                 </div>
