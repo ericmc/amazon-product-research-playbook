@@ -21,6 +21,7 @@ interface ScoringData {
   price: number;
   reviewCount: number;
   rating: number;
+  imageUrl?: string;
 }
 
 interface ScoringCriterion {
@@ -304,12 +305,26 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
     <div className="space-y-6">
       {/* Product Header with Settings */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">{scoringData.productName}</CardTitle>
-              <CardDescription>Advanced scoring configuration • Product: {scoringData.productName}</CardDescription>
-            </div>
+         <CardHeader>
+           <div className="flex items-center justify-between">
+             <div className="flex items-center gap-3">
+               {scoringData.imageUrl && (
+                 <div className="w-12 h-12 rounded border bg-muted flex items-center justify-center overflow-hidden">
+                   <img 
+                     src={scoringData.imageUrl} 
+                     alt="Product"
+                     className="w-full h-full object-cover"
+                     onError={(e) => {
+                       e.currentTarget.src = '/placeholder.svg';
+                     }}
+                   />
+                 </div>
+               )}
+               <div>
+                 <CardTitle className="text-lg">{scoringData.productName}</CardTitle>
+                 <CardDescription>Advanced scoring configuration • Product: {scoringData.productName}</CardDescription>
+               </div>
+             </div>
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
