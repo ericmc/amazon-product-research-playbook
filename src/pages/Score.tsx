@@ -260,6 +260,55 @@ const Score = () => {
     return filtered;
   }, [importedProducts, searchQuery, revenueFilter, sortField, sortDirection]);
 
+  // Sync external scrollbar with table
+  useEffect(() => {
+    const tableViewport = document.getElementById('products-table-viewport');
+    const externalScrollbar = document.getElementById('external-scrollbar');
+    
+    if (!tableViewport || !externalScrollbar) return;
+
+    const syncScrollbars = () => {
+      // Update external scrollbar width to match table content width
+      const tableScrollbarChild = externalScrollbar.firstElementChild as HTMLElement;
+      if (tableScrollbarChild) {
+        tableScrollbarChild.style.width = tableViewport.scrollWidth + 'px';
+      }
+    };
+
+    let isScrolling = false;
+
+    const onTableScroll = () => {
+      if (isScrolling) return;
+      isScrolling = true;
+      externalScrollbar.scrollLeft = tableViewport.scrollLeft;
+      isScrolling = false;
+    };
+
+    const onExternalScroll = () => {
+      if (isScrolling) return;
+      isScrolling = true;
+      tableViewport.scrollLeft = externalScrollbar.scrollLeft;
+      isScrolling = false;
+    };
+
+    // Set up event listeners
+    tableViewport.addEventListener('scroll', onTableScroll, { passive: true });
+    externalScrollbar.addEventListener('scroll', onExternalScroll, { passive: true });
+
+    // Sync on load and resize
+    const resizeObserver = new ResizeObserver(syncScrollbars);
+    resizeObserver.observe(tableViewport);
+    
+    // Initial sync
+    syncScrollbars();
+
+    return () => {
+      tableViewport.removeEventListener('scroll', onTableScroll);
+      externalScrollbar.removeEventListener('scroll', onExternalScroll);
+      resizeObserver.disconnect();
+    };
+  }, [filteredAndSortedProducts]); // Re-sync when products change
+
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
     return sortDirection === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />;
@@ -362,205 +411,214 @@ const Score = () => {
               </Badge>
             </div>
 
-            {/* Table wrapper with sticky bottom scrollbar */}
-            <div className="relative rounded-md border bg-background">
-              <StickyXScrollbar maxHeight="480px" barHeight={14}>
-                <Table className="min-w-[900px] border-spacing-0">
-                <TableHeader className="sticky top-0 z-40 bg-background border-b shadow-sm">
-                  <TableRow className="border-none">
-                    <TableHead className="sticky left-0 z-50 bg-background w-10 p-0 border-r text-xs h-12 flex items-center justify-center">Image</TableHead>
-                     <TableHead className="w-32 bg-background sticky left-10 z-50 p-1 border-r h-12">
-                       <Button 
-                         variant="ghost" 
-                         onClick={() => handleSort('title')}
-                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                       >
-                         <span className="line-clamp-2 text-center">Product Title</span> {getSortIcon('title')}
-                       </Button>
-                     </TableHead>
-                    <TableHead className="text-center bg-background w-8 p-1 h-12">
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => handleSort('score')}
-                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                      >
-                        <span className="line-clamp-2 text-center">Viability Score</span> {getSortIcon('score')}
-                      </Button>
-                    </TableHead>
-                    <TableHead className="text-right bg-background w-24 p-1 h-12">
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => handleSort('revenue')}
-                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                      >
-                        <span className="line-clamp-2 text-center">Revenue /mo</span> {getSortIcon('revenue')}
-                      </Button>
-                    </TableHead>
-                    <TableHead className="text-right bg-background w-16 p-1 h-12">
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => handleSort('price')}
-                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                      >
-                        <span className="line-clamp-2 text-center">Price</span> {getSortIcon('price')}
-                      </Button>
-                    </TableHead>
-                    <TableHead className="text-right bg-background w-16 p-1 h-12">
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => handleSort('reviewCount')}
-                        className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                      >
-                        <span className="line-clamp-2 text-center">Review Count</span> {getSortIcon('reviewCount')}
-                      </Button>
-                    </TableHead>
-                     <TableHead className="text-right bg-background w-14 p-1 h-12">
-                       <Button 
-                         variant="ghost" 
-                         onClick={() => handleSort('rating')}
-                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                       >
-                         <span className="line-clamp-2 text-center">Rating</span> {getSortIcon('rating')}
-                       </Button>
-                     </TableHead>
-                     <TableHead className="text-left bg-background w-20 p-1 h-12">
-                       <Button 
-                         variant="ghost" 
-                         onClick={() => handleSort('brand')}
-                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                       >
-                         <span className="line-clamp-2 text-center">Brand</span> {getSortIcon('brand')}
-                       </Button>
-                     </TableHead>
-                     <TableHead className="text-right bg-background w-16 p-1 h-12">
-                       <Button 
-                         variant="ghost" 
-                         onClick={() => handleSort('bsr')}
-                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                       >
-                         <span className="line-clamp-2 text-center">BSR</span> {getSortIcon('bsr')}
-                       </Button>
-                     </TableHead>
-                     <TableHead className="text-left bg-background w-24 p-1 h-12">
-                       <Button 
-                         variant="ghost" 
-                         onClick={() => handleSort('category')}
-                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                       >
-                         <span className="line-clamp-2 text-center">Category</span> {getSortIcon('category')}
-                       </Button>
-                     </TableHead>
-                     <TableHead className="text-right bg-background w-16 p-1 h-12">
-                       <Button 
-                         variant="ghost" 
-                         onClick={() => handleSort('salesTrend')}
-                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                       >
-                         <span className="line-clamp-2 text-center">Sales Trend %</span> {getSortIcon('salesTrend')}
-                       </Button>
-                     </TableHead>
-                     <TableHead className="text-left bg-background w-20 p-1 h-12">
-                       <Button 
-                         variant="ghost" 
-                         onClick={() => handleSort('seller')}
-                         className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
-                       >
-                         <span className="line-clamp-2 text-center">Seller</span> {getSortIcon('seller')}
-                       </Button>
-                     </TableHead>
-                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAndSortedProducts.map((product, index) => {
-                    const isSelected = selectedProduct === product;
-                    const imageUrl = (product.rawData?.['Image URL'] || product.rawData?.['image url'] || '').trim();
-                    const viabilityScore = calculateProductScore(product);
-                    
-                    return (
-                      <TableRow 
-                        key={index}
-                        className={`cursor-pointer hover:bg-muted/50 ${isSelected ? 'bg-muted' : ''}`}
-                        onClick={() => handleProductSelect(product)}
-                      >
-                        <TableCell className="sticky left-0 z-40 bg-background w-10 p-0 border-r">
-                          <div className="relative group" onMouseEnter={() => setHoverImageUrl(imageUrl)} onMouseLeave={() => setHoverImageUrl(null)}>
-                            <div className="w-9 h-9 m-0.5 rounded border bg-muted flex items-center justify-center overflow-hidden cursor-pointer">
-                              {imageUrl ? (
-                                <img 
-                                  src={imageUrl} 
-                                  alt="Product image"
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    e.currentTarget.src = '/placeholder.svg';
-                                  }}
-                                />
-                              ) : (
-                                <FileText className="h-2 w-2 text-muted-foreground" />
-                              )}
-                            </div>
-                            {/* Preview rendered via portal */}
-                          </div>
-                        </TableCell>
-                         <TableCell className="sticky left-10 z-40 bg-background w-32 p-1 border-r">
-                           <div className="flex items-center gap-1">
-                              <div className="text-[10px] font-medium leading-tight h-8 flex items-center flex-1" title={product.productData.title}>
-                                <span className="overflow-hidden text-ellipsis line-clamp-2 max-h-8">
-                                  {product.productData.title || 'Unknown Product'}
-                                </span>
+            {/* Table wrapper with external sticky scrollbar */}
+            <div className="space-y-2">
+              <div className="relative rounded-md border bg-background overflow-hidden">
+                <div className="overflow-auto max-h-[480px]" id="products-table-viewport">
+                  <Table className="min-w-[900px] border-spacing-0">
+                  <TableHeader className="sticky top-0 z-40 bg-background border-b shadow-sm">
+                    <TableRow className="border-none">
+                      <TableHead className="sticky left-0 z-50 bg-background w-10 p-0 border-r text-xs h-12 flex items-center justify-center">Image</TableHead>
+                       <TableHead className="w-32 bg-background sticky left-10 z-50 p-1 border-r h-12">
+                         <Button 
+                           variant="ghost" 
+                           onClick={() => handleSort('title')}
+                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                         >
+                           <span className="line-clamp-2 text-center">Product Title</span> {getSortIcon('title')}
+                         </Button>
+                       </TableHead>
+                      <TableHead className="text-center bg-background w-8 p-1 h-12">
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => handleSort('score')}
+                          className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                        >
+                          <span className="line-clamp-2 text-center">Viability Score</span> {getSortIcon('score')}
+                        </Button>
+                      </TableHead>
+                      <TableHead className="text-right bg-background w-24 p-1 h-12">
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => handleSort('revenue')}
+                          className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                        >
+                          <span className="line-clamp-2 text-center">Revenue /mo</span> {getSortIcon('revenue')}
+                        </Button>
+                      </TableHead>
+                      <TableHead className="text-right bg-background w-16 p-1 h-12">
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => handleSort('price')}
+                          className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                        >
+                          <span className="line-clamp-2 text-center">Price</span> {getSortIcon('price')}
+                        </Button>
+                      </TableHead>
+                      <TableHead className="text-right bg-background w-16 p-1 h-12">
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => handleSort('reviewCount')}
+                          className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                        >
+                          <span className="line-clamp-2 text-center">Review Count</span> {getSortIcon('reviewCount')}
+                        </Button>
+                      </TableHead>
+                       <TableHead className="text-right bg-background w-14 p-1 h-12">
+                         <Button 
+                           variant="ghost" 
+                           onClick={() => handleSort('rating')}
+                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                         >
+                           <span className="line-clamp-2 text-center">Rating</span> {getSortIcon('rating')}
+                         </Button>
+                       </TableHead>
+                       <TableHead className="text-left bg-background w-20 p-1 h-12">
+                         <Button 
+                           variant="ghost" 
+                           onClick={() => handleSort('brand')}
+                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                         >
+                           <span className="line-clamp-2 text-center">Brand</span> {getSortIcon('brand')}
+                         </Button>
+                       </TableHead>
+                       <TableHead className="text-right bg-background w-16 p-1 h-12">
+                         <Button 
+                           variant="ghost" 
+                           onClick={() => handleSort('bsr')}
+                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                         >
+                           <span className="line-clamp-2 text-center">BSR</span> {getSortIcon('bsr')}
+                         </Button>
+                       </TableHead>
+                       <TableHead className="text-left bg-background w-24 p-1 h-12">
+                         <Button 
+                           variant="ghost" 
+                           onClick={() => handleSort('category')}
+                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                         >
+                           <span className="line-clamp-2 text-center">Category</span> {getSortIcon('category')}
+                         </Button>
+                       </TableHead>
+                       <TableHead className="text-right bg-background w-16 p-1 h-12">
+                         <Button 
+                           variant="ghost" 
+                           onClick={() => handleSort('salesTrend')}
+                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                         >
+                           <span className="line-clamp-2 text-center">Sales Trend %</span> {getSortIcon('salesTrend')}
+                         </Button>
+                       </TableHead>
+                       <TableHead className="text-left bg-background w-20 p-1 h-12">
+                         <Button 
+                           variant="ghost" 
+                           onClick={() => handleSort('seller')}
+                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                         >
+                           <span className="line-clamp-2 text-center">Seller</span> {getSortIcon('seller')}
+                         </Button>
+                       </TableHead>
+                     </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredAndSortedProducts.map((product, index) => {
+                      const isSelected = selectedProduct === product;
+                      const imageUrl = (product.rawData?.['Image URL'] || product.rawData?.['image url'] || '').trim();
+                      const viabilityScore = calculateProductScore(product);
+                      
+                      return (
+                        <TableRow 
+                          key={index}
+                          className={`cursor-pointer hover:bg-muted/50 ${isSelected ? 'bg-muted' : ''}`}
+                          onClick={() => handleProductSelect(product)}
+                        >
+                          <TableCell className="sticky left-0 z-40 bg-background w-10 p-0 border-r">
+                            <div className="relative group" onMouseEnter={() => setHoverImageUrl(imageUrl)} onMouseLeave={() => setHoverImageUrl(null)}>
+                              <div className="w-9 h-9 m-0.5 rounded border bg-muted flex items-center justify-center overflow-hidden cursor-pointer">
+                                {imageUrl ? (
+                                  <img 
+                                    src={imageUrl} 
+                                    alt="Product image"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.src = '/placeholder.svg';
+                                    }}
+                                  />
+                                ) : (
+                                  <FileText className="h-2 w-2 text-muted-foreground" />
+                                )}
                               </div>
-                             {product.productData.asin && (
-                               <a
-                                 href={`https://www.amazon.com/dp/${product.productData.asin}`}
-                                 target="_blank"
-                                 rel="noopener noreferrer"
-                                 className="text-blue-600 hover:text-blue-800 flex-shrink-0"
-                                 title="View on Amazon"
-                                 onClick={(e) => e.stopPropagation()}
-                               >
-                                 <ExternalLink className="h-3 w-3" />
-                               </a>
-                             )}
-                           </div>
-                         </TableCell>
-                        <TableCell className="text-center w-8 p-1">
-                          <Badge className={`${getScoreBadge(viabilityScore)} text-[10px] px-1 py-0.5 rounded`}>
-                            {viabilityScore}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right w-24 p-1 text-xs">
-                          ${(product.productData.revenue || 0).toLocaleString()}/mo
-                        </TableCell>
-                        <TableCell className="text-right w-16 p-1 text-xs">
-                          ${(product.productData.price || 0).toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-right w-16 p-1 text-xs">
-                          {(product.productData.reviewCount || 0).toLocaleString()}
-                        </TableCell>
-                         <TableCell className="text-right w-14 p-1 text-xs">
-                           {product.productData.rating ? `${product.productData.rating.toFixed(1)}★` : '-'}
-                         </TableCell>
-                         <TableCell className="text-left w-20 p-1 text-xs">
-                           {product.rawData?.['Brand'] || product.productData.brand || '-'}
-                         </TableCell>
-                         <TableCell className="text-right w-16 p-1 text-xs">
-                           {product.rawData?.['BSR'] ? parseInt(product.rawData['BSR']).toLocaleString() : '-'}
-                         </TableCell>
-                         <TableCell className="text-left w-24 p-1 text-xs">
-                           {product.rawData?.['Category'] || '-'}
-                         </TableCell>
-                         <TableCell className="text-right w-16 p-1 text-xs">
-                           {product.rawData?.['Sales Trend (90 days) (%)'] ? `${parseFloat(product.rawData['Sales Trend (90 days) (%)']).toFixed(1)}%` : '-'}
-                         </TableCell>
-                         <TableCell className="text-left w-20 p-1 text-xs">
-                           {product.rawData?.['Seller'] || '-'}
-                         </TableCell>
-                       </TableRow>
-                    );
-                  })}
-                 </TableBody>
-                 </Table>
-               </StickyXScrollbar>
-             </div>
+                              {/* Preview rendered via portal */}
+                            </div>
+                          </TableCell>
+                           <TableCell className="sticky left-10 z-40 bg-background w-32 p-1 border-r">
+                             <div className="flex items-center gap-1">
+                                <div className="text-[10px] font-medium leading-tight h-8 flex items-center flex-1" title={product.productData.title}>
+                                  <span className="overflow-hidden text-ellipsis line-clamp-2 max-h-8">
+                                    {product.productData.title || 'Unknown Product'}
+                                  </span>
+                                </div>
+                               {product.productData.asin && (
+                                 <a
+                                   href={`https://www.amazon.com/dp/${product.productData.asin}`}
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   className="text-blue-600 hover:text-blue-800 flex-shrink-0"
+                                   title="View on Amazon"
+                                   onClick={(e) => e.stopPropagation()}
+                                 >
+                                   <ExternalLink className="h-3 w-3" />
+                                 </a>
+                               )}
+                             </div>
+                           </TableCell>
+                          <TableCell className="text-center w-8 p-1">
+                            <Badge className={`${getScoreBadge(viabilityScore)} text-[10px] px-1 py-0.5 rounded`}>
+                              {viabilityScore}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right w-24 p-1 text-xs">
+                            ${(product.productData.revenue || 0).toLocaleString()}/mo
+                          </TableCell>
+                          <TableCell className="text-right w-16 p-1 text-xs">
+                            ${(product.productData.price || 0).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right w-16 p-1 text-xs">
+                            {(product.productData.reviewCount || 0).toLocaleString()}
+                          </TableCell>
+                           <TableCell className="text-right w-14 p-1 text-xs">
+                             {product.productData.rating ? `${product.productData.rating.toFixed(1)}★` : '-'}
+                           </TableCell>
+                           <TableCell className="text-left w-20 p-1 text-xs">
+                             {product.rawData?.['Brand'] || product.productData.brand || '-'}
+                           </TableCell>
+                           <TableCell className="text-right w-16 p-1 text-xs">
+                             {product.rawData?.['BSR'] ? parseInt(product.rawData['BSR']).toLocaleString() : '-'}
+                           </TableCell>
+                           <TableCell className="text-left w-24 p-1 text-xs">
+                             {product.rawData?.['Category'] || '-'}
+                           </TableCell>
+                           <TableCell className="text-right w-16 p-1 text-xs">
+                             {product.rawData?.['Sales Trend (90 days) (%)'] ? `${parseFloat(product.rawData['Sales Trend (90 days) (%)']).toFixed(1)}%` : '-'}
+                           </TableCell>
+                           <TableCell className="text-left w-20 p-1 text-xs">
+                             {product.rawData?.['Seller'] || '-'}
+                           </TableCell>
+                         </TableRow>
+                      );
+                    })}
+                   </TableBody>
+                   </Table>
+                </div>
+              </div>
+              
+              {/* External sticky horizontal scrollbar */}
+              <div className="sticky bottom-4 z-50 bg-background/95 backdrop-blur-sm border rounded-lg p-2 shadow-lg">
+                <div className="overflow-x-auto overflow-y-hidden h-4" id="external-scrollbar">
+                  <div style={{ width: '900px', height: '1px', backgroundColor: 'transparent' }} />
+                </div>
+              </div>
+            </div>
 
             {hoverImageUrl && createPortal(
               <div className="fixed inset-0 flex items-center justify-center z-[2147483647] pointer-events-none">
