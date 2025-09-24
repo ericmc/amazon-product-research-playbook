@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, CheckCircle, BarChart3, TrendingUp, ArrowRight } from "lucide-react";
+import StickyXScrollbar from "@/components/StickyxScrollbar";
 
 const phases = [
   {
@@ -69,32 +70,34 @@ const Index = () => {
             <p className="text-muted-foreground">Complete systematic approach to product research and validation</p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {phases.map((phase, index) => (
-              <Card key={phase.id} className="relative group hover:shadow-lg transition-all">
-                <CardHeader className="text-center">
-                  <div className="mx-auto w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-4">
-                    <phase.icon className="w-6 h-6 text-primary-foreground" />
-                  </div>
-                  <div className="absolute -top-3 -left-3 w-8 h-8 bg-business text-business-foreground rounded-full flex items-center justify-center text-sm font-bold">
-                    {phase.id}
-                  </div>
-                  <CardTitle className="text-xl">{phase.title}</CardTitle>
-                  <Badge variant="secondary">{phase.duration}</Badge>
-                </CardHeader>
-                <CardContent className="text-center space-y-4">
-                  <CardDescription className="text-sm">
-                    {phase.description}
-                  </CardDescription>
-                  <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground" asChild>
-                    <Link to={phase.link}>
-                      Start Phase {phase.id}
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <StickyXScrollbar maxHeight="75vh" barHeight={14}>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {phases.map((phase, index) => (
+                <Card key={phase.id} className="relative group hover:shadow-lg transition-all">
+                  <CardHeader className="text-center">
+                    <div className="mx-auto w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-4">
+                      <phase.icon className="w-6 h-6 text-primary-foreground" />
+                    </div>
+                    <div className="absolute -top-3 -left-3 w-8 h-8 bg-business text-business-foreground rounded-full flex items-center justify-center text-sm font-bold">
+                      {phase.id}
+                    </div>
+                    <CardTitle className="text-xl">{phase.title}</CardTitle>
+                    <Badge variant="secondary">{phase.duration}</Badge>
+                  </CardHeader>
+                  <CardContent className="text-center space-y-4">
+                    <CardDescription className="text-sm">
+                      {phase.description}
+                    </CardDescription>
+                    <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground" asChild>
+                      <Link to={phase.link}>
+                        Start Phase {phase.id}
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </StickyXScrollbar>
         </div>
 
         {/* Key Benefits */}
