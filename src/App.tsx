@@ -24,6 +24,7 @@ const Score = lazy(() => import("./pages/Score"));
 const DataIntakeV2 = lazy(() => import("./pages/DataIntakeV2"));
 const SourcingPacket = lazy(() => import("./pages/SourcingPacket"));
 const Help = lazy(() => import("./pages/Help"));
+const StoredImports = lazy(() => import("./pages/StoredImports"));
 
 // Initialize axe in development
 if (import.meta.env.DEV) {
@@ -99,6 +100,16 @@ const AppContent = () => {
                 <ErrorBoundary fallbackTitle="Import Error" fallbackMessage="There was a problem with the import feature. Please check your data and try again.">
                   <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]">Loading...</div>}>
                     <DataIntakeV2 />
+                  </Suspense>
+                </ErrorBoundary>
+              } 
+            />
+            <Route 
+              path="/stored-imports" 
+              element={
+                <ErrorBoundary fallbackTitle="Stored Imports Error">
+                  <Suspense fallback={<div className="flex items-center justify-center min-h-[200px]">Loading...</div>}>
+                    <StoredImports />
                   </Suspense>
                 </ErrorBoundary>
               } 

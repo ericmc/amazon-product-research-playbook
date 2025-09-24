@@ -15,7 +15,8 @@ import {
   Settings,
   HelpCircle,
   LogOut,
-  Home
+  Home,
+  Archive
 } from "lucide-react";
 
 const navigationItems = [
@@ -23,6 +24,7 @@ const navigationItems = [
   { name: "Score", href: "/score", icon: BarChart3, tour: "nav-score" },
   { name: "Opportunities", href: "/opportunities", icon: Database, tour: "nav-opportunities" },
   { name: "Import", href: "/import", icon: Upload, tour: "nav-import" },
+  { name: "Stored Imports", href: "/stored-imports", icon: Archive, tour: "nav-stored-imports" },
   { name: "Integrations", href: "/integrations", icon: Puzzle, tour: "nav-integrations" },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
