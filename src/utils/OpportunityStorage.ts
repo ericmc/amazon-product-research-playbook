@@ -93,7 +93,7 @@ class OpportunityStorage {
   }
 
   private getSettings(): StorageSettings {
-    return safeParseLocalStorage('app_settings', { useSupabase: false });
+    return safeParseLocalStorage('app_settings', { useSupabase: true });
   }
 
   private saveSettings(settings: StorageSettings) {
