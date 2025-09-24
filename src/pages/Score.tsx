@@ -16,7 +16,7 @@ import { ProductWithKeywords } from "@/lib/matchKeyword";
 import { computeFinalScore, calculateH10Score } from "@/utils/scoringUtils";
 import StickyXScrollbar from "@/components/ui/sticky-x-scrollbar";
 
-type SortField = 'title' | 'revenue' | 'price' | 'searchVolume' | 'reviewCount' | 'rating' | 'score' | 'brand' | 'bsr' | 'category' | 'salesTrend' | 'seller';
+type SortField = 'title' | 'revenue' | 'price' | 'searchVolume' | 'reviewCount' | 'rating' | 'score' | 'brand' | 'bsr' | 'category' | 'salesTrend' | 'seller' | 'subcategory' | 'priceTrend' | 'sellerCountry' | 'activeSellers' | 'lastYearSales';
 type SortDirection = 'asc' | 'desc';
 
 interface ScoringData {
@@ -414,8 +414,8 @@ const Score = () => {
             {/* Table wrapper with external sticky scrollbar */}
             <div className="space-y-2">
               <div className="relative rounded-md border bg-background overflow-hidden">
-                <div className="overflow-auto max-h-[480px]" id="products-table-viewport">
-                  <Table className="min-w-[900px] border-spacing-0">
+                 <div className="overflow-auto max-h-[480px]" id="products-table-viewport">
+                   <Table className="min-w-[1200px] border-spacing-0">
                   <TableHeader className="sticky top-0 z-50 bg-background border-b shadow-sm">
                     <TableRow className="border-none">
                       <TableHead className="sticky left-0 z-50 bg-background w-10 p-0 border-r text-xs h-12 flex items-center justify-center">Image</TableHead>
@@ -518,6 +518,51 @@ const Score = () => {
                            <span className="line-clamp-2 text-center">Seller</span> {getSortIcon('seller')}
                          </Button>
                        </TableHead>
+                       <TableHead className="text-left bg-background w-24 p-1 h-12">
+                         <Button 
+                           variant="ghost" 
+                           onClick={() => handleSort('subcategory')}
+                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                         >
+                           <span className="line-clamp-2 text-center">Subcategory</span> {getSortIcon('subcategory')}
+                         </Button>
+                       </TableHead>
+                       <TableHead className="text-right bg-background w-20 p-1 h-12">
+                         <Button 
+                           variant="ghost" 
+                           onClick={() => handleSort('priceTrend')}
+                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                         >
+                           <span className="line-clamp-2 text-center">Price Trend (90 days)</span> {getSortIcon('priceTrend')}
+                         </Button>
+                       </TableHead>
+                       <TableHead className="text-left bg-background w-20 p-1 h-12">
+                         <Button 
+                           variant="ghost" 
+                           onClick={() => handleSort('sellerCountry')}
+                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                         >
+                           <span className="line-clamp-2 text-center">Seller Country</span> {getSortIcon('sellerCountry')}
+                         </Button>
+                       </TableHead>
+                       <TableHead className="text-right bg-background w-16 p-1 h-12">
+                         <Button 
+                           variant="ghost" 
+                           onClick={() => handleSort('activeSellers')}
+                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                         >
+                           <span className="line-clamp-2 text-center"># of Active Sellers</span> {getSortIcon('activeSellers')}
+                         </Button>
+                       </TableHead>
+                       <TableHead className="text-right bg-background w-20 p-1 h-12">
+                         <Button 
+                           variant="ghost" 
+                           onClick={() => handleSort('lastYearSales')}
+                           className="h-auto p-0 font-medium text-[10px] hover:bg-transparent leading-tight w-full"
+                         >
+                           <span className="line-clamp-2 text-center">Last Year Sales</span> {getSortIcon('lastYearSales')}
+                         </Button>
+                       </TableHead>
                      </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -604,6 +649,21 @@ const Score = () => {
                            <TableCell className="text-left w-20 p-1 text-xs">
                              {product.rawData?.['Seller'] || '-'}
                            </TableCell>
+                           <TableCell className="text-left w-24 p-1 text-xs">
+                             {product.rawData?.['Subcategory'] || '-'}
+                           </TableCell>
+                           <TableCell className="text-right w-20 p-1 text-xs">
+                             {product.rawData?.['Price Trend (90 days)'] ? `${parseFloat(product.rawData['Price Trend (90 days)']).toFixed(1)}%` : '-'}
+                           </TableCell>
+                           <TableCell className="text-left w-20 p-1 text-xs">
+                             {product.rawData?.['Seller Country'] || '-'}
+                           </TableCell>
+                           <TableCell className="text-right w-16 p-1 text-xs">
+                             {product.rawData?.['# of Active Sellers'] || product.rawData?.['Active Sellers'] || '-'}
+                           </TableCell>
+                           <TableCell className="text-right w-20 p-1 text-xs">
+                             {product.rawData?.['Last Year Sales'] ? parseInt(product.rawData['Last Year Sales']).toLocaleString() : '-'}
+                           </TableCell>
                          </TableRow>
                       );
                     })}
@@ -615,7 +675,7 @@ const Score = () => {
               {/* External sticky horizontal scrollbar */}
               <div className="sticky bottom-4 z-50 bg-background/95 backdrop-blur-sm border rounded-lg p-2 shadow-lg">
                 <div className="overflow-x-auto overflow-y-hidden h-4" id="external-scrollbar">
-                  <div style={{ width: '900px', height: '1px', backgroundColor: 'transparent' }} />
+                  <div style={{ width: '1200px', height: '1px', backgroundColor: 'transparent' }} />
                 </div>
               </div>
             </div>
