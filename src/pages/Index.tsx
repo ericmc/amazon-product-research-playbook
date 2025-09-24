@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, CheckCircle, BarChart3, TrendingUp, ArrowRight } from "lucide-react";
-import StickyXScrollbar from "@/components/StickyxScrollbar";
+import StickyXScrollbar from "@/components/StickyXScrollbar";
+
 
 const phases = [
   {
