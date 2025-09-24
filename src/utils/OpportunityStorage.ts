@@ -224,7 +224,7 @@ class OpportunityStorage {
 
   private async getFromSupabase(): Promise<SavedOpportunity[]> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return [];
+    if (!user) throw new Error('User not authenticated');
 
     const { data, error } = await supabase
       .from('opportunities')
