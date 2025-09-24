@@ -416,7 +416,7 @@ const Score = () => {
               <div className="relative rounded-md border bg-background overflow-hidden">
                 <div className="overflow-auto max-h-[480px]" id="products-table-viewport">
                   <Table className="min-w-[900px] border-spacing-0">
-                  <TableHeader className="sticky top-0 z-40 bg-background border-b shadow-sm">
+                  <TableHeader className="sticky top-0 z-50 bg-background border-b shadow-sm">
                     <TableRow className="border-none">
                       <TableHead className="sticky left-0 z-50 bg-background w-10 p-0 border-r text-xs h-12 flex items-center justify-center">Image</TableHead>
                        <TableHead className="w-32 bg-background sticky left-10 z-50 p-1 border-r h-12">
