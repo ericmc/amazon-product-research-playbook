@@ -392,10 +392,18 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
               />
             </div>
             <div className="space-y-2">
-              <Badge className={`${getRecommendationBadge(opportunityRecommendation.recommendation)} text-sm px-4 py-2`}>
-                {opportunityRecommendation.recommendation === 'Proceed' ? '✅ Proceed' :
-                 opportunityRecommendation.recommendation === 'Monitor / Gather Data' ? '⚠️ Monitor / Gather Data' : '❌ Reject'}
-              </Badge>
+              <Button 
+                className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2"
+                onClick={() => {
+                  // Save opportunity logic here
+                  toast({
+                    title: "Opportunity Saved",
+                    description: `${scoringData.productName} has been saved to your opportunities.`,
+                  });
+                }}
+              >
+                Save Opportunity
+              </Button>
               <p className="text-sm text-muted-foreground">{opportunityRecommendation.description}</p>
               <p className="text-xs font-medium">{opportunityRecommendation.action}</p>
               <div className="text-xs text-muted-foreground pt-2 border-t">
