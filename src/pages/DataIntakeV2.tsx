@@ -31,8 +31,33 @@ const DataIntakeV2 = () => {
       const parsed = await parseCSVFile(file);
       const { products: processedProducts, revenueSource } = processBlackBoxData(parsed);
       
+      // Extract most common category from products
+      const categories = processedProducts
+        .map(p => p.rawData?.['Category'])
+        .filter(Boolean) as string[];
+      
+      const categoryCount = categories.reduce((acc, cat) => {
+        acc[cat] = (acc[cat] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const mostCommonCategory = Object.entries(categoryCount)
+        .sort(([,a], [,b]) => b - a)[0]?.[0] || 'Unknown';
+      
+      // Store metadata alongside products
+      const importMetadata = {
+        filename: file.name,
+        category: mostCommonCategory,
+        importDate: new Date().toISOString(),
+        productCount: processedProducts.length,
+        revenueSource
+      };
+      
       setProducts(processedProducts);
       setImportSummary({ count: processedProducts.length, revenueSource });
+      
+      // Store metadata in localStorage
+      localStorage.setItem('importMetadata', JSON.stringify(importMetadata));
       
       toast({
         title: "Import Complete",

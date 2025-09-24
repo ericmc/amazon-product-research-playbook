@@ -45,6 +45,7 @@ const Score = () => {
   const [selectedProduct, setSelectedProduct] = useState<AutoMappedProduct | ProductWithKeywords | null>(null);
   const [scoringData, setScoringData] = useState<ScoringData | null>(null);
   const [hasImportedData, setHasImportedData] = useState(false);
+  const [importMetadata, setImportMetadata] = useState<{filename: string, category: string, importDate: string, productCount: number} | null>(null);
   
   // Filtering and sorting state
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,11 +65,19 @@ const Score = () => {
   useEffect(() => {
     // Check for imported data from the new DataIntakeV2 flow
     const storedProducts = localStorage.getItem('importedProducts');
+    const storedMetadata = localStorage.getItem('importMetadata');
+    
     if (storedProducts) {
       try {
         const products = JSON.parse(storedProducts);
         setImportedProducts(products);
         setHasImportedData(true);
+        
+        // Load import metadata if available
+        if (storedMetadata) {
+          const metadata = JSON.parse(storedMetadata);
+          setImportMetadata(metadata);
+        }
         
         // Auto-select first product for scoring
         if (products.length > 0) {
@@ -361,10 +370,14 @@ const Score = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Select Product to Score
+              Product Scoring{importMetadata ? ` - ${importMetadata.category}` : ''}
             </CardTitle>
             <CardDescription>
-              Choose from your {importedProducts?.length || 0} imported products
+              {importMetadata ? (
+                <>Choose from your {importedProducts?.length || 0} imported products from <span className="font-medium">{importMetadata.filename}</span></>
+              ) : (
+                <>Choose from your {importedProducts?.length || 0} imported products</>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
