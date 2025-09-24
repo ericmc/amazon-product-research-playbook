@@ -404,7 +404,7 @@ const Score = () => {
             {/* Table wrapper - 30% taller */}
             <div className="space-y-4">
               <div className="relative rounded-md border bg-background overflow-hidden">
-                <div className="overflow-auto min-h-[880px] max-h-[880px]" id="products-table-viewport">
+                <div className="overflow-x-auto overflow-y-hidden min-h-[880px] max-h-[880px]" id="products-table-viewport">
                    <Table className="min-w-[1200px] border-spacing-0">
                   <TableHeader className="sticky top-0 z-50 bg-background border-b shadow-sm">
                     <TableRow className="border-none">
