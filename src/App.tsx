@@ -68,7 +68,6 @@ const AppContent = () => {
             
             {/* Protected routes */}
             <Route path="/" element={<Score />} />
-            <Route path="/score" element={<Score />} />
             <Route path="/opportunities" element={<Opportunities />} />
             <Route path="/opportunities/:id" element={<OpportunityDetail />} />
             <Route path="/opportunities/:id/decision" element={<Decision />} />
