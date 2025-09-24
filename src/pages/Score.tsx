@@ -405,11 +405,11 @@ const Score = () => {
             <div className="space-y-4">
               <div className="relative rounded-md border bg-background overflow-hidden">
                 <div className="overflow-x-auto overflow-y-hidden min-h-[880px] max-h-[880px]" id="products-table-viewport">
-                   <Table className="min-w-[1200px] border-spacing-0">
+                   <Table className="min-w-[1400px] border-spacing-0 table-fixed">
                   <TableHeader className="sticky top-0 z-50 bg-background border-b shadow-sm">
                     <TableRow className="border-none">
-                      <TableHead className="sticky left-0 z-50 bg-background w-10 p-0 border-r text-xs h-12 flex items-center justify-center">Image</TableHead>
-                       <TableHead className="w-32 bg-background sticky left-10 z-50 p-1 border-r h-12">
+                       <TableHead className="sticky left-0 z-50 bg-background w-[60px] min-w-[60px] max-w-[60px] p-0 border-r text-xs h-12 flex items-center justify-center">Image</TableHead>
+                       <TableHead className="bg-background sticky left-[60px] z-50 w-[200px] min-w-[200px] max-w-[200px] p-1 border-r h-12">
                          <Button 
                            variant="ghost" 
                            onClick={() => handleSort('title')}
@@ -418,7 +418,7 @@ const Score = () => {
                            <span className="line-clamp-2 text-center">Product Title</span> {getSortIcon('title')}
                          </Button>
                        </TableHead>
-                      <TableHead className="text-center bg-background w-8 p-1 h-12">
+                      <TableHead className="text-center bg-background w-[100px] min-w-[100px] max-w-[100px] p-1 h-12">
                         <Button 
                           variant="ghost" 
                           onClick={() => handleSort('score')}
@@ -427,7 +427,7 @@ const Score = () => {
                           <span className="line-clamp-2 text-center">Viability Score</span> {getSortIcon('score')}
                         </Button>
                       </TableHead>
-                      <TableHead className="text-right bg-background w-24 p-1 h-12">
+                      <TableHead className="text-right bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
                         <Button 
                           variant="ghost" 
                           onClick={() => handleSort('revenue')}
@@ -436,7 +436,7 @@ const Score = () => {
                           <span className="line-clamp-2 text-center">Revenue /mo</span> {getSortIcon('revenue')}
                         </Button>
                       </TableHead>
-                      <TableHead className="text-right bg-background w-16 p-1 h-12">
+                      <TableHead className="text-right bg-background w-[80px] min-w-[80px] max-w-[80px] p-1 h-12">
                         <Button 
                           variant="ghost" 
                           onClick={() => handleSort('price')}
@@ -445,7 +445,7 @@ const Score = () => {
                           <span className="line-clamp-2 text-center">Price</span> {getSortIcon('price')}
                         </Button>
                       </TableHead>
-                      <TableHead className="text-right bg-background w-16 p-1 h-12">
+                      <TableHead className="text-right bg-background w-[100px] min-w-[100px] max-w-[100px] p-1 h-12">
                         <Button 
                           variant="ghost" 
                           onClick={() => handleSort('reviewCount')}
@@ -454,7 +454,7 @@ const Score = () => {
                           <span className="line-clamp-2 text-center">Review Count</span> {getSortIcon('reviewCount')}
                         </Button>
                       </TableHead>
-                       <TableHead className="text-right bg-background w-14 p-1 h-12">
+                       <TableHead className="text-right bg-background w-[80px] min-w-[80px] max-w-[80px] p-1 h-12">
                          <Button 
                            variant="ghost" 
                            onClick={() => handleSort('rating')}
@@ -463,7 +463,7 @@ const Score = () => {
                            <span className="line-clamp-2 text-center">Rating</span> {getSortIcon('rating')}
                          </Button>
                        </TableHead>
-                       <TableHead className="text-left bg-background w-20 p-1 h-12">
+                       <TableHead className="text-left bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
                          <Button 
                            variant="ghost" 
                            onClick={() => handleSort('brand')}
@@ -472,7 +472,7 @@ const Score = () => {
                            <span className="line-clamp-2 text-center">Brand</span> {getSortIcon('brand')}
                          </Button>
                        </TableHead>
-                       <TableHead className="text-right bg-background w-16 p-1 h-12">
+                       <TableHead className="text-right bg-background w-[100px] min-w-[100px] max-w-[100px] p-1 h-12">
                          <Button 
                            variant="ghost" 
                            onClick={() => handleSort('bsr')}
@@ -481,7 +481,7 @@ const Score = () => {
                            <span className="line-clamp-2 text-center">BSR</span> {getSortIcon('bsr')}
                          </Button>
                        </TableHead>
-                       <TableHead className="text-left bg-background w-24 p-1 h-12">
+                       <TableHead className="text-left bg-background w-[140px] min-w-[140px] max-w-[140px] p-1 h-12">
                          <Button 
                            variant="ghost" 
                            onClick={() => handleSort('category')}
@@ -490,7 +490,7 @@ const Score = () => {
                            <span className="line-clamp-2 text-center">Category</span> {getSortIcon('category')}
                          </Button>
                        </TableHead>
-                       <TableHead className="text-right bg-background w-16 p-1 h-12">
+                       <TableHead className="text-right bg-background w-[100px] min-w-[100px] max-w-[100px] p-1 h-12">
                          <Button 
                            variant="ghost" 
                            onClick={() => handleSort('salesTrend')}
@@ -499,7 +499,7 @@ const Score = () => {
                            <span className="line-clamp-2 text-center">Sales Trend %</span> {getSortIcon('salesTrend')}
                          </Button>
                        </TableHead>
-                       <TableHead className="text-left bg-background w-20 p-1 h-12">
+                       <TableHead className="text-left bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
                          <Button 
                            variant="ghost" 
                            onClick={() => handleSort('seller')}
@@ -508,7 +508,7 @@ const Score = () => {
                            <span className="line-clamp-2 text-center">Seller</span> {getSortIcon('seller')}
                          </Button>
                        </TableHead>
-                       <TableHead className="text-left bg-background w-24 p-1 h-12">
+                       <TableHead className="text-left bg-background w-[140px] min-w-[140px] max-w-[140px] p-1 h-12">
                          <Button 
                            variant="ghost" 
                            onClick={() => handleSort('subcategory')}
@@ -517,7 +517,7 @@ const Score = () => {
                            <span className="line-clamp-2 text-center">Subcategory</span> {getSortIcon('subcategory')}
                          </Button>
                        </TableHead>
-                       <TableHead className="text-right bg-background w-20 p-1 h-12">
+                       <TableHead className="text-right bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
                          <Button 
                            variant="ghost" 
                            onClick={() => handleSort('priceTrend')}
@@ -567,26 +567,26 @@ const Score = () => {
                           className={`cursor-pointer hover:bg-muted/50 ${isSelected ? 'bg-muted' : ''}`}
                           onClick={() => handleProductSelect(product)}
                         >
-                          <TableCell className="sticky left-0 z-40 bg-background w-10 p-0 border-r">
-                            <div className="relative group" onMouseEnter={() => setHoverImageUrl(imageUrl)} onMouseLeave={() => setHoverImageUrl(null)}>
-                              <div className="w-9 h-9 m-0.5 rounded border bg-muted flex items-center justify-center overflow-hidden cursor-pointer">
-                                {imageUrl ? (
-                                  <img 
-                                    src={imageUrl} 
-                                    alt="Product image"
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      e.currentTarget.src = '/placeholder.svg';
-                                    }}
-                                  />
-                                ) : (
-                                  <FileText className="h-2 w-2 text-muted-foreground" />
-                                )}
-                              </div>
-                              {/* Preview rendered via portal */}
-                            </div>
-                          </TableCell>
-                           <TableCell className="sticky left-10 z-40 bg-background w-32 p-1 border-r">
+                           <TableCell className="sticky left-0 z-40 bg-background w-[60px] min-w-[60px] max-w-[60px] p-0 border-r">
+                             <div className="relative group" onMouseEnter={() => setHoverImageUrl(imageUrl)} onMouseLeave={() => setHoverImageUrl(null)}>
+                               <div className="w-9 h-9 m-0.5 rounded border bg-muted flex items-center justify-center overflow-hidden cursor-pointer">
+                                 {imageUrl ? (
+                                   <img 
+                                     src={imageUrl} 
+                                     alt="Product image"
+                                     className="w-full h-full object-cover"
+                                     onError={(e) => {
+                                       e.currentTarget.src = '/placeholder.svg';
+                                     }}
+                                   />
+                                 ) : (
+                                   <FileText className="h-2 w-2 text-muted-foreground" />
+                                 )}
+                               </div>
+                               {/* Preview rendered via portal */}
+                             </div>
+                           </TableCell>
+                           <TableCell className="sticky left-[60px] z-40 bg-background w-[200px] min-w-[200px] max-w-[200px] p-1 border-r">
                              <div className="flex items-center gap-1">
                                 <div className="text-[10px] font-medium leading-tight h-8 flex items-center flex-1" title={product.productData.title}>
                                   <span className="overflow-hidden text-ellipsis line-clamp-2 max-h-8">
@@ -607,42 +607,42 @@ const Score = () => {
                                )}
                              </div>
                            </TableCell>
-                          <TableCell className="text-center w-8 p-1">
-                            <Badge className={`${getScoreBadge(viabilityScore)} text-[10px] px-1 py-0.5 rounded`}>
-                              {viabilityScore}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right w-24 p-1 text-xs">
-                            ${(product.productData.revenue || 0).toLocaleString()}/mo
-                          </TableCell>
-                          <TableCell className="text-right w-16 p-1 text-xs">
-                            ${(product.productData.price || 0).toFixed(2)}
-                          </TableCell>
-                          <TableCell className="text-right w-16 p-1 text-xs">
-                            {(product.productData.reviewCount || 0).toLocaleString()}
-                          </TableCell>
-                           <TableCell className="text-right w-14 p-1 text-xs">
+                           <TableCell className="text-center w-[100px] min-w-[100px] max-w-[100px] p-1">
+                             <Badge className={`${getScoreBadge(viabilityScore)} text-[10px] px-1 py-0.5 rounded`}>
+                               {viabilityScore}
+                             </Badge>
+                           </TableCell>
+                           <TableCell className="text-right w-[120px] min-w-[120px] max-w-[120px] p-1 text-xs">
+                             ${(product.productData.revenue || 0).toLocaleString()}/mo
+                           </TableCell>
+                           <TableCell className="text-right w-[80px] min-w-[80px] max-w-[80px] p-1 text-xs">
+                             ${(product.productData.price || 0).toFixed(2)}
+                           </TableCell>
+                           <TableCell className="text-right w-[100px] min-w-[100px] max-w-[100px] p-1 text-xs">
+                             {(product.productData.reviewCount || 0).toLocaleString()}
+                           </TableCell>
+                           <TableCell className="text-right w-[80px] min-w-[80px] max-w-[80px] p-1 text-xs">
                              {product.productData.rating ? `${product.productData.rating.toFixed(1)}★` : '-'}
                            </TableCell>
-                           <TableCell className="text-left w-20 p-1 text-xs">
+                           <TableCell className="text-left w-[120px] min-w-[120px] max-w-[120px] p-1 text-xs truncate">
                              {product.rawData?.['Brand'] || product.productData.brand || '-'}
                            </TableCell>
-                           <TableCell className="text-right w-16 p-1 text-xs">
+                           <TableCell className="text-right w-[100px] min-w-[100px] max-w-[100px] p-1 text-xs">
                              {product.rawData?.['BSR'] ? parseInt(product.rawData['BSR']).toLocaleString() : '-'}
                            </TableCell>
-                           <TableCell className="text-left w-24 p-1 text-xs">
+                           <TableCell className="text-left w-[140px] min-w-[140px] max-w-[140px] p-1 text-xs truncate">
                              {product.rawData?.['Category'] || '-'}
                            </TableCell>
-                           <TableCell className="text-right w-16 p-1 text-xs">
+                           <TableCell className="text-right w-[100px] min-w-[100px] max-w-[100px] p-1 text-xs">
                              {product.rawData?.['Sales Trend (90 days) (%)'] ? `${parseFloat(product.rawData['Sales Trend (90 days) (%)']).toFixed(1)}%` : '-'}
                            </TableCell>
-                           <TableCell className="text-left w-20 p-1 text-xs">
+                           <TableCell className="text-left w-[120px] min-w-[120px] max-w-[120px] p-1 text-xs truncate">
                              {product.rawData?.['Seller'] || '-'}
                            </TableCell>
-                           <TableCell className="text-left w-24 p-1 text-xs">
+                           <TableCell className="text-left w-[140px] min-w-[140px] max-w-[140px] p-1 text-xs truncate">
                              {product.rawData?.['Subcategory'] || '-'}
                            </TableCell>
-                           <TableCell className="text-right w-20 p-1 text-xs">
+                           <TableCell className="text-right w-[120px] min-w-[120px] max-w-[120px] p-1 text-xs">
                              {product.rawData?.['Price Trend (90 days)'] ? `${parseFloat(product.rawData['Price Trend (90 days)']).toFixed(1)}%` : '-'}
                            </TableCell>
                            <TableCell className="text-left w-20 p-1 text-xs">
