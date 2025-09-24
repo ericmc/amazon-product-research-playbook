@@ -269,26 +269,33 @@ const Score = () => {
 
     const syncScrollbars = () => {
       // Update external scrollbar width to match table content width
-      const tableScrollbarChild = externalScrollbar.firstElementChild as HTMLElement;
+      const tableScrollbarChild = document.getElementById('external-scrollbar-content');
       if (tableScrollbarChild) {
         tableScrollbarChild.style.width = tableViewport.scrollWidth + 'px';
       }
     };
 
     let isScrolling = false;
+    let scrollTimeout: NodeJS.Timeout;
 
     const onTableScroll = () => {
       if (isScrolling) return;
       isScrolling = true;
       externalScrollbar.scrollLeft = tableViewport.scrollLeft;
-      isScrolling = false;
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 16); // ~60fps
     };
 
     const onExternalScroll = () => {
       if (isScrolling) return;
       isScrolling = true;
       tableViewport.scrollLeft = externalScrollbar.scrollLeft;
-      isScrolling = false;
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 16); // ~60fps
     };
 
     // Set up event listeners
@@ -673,9 +680,12 @@ const Score = () => {
               </div>
               
               {/* External sticky horizontal scrollbar */}
-              <div className="sticky bottom-4 z-50 bg-background/95 backdrop-blur-sm border rounded-lg p-2 shadow-lg">
-                <div className="overflow-x-auto overflow-y-hidden h-4" id="external-scrollbar">
-                  <div style={{ width: '1200px', height: '1px', backgroundColor: 'transparent' }} />
+              <div className="sticky bottom-2 z-50 mx-2">
+                <div className="bg-background/95 backdrop-blur-sm border rounded p-1 shadow-sm">
+                  <div className="overflow-x-auto overflow-y-hidden h-2 bg-muted/30 rounded" id="external-scrollbar">
+                    <div id="external-scrollbar-content" style={{ height: '100%', backgroundColor: 'transparent', minWidth: '100%' }} />
+                  </div>
+                  <div className="text-xs text-muted-foreground text-center mt-1">Scroll horizontally to view all columns</div>
                 </div>
               </div>
             </div>
