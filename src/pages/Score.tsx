@@ -268,10 +268,17 @@ const Score = () => {
     if (!tableViewport || !externalScrollbar) return;
 
     const syncScrollbars = () => {
-      // Update external scrollbar width to match table content width
+      // Calculate proper handle width as proportion of visible vs total content
       const tableScrollbarChild = document.getElementById('external-scrollbar-content');
       if (tableScrollbarChild) {
-        tableScrollbarChild.style.width = tableViewport.scrollWidth + 'px';
+        const visibleWidth = tableViewport.clientWidth;
+        const totalWidth = tableViewport.scrollWidth;
+        const handleWidthRatio = Math.min(visibleWidth / totalWidth, 1);
+        const trackWidth = externalScrollbar.clientWidth;
+        const handleWidth = Math.max(trackWidth * handleWidthRatio, 20); // Minimum 20px handle
+        
+        tableScrollbarChild.style.width = handleWidth + 'px';
+        tableScrollbarChild.style.marginLeft = '0px';
       }
     };
 
@@ -281,7 +288,19 @@ const Score = () => {
     const onTableScroll = () => {
       if (isScrolling) return;
       isScrolling = true;
-      externalScrollbar.scrollLeft = tableViewport.scrollLeft;
+      
+      // Update handle position based on scroll progress
+      const tableScrollbarChild = document.getElementById('external-scrollbar-content');
+      if (tableScrollbarChild) {
+        const scrollProgress = tableViewport.scrollLeft / (tableViewport.scrollWidth - tableViewport.clientWidth);
+        const trackWidth = externalScrollbar.clientWidth;
+        const handleWidth = parseFloat(tableScrollbarChild.style.width);
+        const maxPosition = trackWidth - handleWidth;
+        const handlePosition = scrollProgress * maxPosition;
+        
+        tableScrollbarChild.style.marginLeft = handlePosition + 'px';
+      }
+      
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
         isScrolling = false;
@@ -291,16 +310,45 @@ const Score = () => {
     const onExternalScroll = () => {
       if (isScrolling) return;
       isScrolling = true;
-      tableViewport.scrollLeft = externalScrollbar.scrollLeft;
+      
+      // Calculate scroll position from handle position
+      const tableScrollbarChild = document.getElementById('external-scrollbar-content');
+      if (tableScrollbarChild) {
+        const handlePosition = parseFloat(tableScrollbarChild.style.marginLeft || '0');
+        const trackWidth = externalScrollbar.clientWidth;
+        const handleWidth = parseFloat(tableScrollbarChild.style.width);
+        const maxPosition = trackWidth - handleWidth;
+        const scrollProgress = maxPosition > 0 ? handlePosition / maxPosition : 0;
+        const maxScroll = tableViewport.scrollWidth - tableViewport.clientWidth;
+        
+        tableViewport.scrollLeft = scrollProgress * maxScroll;
+      }
+      
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
         isScrolling = false;
       }, 16); // ~60fps
     };
 
-    // Set up event listeners
+    // Set up event listeners - use click/drag for external scrollbar instead of scroll
     tableViewport.addEventListener('scroll', onTableScroll, { passive: true });
-    externalScrollbar.addEventListener('scroll', onExternalScroll, { passive: true });
+    
+    // Handle mouse drag on external scrollbar
+    let isDragging = false;
+    const onMouseDown = (e: MouseEvent) => {
+      isDragging = true;
+      onExternalScroll();
+    };
+    const onMouseMove = (e: MouseEvent) => {
+      if (isDragging) onExternalScroll();
+    };
+    const onMouseUp = () => {
+      isDragging = false;
+    };
+    
+    externalScrollbar.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
 
     // Sync on load and resize
     const resizeObserver = new ResizeObserver(syncScrollbars);
@@ -311,7 +359,9 @@ const Score = () => {
 
     return () => {
       tableViewport.removeEventListener('scroll', onTableScroll);
-      externalScrollbar.removeEventListener('scroll', onExternalScroll);
+      externalScrollbar.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
       resizeObserver.disconnect();
     };
   }, [filteredAndSortedProducts]); // Re-sync when products change
