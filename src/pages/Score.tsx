@@ -268,17 +268,10 @@ const Score = () => {
     if (!tableViewport || !externalScrollbar) return;
 
     const syncScrollbars = () => {
-      // Calculate proper handle width as proportion of visible vs total content
+      // Update external scrollbar width to match table content width
       const tableScrollbarChild = document.getElementById('external-scrollbar-content');
       if (tableScrollbarChild) {
-        const visibleWidth = tableViewport.clientWidth;
-        const totalWidth = tableViewport.scrollWidth;
-        const handleWidthRatio = Math.min(visibleWidth / totalWidth, 1);
-        const trackWidth = externalScrollbar.clientWidth;
-        const handleWidth = Math.max(trackWidth * handleWidthRatio, 20); // Minimum 20px handle
-        
-        tableScrollbarChild.style.width = handleWidth + 'px';
-        tableScrollbarChild.style.marginLeft = '0px';
+        tableScrollbarChild.style.width = tableViewport.scrollWidth + 'px';
       }
     };
 
@@ -288,19 +281,7 @@ const Score = () => {
     const onTableScroll = () => {
       if (isScrolling) return;
       isScrolling = true;
-      
-      // Update handle position based on scroll progress
-      const tableScrollbarChild = document.getElementById('external-scrollbar-content');
-      if (tableScrollbarChild) {
-        const scrollProgress = tableViewport.scrollLeft / (tableViewport.scrollWidth - tableViewport.clientWidth);
-        const trackWidth = externalScrollbar.clientWidth;
-        const handleWidth = parseFloat(tableScrollbarChild.style.width);
-        const maxPosition = trackWidth - handleWidth;
-        const handlePosition = scrollProgress * maxPosition;
-        
-        tableScrollbarChild.style.marginLeft = handlePosition + 'px';
-      }
-      
+      externalScrollbar.scrollLeft = tableViewport.scrollLeft;
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
         isScrolling = false;
@@ -310,45 +291,16 @@ const Score = () => {
     const onExternalScroll = () => {
       if (isScrolling) return;
       isScrolling = true;
-      
-      // Calculate scroll position from handle position
-      const tableScrollbarChild = document.getElementById('external-scrollbar-content');
-      if (tableScrollbarChild) {
-        const handlePosition = parseFloat(tableScrollbarChild.style.marginLeft || '0');
-        const trackWidth = externalScrollbar.clientWidth;
-        const handleWidth = parseFloat(tableScrollbarChild.style.width);
-        const maxPosition = trackWidth - handleWidth;
-        const scrollProgress = maxPosition > 0 ? handlePosition / maxPosition : 0;
-        const maxScroll = tableViewport.scrollWidth - tableViewport.clientWidth;
-        
-        tableViewport.scrollLeft = scrollProgress * maxScroll;
-      }
-      
+      tableViewport.scrollLeft = externalScrollbar.scrollLeft;
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
         isScrolling = false;
       }, 16); // ~60fps
     };
 
-    // Set up event listeners - use click/drag for external scrollbar instead of scroll
+    // Set up event listeners
     tableViewport.addEventListener('scroll', onTableScroll, { passive: true });
-    
-    // Handle mouse drag on external scrollbar
-    let isDragging = false;
-    const onMouseDown = (e: MouseEvent) => {
-      isDragging = true;
-      onExternalScroll();
-    };
-    const onMouseMove = (e: MouseEvent) => {
-      if (isDragging) onExternalScroll();
-    };
-    const onMouseUp = () => {
-      isDragging = false;
-    };
-    
-    externalScrollbar.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    externalScrollbar.addEventListener('scroll', onExternalScroll, { passive: true });
 
     // Sync on load and resize
     const resizeObserver = new ResizeObserver(syncScrollbars);
@@ -359,9 +311,7 @@ const Score = () => {
 
     return () => {
       tableViewport.removeEventListener('scroll', onTableScroll);
-      externalScrollbar.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
+      externalScrollbar.removeEventListener('scroll', onExternalScroll);
       resizeObserver.disconnect();
     };
   }, [filteredAndSortedProducts]); // Re-sync when products change
@@ -730,19 +680,18 @@ const Score = () => {
               </div>
               
               {/* External sticky horizontal scrollbar */}
-              <div className="sticky bottom-4 z-50 mx-4 mb-4">
-                <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-                  <div className="text-xs font-medium text-foreground mb-2 text-center">
+              <div className="sticky bottom-3 z-50 mx-4 mb-4">
+                <div className="bg-card border border-border rounded-lg p-2 shadow-md">
+                  <div className="text-xs text-muted-foreground mb-1 text-center">
                     Scroll horizontally to view all columns
                   </div>
                   <div 
-                    className="overflow-x-auto overflow-y-hidden h-6 bg-muted rounded-md border border-border cursor-pointer hover:bg-muted/80 transition-colors" 
+                    className="overflow-x-auto overflow-y-hidden h-4 bg-muted/40 rounded-md border border-border" 
                     id="external-scrollbar"
                   >
                     <div 
                       id="external-scrollbar-content" 
-                      className="h-full bg-primary/20 hover:bg-primary/30 transition-colors rounded-sm border border-primary/40" 
-                      style={{ minWidth: '100%' }} 
+                      style={{ height: '100%', backgroundColor: 'transparent', minWidth: '100%' }} 
                     />
                   </div>
                 </div>
