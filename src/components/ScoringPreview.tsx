@@ -307,9 +307,9 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
       <Card>
          <CardHeader>
            <div className="flex items-center justify-between">
-             <div className="flex items-center gap-3">
+             <div className="flex items-center gap-4">
                {scoringData.imageUrl && (
-                 <div className="w-12 h-12 rounded border bg-muted flex items-center justify-center overflow-hidden">
+                 <div className="w-24 h-24 rounded border bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
                    <img 
                      src={scoringData.imageUrl} 
                      alt="Product"
