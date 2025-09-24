@@ -78,6 +78,16 @@ const OpportunitiesList = () => {
     loadOpportunities();
   }, []);
 
+  // Refresh opportunities when returning to this page
+  useEffect(() => {
+    const handleFocus = () => {
+      loadOpportunities();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   useEffect(() => {
     let filtered = showStaleOnly ? filterStale(opportunities) : opportunities;
     filtered = sortOpportunities(filtered, sortBy);
