@@ -426,13 +426,13 @@ const Score = () => {
             <div className="space-y-4">
               <div className="relative rounded-md border bg-background overflow-hidden">
                 <div className="overflow-x-auto overflow-y-hidden min-h-[880px] max-h-[880px]" id="products-table-viewport">
-                   <Table className="min-w-[1400px] border-spacing-0 table-fixed">
+                   <Table className="min-w-[1800px] border-spacing-0 table-fixed">
                   <TableHeader className="sticky top-0 z-50 bg-background border-b shadow-sm">
                     <TableRow className="border-none">
                         <TableHead className="sticky left-0 z-50 bg-background w-[60px] min-w-[60px] max-w-[60px] p-0 border-r text-xs h-12 flex items-center justify-center">
                           <span>Image</span>
                         </TableHead>
-                        <TableHead className="bg-background sticky left-[60px] z-50 w-[200px] min-w-[200px] max-w-[200px] p-1 border-r h-12">
+                        <TableHead className="bg-background sticky left-[60px] z-50 w-[280px] min-w-[280px] max-w-[280px] p-1 border-r h-12">
                           <Button 
                             variant="ghost" 
                             onClick={() => handleSort('title')}
@@ -444,7 +444,7 @@ const Score = () => {
                             </div>
                           </Button>
                         </TableHead>
-                       <TableHead className="text-center bg-background sticky left-[260px] z-50 w-[120px] min-w-[120px] max-w-[120px] p-1 border-r h-12">
+                       <TableHead className="text-center bg-background sticky left-[340px] z-50 w-[120px] min-w-[120px] max-w-[120px] p-1 border-r h-12">
                          <Button 
                            variant="ghost" 
                            onClick={() => handleSort('score')}
@@ -456,7 +456,7 @@ const Score = () => {
                            </div>
                          </Button>
                        </TableHead>
-                        <TableHead className="text-right bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
+                        <TableHead className="text-right bg-background w-[100px] min-w-[100px] max-w-[100px] p-1 h-12">
                           <Button 
                             variant="ghost" 
                             onClick={() => handleSort('revenue')}
@@ -480,7 +480,7 @@ const Score = () => {
                             </div>
                           </Button>
                         </TableHead>
-                        <TableHead className="text-right bg-background w-[100px] min-w-[100px] max-w-[100px] p-1 h-12">
+                        <TableHead className="text-right bg-background w-[110px] min-w-[110px] max-w-[110px] p-1 h-12">
                           <Button 
                             variant="ghost" 
                             onClick={() => handleSort('reviewCount')}
@@ -504,7 +504,7 @@ const Score = () => {
                              </div>
                            </Button>
                          </TableHead>
-                         <TableHead className="text-left bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
+                         <TableHead className="text-left bg-background w-[140px] min-w-[140px] max-w-[140px] p-1 h-12">
                            <Button 
                              variant="ghost" 
                              onClick={() => handleSort('brand')}
@@ -528,7 +528,7 @@ const Score = () => {
                              </div>
                            </Button>
                          </TableHead>
-                         <TableHead className="text-left bg-background w-[140px] min-w-[140px] max-w-[140px] p-1 h-12">
+                         <TableHead className="text-left bg-background w-[160px] min-w-[160px] max-w-[160px] p-1 h-12">
                            <Button 
                              variant="ghost" 
                              onClick={() => handleSort('category')}
@@ -540,7 +540,7 @@ const Score = () => {
                              </div>
                            </Button>
                          </TableHead>
-                         <TableHead className="text-right bg-background w-[100px] min-w-[100px] max-w-[100px] p-1 h-12">
+                         <TableHead className="text-right bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
                            <Button 
                              variant="ghost" 
                              onClick={() => handleSort('salesTrend')}
@@ -552,7 +552,7 @@ const Score = () => {
                              </div>
                            </Button>
                          </TableHead>
-                         <TableHead className="text-left bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
+                         <TableHead className="text-left bg-background w-[140px] min-w-[140px] max-w-[140px] p-1 h-12">
                            <Button 
                              variant="ghost" 
                              onClick={() => handleSort('seller')}
@@ -564,7 +564,7 @@ const Score = () => {
                              </div>
                            </Button>
                          </TableHead>
-                         <TableHead className="text-left bg-background w-[140px] min-w-[140px] max-w-[140px] p-1 h-12">
+                         <TableHead className="text-left bg-background w-[160px] min-w-[160px] max-w-[160px] p-1 h-12">
                            <Button 
                              variant="ghost" 
                              onClick={() => handleSort('subcategory')}
@@ -576,7 +576,7 @@ const Score = () => {
                              </div>
                            </Button>
                          </TableHead>
-                         <TableHead className="text-right bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
+                         <TableHead className="text-right bg-background w-[150px] min-w-[150px] max-w-[150px] p-1 h-12">
                            <Button 
                              variant="ghost" 
                              onClick={() => handleSort('priceTrend')}
@@ -588,7 +588,7 @@ const Score = () => {
                              </div>
                            </Button>
                          </TableHead>
-                       <TableHead className="text-left bg-background w-20 p-1 h-12">
+                       <TableHead className="text-left bg-background w-[120px] min-w-[120px] max-w-[120px] p-1 h-12">
                          <Button 
                            variant="ghost" 
                            onClick={() => handleSort('sellerCountry')}
@@ -597,7 +597,7 @@ const Score = () => {
                            <span className="line-clamp-2 text-center">Seller Country</span> {getSortIcon('sellerCountry')}
                          </Button>
                        </TableHead>
-                       <TableHead className="text-right bg-background w-16 p-1 h-12">
+                       <TableHead className="text-right bg-background w-[140px] min-w-[140px] max-w-[140px] p-1 h-12">
                          <Button 
                            variant="ghost" 
                            onClick={() => handleSort('activeSellers')}
@@ -606,7 +606,7 @@ const Score = () => {
                            <span className="line-clamp-2 text-center"># of Active Sellers</span> {getSortIcon('activeSellers')}
                          </Button>
                        </TableHead>
-                       <TableHead className="text-right bg-background w-20 p-1 h-12">
+                       <TableHead className="text-right bg-background w-[130px] min-w-[130px] max-w-[130px] p-1 h-12">
                          <Button 
                            variant="ghost" 
                            onClick={() => handleSort('lastYearSales')}
