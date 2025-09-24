@@ -23,7 +23,9 @@ import {
   Filter,
   SortAsc,
   AlertTriangle,
-  X
+  X,
+  ExternalLink,
+  FileText
 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -431,21 +433,48 @@ const OpportunitiesList = () => {
               return (
                 <Card key={opportunity.id} className={isSelected ? "ring-2 ring-primary" : ""}>
                   <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-3">
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={(checked) => handleSelectOpportunity(originalIndex, checked as boolean)}
-                          aria-label={`Select ${opportunity.productName}`}
-                        />
-                        <div className="space-y-1">
-                          <CardTitle className="text-lg">{opportunity.productName}</CardTitle>
-                          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                            <Calendar className="w-4 h-4" />
-                            <span>{formatDate(opportunity.createdAt)}</span>
-                            {getStalenessBadge(opportunity)}
-                          </div>
-                        </div>
+                     <div className="flex items-start justify-between">
+                       <div className="flex items-start space-x-3">
+                         <Checkbox
+                           checked={isSelected}
+                           onCheckedChange={(checked) => handleSelectOpportunity(originalIndex, checked as boolean)}
+                           aria-label={`Select ${opportunity.productName}`}
+                         />
+                         {/* Product Image */}
+                         {opportunity.imageUrl && (
+                           <div className="w-16 h-16 rounded border bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                             <img 
+                               src={opportunity.imageUrl} 
+                               alt="Product"
+                               className="w-full h-full object-cover"
+                               onError={(e) => {
+                                 e.currentTarget.src = '/placeholder.svg';
+                               }}
+                             />
+                           </div>
+                         )}
+                         <div className="space-y-1">
+                           <div className="flex items-center gap-2">
+                             <CardTitle className="text-lg">{opportunity.productName}</CardTitle>
+                             {/* Amazon Link */}
+                             {opportunity.asin && (
+                               <a
+                                 href={`https://www.amazon.com/dp/${opportunity.asin}`}
+                                 target="_blank"
+                                 rel="noopener noreferrer"
+                                 className="text-blue-600 hover:text-blue-800 transition-colors"
+                                 title="View on Amazon"
+                               >
+                                 <ExternalLink className="h-4 w-4" />
+                               </a>
+                             )}
+                           </div>
+                           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                             <Calendar className="w-4 h-4" />
+                             <span>{formatDate(opportunity.createdAt)}</span>
+                             {getStalenessBadge(opportunity)}
+                           </div>
+                         </div>
                       </div>
                       <div className="text-right space-y-2">
                         <Badge className={cn("text-lg px-3 py-1", getScoreColor(opportunity.finalScore))}>

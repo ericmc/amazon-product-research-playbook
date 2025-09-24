@@ -22,6 +22,7 @@ interface ScoringData {
   reviewCount: number;
   rating: number;
   imageUrl?: string;
+  asin?: string;
 }
 
 interface ScoringCriterion {
@@ -133,7 +134,9 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
         createdAt: new Date().toISOString(),
         status: 'scored' as const,
         source: scoringData.source || 'import',
-        notes: `Imported and scored on ${new Date().toLocaleDateString()}`
+        notes: `Imported and scored on ${new Date().toLocaleDateString()}`,
+        imageUrl: scoringData.imageUrl,
+        asin: scoringData.asin
       };
 
       // Save to the opportunities system

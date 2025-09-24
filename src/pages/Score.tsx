@@ -37,6 +37,7 @@ interface ScoringData {
   reviewCount: number;
   rating: number;
   imageUrl?: string;
+  asin?: string;
 }
 
 const Score = () => {
@@ -94,8 +95,9 @@ const Score = () => {
     const reviewCount = product.productData.reviewCount || 0;
     const rating = product.productData.rating || 0;
     
-    // Get the image URL from the raw data
+    // Get the image URL and ASIN from the raw data
     const imageUrl = (product.rawData?.['Image URL'] || product.rawData?.['image url'] || '').trim();
+    const asin = product.productData.asin || product.rawData?.['ASIN'] || '';
     
     // Map competition text to numeric scale (0-100)
     let competitionScore = 50; // default medium
@@ -113,7 +115,8 @@ const Score = () => {
       price,
       reviewCount,
       rating,
-      imageUrl: imageUrl || undefined
+      imageUrl: imageUrl || undefined,
+      asin: asin || undefined
     };
 
     return scoringData;

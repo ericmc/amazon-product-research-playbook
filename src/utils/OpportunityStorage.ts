@@ -12,6 +12,8 @@ export interface SavedOpportunity {
   status: 'draft' | 'scored' | 'analyzing' | 'sourcing' | 'archived';
   source?: string;
   notes?: string;
+  imageUrl?: string;
+  asin?: string;
   importedAt?: string;
   importNotes?: string;
   recommendation?: string;
@@ -194,6 +196,8 @@ class OpportunityStorage {
         status: opportunity.status,
         source: opportunity.source || 'manual',
         notes: opportunity.notes,
+        image_url: opportunity.imageUrl,
+        asin: opportunity.asin,
         user_id: user.id
       });
 
@@ -220,7 +224,9 @@ class OpportunityStorage {
       createdAt: op.created_at,
       status: op.status as SavedOpportunity['status'],
       source: op.source,
-      notes: op.notes
+      notes: op.notes,
+      imageUrl: op.image_url,
+      asin: op.asin
     }));
   }
 

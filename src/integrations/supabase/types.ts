@@ -16,10 +16,12 @@ export type Database = {
     Tables: {
       opportunities: {
         Row: {
+          asin: string | null
           created_at: string
           criteria: Json
           final_score: number
           id: string
+          image_url: string | null
           notes: string | null
           product_name: string
           source: string
@@ -28,10 +30,12 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          asin?: string | null
           created_at?: string
           criteria?: Json
           final_score?: number
           id?: string
+          image_url?: string | null
           notes?: string | null
           product_name: string
           source: string
@@ -40,10 +44,12 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          asin?: string | null
           created_at?: string
           criteria?: Json
           final_score?: number
           id?: string
+          image_url?: string | null
           notes?: string | null
           product_name?: string
           source?: string
