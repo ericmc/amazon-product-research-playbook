@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { opportunityStorage, SavedOpportunity } from "@/utils/OpportunityStorage";
 import { RotateCcw, TrendingUp, Target, AlertCircle, CheckCircle, DollarSign, Users, Settings, Info, ChevronDown, ChevronUp } from "lucide-react";
 import { computeFinalScore, checkGates, getRecommendation, calculateH10Score, getOpportunityRecommendation } from "@/utils/scoringUtils";
 
@@ -52,6 +54,8 @@ interface ScoringPreviewProps {
 
 export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onRefresh }) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [isSaving, setIsSaving] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   
   // Default thresholds (suggested values)
@@ -109,6 +113,49 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
       </Card>
     );
   }
+
+  const handleSaveOpportunity = async () => {
+    if (!scoringData) return;
+
+    setIsSaving(true);
+    try {
+      // Calculate the final score using the current thresholds
+      const criteria = calculateH10Score(scoringData, thresholds);
+      const finalScore = computeFinalScore(criteria);
+
+      // Create the opportunity object
+      const opportunity: SavedOpportunity = {
+        id: `opp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        productName: scoringData.productName,
+        criteria: criteria,
+        finalScore: finalScore,
+        createdAt: new Date().toISOString(),
+        status: 'scored' as const,
+        source: scoringData.source || 'import',
+        notes: `Imported and scored on ${new Date().toLocaleDateString()}`
+      };
+
+      // Save to the opportunities system
+      await opportunityStorage.saveOpportunity(opportunity);
+
+      toast({
+        title: "Opportunity Saved",
+        description: `${scoringData.productName} has been saved to your opportunities.`,
+      });
+
+      // Navigate to opportunities page
+      navigate('/opportunities');
+    } catch (error) {
+      console.error('Failed to save opportunity:', error);
+      toast({
+        title: "Save Failed",
+        description: "Could not save opportunity. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Helper functions for criteria mapping
   const getIconForCriteria = (id: string) => {
@@ -394,15 +441,10 @@ export const ScoringPreview: React.FC<ScoringPreviewProps> = ({ scoringData, onR
             <div className="space-y-2">
               <Button 
                 className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2"
-                onClick={() => {
-                  // Save opportunity logic here
-                  toast({
-                    title: "Opportunity Saved",
-                    description: `${scoringData.productName} has been saved to your opportunities.`,
-                  });
-                }}
+                onClick={handleSaveOpportunity}
+                disabled={isSaving}
               >
-                Save Opportunity
+                {isSaving ? "Saving..." : "Save Opportunity"}
               </Button>
               <p className="text-sm text-muted-foreground">{opportunityRecommendation.description}</p>
               <p className="text-xs font-medium">{opportunityRecommendation.action}</p>
