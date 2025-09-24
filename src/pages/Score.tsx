@@ -562,10 +562,14 @@ const Score = () => {
                       const viabilityScore = calculateProductScore(product);
                       
                       return (
-                        <TableRow 
-                          key={index}
-                          className={`cursor-pointer hover:bg-muted/50 ${isSelected ? 'bg-muted' : ''}`}
-                          onClick={() => handleProductSelect(product)}
+                         <TableRow 
+                           key={index}
+                           className={`cursor-pointer transition-colors ${
+                             isSelected 
+                               ? 'bg-primary/10 border-l-4 border-l-primary hover:bg-primary/15' 
+                               : 'hover:bg-muted/50'
+                           }`}
+                           onClick={() => handleProductSelect(product)}
                         >
                            <TableCell className="sticky left-0 z-40 bg-background w-[60px] min-w-[60px] max-w-[60px] p-0 border-r">
                              <div className="relative group" onMouseEnter={() => setHoverImageUrl(imageUrl)} onMouseLeave={() => setHoverImageUrl(null)}>
