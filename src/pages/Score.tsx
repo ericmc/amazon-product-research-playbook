@@ -5,6 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious,
+  PaginationEllipsis
+} from "@/components/ui/pagination";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -14,7 +23,6 @@ import { ScoringPreview } from "@/components/ScoringPreview";
 import { AutoMappedProduct } from "@/lib/normalizeBlackBox";
 import { ProductWithKeywords } from "@/lib/matchKeyword";
 import { computeFinalScore, calculateH10Score } from "@/utils/scoringUtils";
-import StickyXScrollbar from "@/components/ui/sticky-x-scrollbar";
 
 type SortField = 'title' | 'revenue' | 'price' | 'searchVolume' | 'reviewCount' | 'rating' | 'score' | 'brand' | 'bsr' | 'category' | 'salesTrend' | 'seller' | 'subcategory' | 'priceTrend' | 'sellerCountry' | 'activeSellers' | 'lastYearSales';
 type SortDirection = 'asc' | 'desc';
@@ -43,6 +51,10 @@ const Score = () => {
   const [sortField, setSortField] = useState<SortField>('score');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [hoverImageUrl, setHoverImageUrl] = useState<string | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20); // About 20 rows will fit in the taller table
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -187,7 +199,6 @@ const Score = () => {
         }
       }
 
-
       return true;
     });
 
@@ -260,77 +271,23 @@ const Score = () => {
     return filtered;
   }, [importedProducts, searchQuery, revenueFilter, sortField, sortDirection]);
 
-  // Sync external scrollbar with table
+  // Paginate the filtered and sorted products
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredAndSortedProducts.slice(startIndex, endIndex);
+  }, [filteredAndSortedProducts, currentPage, itemsPerPage]);
+
+  // Reset to first page when filters change
   useEffect(() => {
-    const tableViewport = document.getElementById('products-table-viewport');
-    const externalScrollbar = document.getElementById('external-scrollbar');
-    
-    if (!tableViewport || !externalScrollbar) return;
+    setCurrentPage(1);
+  }, [searchQuery, revenueFilter, sortField, sortDirection]);
 
-    const syncScrollbars = () => {
-      // Ensure the external scrollbar content width creates a proper thumb size
-      const tableScrollbarChild = document.getElementById('external-scrollbar-content');
-      if (tableScrollbarChild) {
-        const trackWidth = externalScrollbar.clientWidth || 0;
-        const visible = Math.max(1, tableViewport.clientWidth);
-        const total = Math.max(visible + 1, tableViewport.scrollWidth);
-        const scrollRatio = total / visible; // > 1 when horizontal scroll exists
-        const contentWidth = Math.max(trackWidth * scrollRatio, trackWidth + 2); // ensure draggable
-        tableScrollbarChild.style.width = contentWidth + 'px';
+  // Calculate pagination info
+  const totalPages = Math.ceil(filteredAndSortedProducts.length / itemsPerPage);
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, filteredAndSortedProducts.length);
 
-        // Also sync position after recalculating sizes
-        const maxTableScroll = total - visible;
-        const maxExternalScroll = (contentWidth - trackWidth);
-        const progress = maxTableScroll > 0 ? (tableViewport.scrollLeft / maxTableScroll) : 0;
-        externalScrollbar.scrollLeft = progress * maxExternalScroll;
-      }
-    };
-
-    let isScrolling = false;
-    let scrollTimeout: NodeJS.Timeout;
-
-    const onTableScroll = () => {
-      if (isScrolling) return;
-      isScrolling = true;
-      // Sync the external scrollbar position with the table scroll position
-      externalScrollbar.scrollLeft = tableViewport.scrollLeft;
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        isScrolling = false;
-      }, 16);
-    };
-
-    const onExternalScroll = () => {
-      if (isScrolling) return;
-      isScrolling = true;
-      // Sync the table scroll position with the external scrollbar position
-      tableViewport.scrollLeft = externalScrollbar.scrollLeft;
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        isScrolling = false;
-      }, 16);
-    };
-
-    // Set up event listeners
-    tableViewport.addEventListener('scroll', onTableScroll, { passive: true });
-    externalScrollbar.addEventListener('scroll', onExternalScroll, { passive: true });
-
-    // Sync on load and resize
-    const resizeObserverViewport = new ResizeObserver(syncScrollbars);
-    const resizeObserverExternal = new ResizeObserver(syncScrollbars);
-    resizeObserverViewport.observe(tableViewport);
-    resizeObserverExternal.observe(externalScrollbar);
-    
-    // Initial sync
-    syncScrollbars();
-
-    return () => {
-      tableViewport.removeEventListener('scroll', onTableScroll);
-      externalScrollbar.removeEventListener('scroll', onExternalScroll);
-      resizeObserverViewport.disconnect();
-      resizeObserverExternal.disconnect();
-    };
-  }, [filteredAndSortedProducts]); // Re-sync when products change
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
@@ -430,14 +387,24 @@ const Score = () => {
 
               <Badge variant="outline" className="flex items-center gap-1 px-3 py-2">
                 <Filter className="h-3 w-3" />
-                {filteredAndSortedProducts.length} shown
+                {filteredAndSortedProducts.length} total
               </Badge>
             </div>
 
-            {/* Table wrapper with external sticky scrollbar */}
-            <div className="space-y-2">
+            {/* Pagination info */}
+            <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+              <div>
+                Showing {startItem}-{endItem} of {filteredAndSortedProducts.length} products
+              </div>
+              <div>
+                Page {currentPage} of {totalPages}
+              </div>
+            </div>
+
+            {/* Table wrapper - 30% taller */}
+            <div className="space-y-4">
               <div className="relative rounded-md border bg-background overflow-hidden">
-                 <div className="overflow-auto max-h-[480px]" id="products-table-viewport">
+                <div className="overflow-auto max-h-[624px]" id="products-table-viewport">
                    <Table className="min-w-[1200px] border-spacing-0">
                   <TableHeader className="sticky top-0 z-50 bg-background border-b shadow-sm">
                     <TableRow className="border-none">
@@ -588,8 +555,8 @@ const Score = () => {
                        </TableHead>
                      </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {filteredAndSortedProducts.map((product, index) => {
+                 <TableBody>
+                   {paginatedProducts.map((product, index) => {
                       const isSelected = selectedProduct === product;
                       const imageUrl = (product.rawData?.['Image URL'] || product.rawData?.['image url'] || '').trim();
                       const viabilityScore = calculateProductScore(product);
@@ -695,24 +662,88 @@ const Score = () => {
                 </div>
               </div>
               
-              {/* External sticky horizontal scrollbar */}
-              <div className="sticky bottom-3 z-50 mx-4 mb-4">
-                <div className="bg-card border border-border rounded-lg p-2 shadow-md">
-                  <div className="text-xs text-muted-foreground mb-1 text-center">
-                    Scroll horizontally to view all columns
-                  </div>
-                  <div 
-                    className="overflow-x-auto overflow-y-hidden h-4 bg-muted/40 rounded-md border border-border" 
-                    id="external-scrollbar"
-                    style={{ width: '100%' }}
-                  >
-                    <div 
-                      id="external-scrollbar-content" 
-                      style={{ height: '100%', minHeight: '1px', backgroundColor: 'rgba(0,0,0,0.1)' }} 
-                    />
-                  </div>
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (currentPage > 1) {
+                              setCurrentPage(currentPage - 1);
+                            }
+                          }}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                      
+                      {/* Page numbers */}
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        
+                        return (
+                          <PaginationItem key={pageNum}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage(pageNum);
+                              }}
+                              isActive={currentPage === pageNum}
+                            >
+                              {pageNum}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      })}
+                      
+                      {totalPages > 5 && currentPage < totalPages - 2 && (
+                        <>
+                          <PaginationItem>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                          <PaginationItem>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage(totalPages);
+                              }}
+                            >
+                              {totalPages}
+                            </PaginationLink>
+                          </PaginationItem>
+                        </>
+                      )}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (currentPage < totalPages) {
+                              setCurrentPage(currentPage + 1);
+                            }
+                          }}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
-              </div>
+              )}
             </div>
 
             {hoverImageUrl && createPortal(
@@ -729,7 +760,7 @@ const Score = () => {
               document.body
             )}
 
-            {filteredAndSortedProducts.length === 0 && (
+            {paginatedProducts.length === 0 && filteredAndSortedProducts.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 No products match your current filters
               </div>
